@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Alliance" ADD COLUMN     "autoScore" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "driveScore" INTEGER NOT NULL DEFAULT 0;
