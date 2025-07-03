@@ -1,0 +1,35 @@
+# Node modules and dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Build output
+dist
+generated/prisma
+
+# Environment files
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Prisma local files
+prisma/dev.db
+prisma/.env
+
+# Test and coverage
+coverage
+test
+*.spec.ts
+
+# Editor and IDE
+.vscode
+.idea
+*.swp
+
+# Docker
+Dockerfile
+docker-compose*

@@ -14,6 +14,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery }
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { Public } from '../auth/public.decorator';
 import { UserRole } from '../utils/prisma-types';
 import { MatchScoresService } from './match-scores.service';
 import { CreateMatchScoresDto, UpdateMatchScoresDto } from './dto';
@@ -45,6 +46,7 @@ export class MatchScoresController {
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'Get all match scores' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
@@ -56,6 +58,7 @@ export class MatchScoresController {
 
   // More specific route comes first to prevent route conflicts
   @Get('match/:matchId')
+  @Public()
   @ApiOperation({ summary: 'Get match scores by match ID' })
   @ApiParam({ name: 'matchId', description: 'Match ID' })
   @ApiResponse({ 
@@ -72,6 +75,7 @@ export class MatchScoresController {
 
   // General ID route comes after more specific routes
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: 'Get match scores by ID' })
   @ApiParam({ name: 'id', description: 'Match scores ID' })
   @ApiResponse({ 

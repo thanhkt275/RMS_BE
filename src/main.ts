@@ -62,7 +62,7 @@ async function bootstrap(): Promise<void> {
 
   // Enable CORS with specific configuration for credentialed requests
   app.enableCors({
-    origin: 'http://localhost:3000', // Your frontend origin
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Your frontend origin from environment
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders: 'Content-Type,Accept,Authorization'
