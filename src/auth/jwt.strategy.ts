@@ -11,7 +11,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private prisma: PrismaService) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (req: Request) => req?.cookies?.token,
+        ExtractJwt.fromAuthHeaderAsBearerToken(), // Authorization header (primary)
+        (req: Request) => req?.cookies?.token,    // Cookie (fallback for same-domain)
       ]),
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET || 'your-secret-key', // Use environment variable in production

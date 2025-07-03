@@ -28,6 +28,23 @@ NODE_ENV="production"
 PORT=5000
 ```
 
+## Frontend Environment Variables
+
+Create a `.env.production` file in your frontend project:
+
+```bash
+# Frontend Production Environment Variables
+NEXT_PUBLIC_BACKEND_URL="https://your-backend-domain.com"
+NEXT_PUBLIC_API_URL="https://your-backend-domain.com/api"
+NEXT_PUBLIC_WS_URL="https://your-backend-domain.com"
+
+# JWT Secret (should match backend)
+JWT_SECRET="your-same-jwt-secret-as-backend"
+
+# Environment
+NODE_ENV="production"
+```
+
 ## Key Configuration Changes Made
 
 ### 1. Cookie Settings
@@ -62,6 +79,21 @@ PORT=5000
    ```bash
    GET /api/auth/force-recreate-admin
    ```
+
+## Root Cause Analysis
+
+The issue was that the **frontend middleware was trying to read cookies set by the backend**, but cookies are domain-specific. Here's what was happening:
+
+1. **Backend** (API domain) correctly sets the authentication cookie ✅
+2. **Frontend middleware** (runs on frontend domain) tries to read backend cookies ❌
+3. **Frontend to Backend API calls** correctly send the cookie ✅
+
+## Solution Applied
+
+**Fixed Frontend Middleware Approach:**
+- Instead of reading cookies directly, the middleware now makes an API call to `/api/auth/check-auth`
+- This leverages the existing working cookie mechanism
+- The API call includes `credentials: 'include'` to send cookies automatically
 
 ## Frontend Configuration
 
