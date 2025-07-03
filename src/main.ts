@@ -61,11 +61,16 @@ async function bootstrap(): Promise<void> {
   app.use(cookieParser());
 
   // Enable CORS with specific configuration for credentialed requests
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL] 
+    : ['http://localhost:3000', 'http://localhost:3001'];
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Your frontend origin from environment
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
-    allowedHeaders: 'Content-Type,Accept,Authorization'
+    allowedHeaders: 'Content-Type,Accept,Authorization,Cookie',
+    exposedHeaders: 'Set-Cookie',
   });
   
   // Enable global Zod validation

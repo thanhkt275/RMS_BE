@@ -30,13 +30,18 @@ export class AuthController {
     const user = await this.authService.validateUser(loginDto.username, loginDto.password, clientIp);
     const { access_token, user: userInfo } = await this.authService.login(user);
 
-    // Set JWT as HTTP-only cookie
-    res.cookie('token', access_token, {
+    // Set JWT as HTTP-only cookie with production-safe settings
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // Enhanced CSRF protection
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'strict' as const,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    });
+      ...(process.env.NODE_ENV === 'production' && {
+        domain: process.env.COOKIE_DOMAIN || undefined
+      })
+    };
+
+    res.cookie('token', access_token, cookieOptions);
 
     this.logger.log(`User logged in: ${userInfo.username}`);
     return { user: userInfo, message: 'Login successful' };
@@ -46,7 +51,10 @@ export class AuthController {
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'strict' as const,
+      ...(process.env.NODE_ENV === 'production' && {
+        domain: process.env.COOKIE_DOMAIN || undefined
+      })
     });
     return { message: 'Logged out successfully' };
   }
@@ -187,5 +195,32 @@ export class AuthController {
         error: error.message
       };
     }
+  }
+
+  @Get('debug-env')
+  debugEnvironment() {
+    return {
+      nodeEnv: process.env.NODE_ENV,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      frontendUrl: process.env.FRONTEND_URL,
+      cookieDomain: process.env.COOKIE_DOMAIN,
+      adminUsername: process.env.ADMIN_USERNAME,
+      hasAdminPassword: !!process.env.ADMIN_PASSWORD,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  @Get('debug-cookies')
+  debugCookies(@Request() req) {
+    return {
+      cookies: req.cookies,
+      headers: {
+        cookie: req.headers.cookie,
+        authorization: req.headers.authorization,
+        origin: req.headers.origin,
+        referer: req.headers.referer
+      },
+      timestamp: new Date().toISOString()
+    };
   }
 }
