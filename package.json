@@ -17,7 +17,14 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:stress": "artillery run stress-tests/artillery-basic.yml",
+    "test:stress:spike": "artillery run stress-tests/artillery-spike.yml",
+    "test:stress:soak": "artillery run stress-tests/artillery-soak.yml",
+    "test:stress:performance": "artillery run stress-tests/artillery-performance.yml",
+    "test:stress:auth": "artillery run stress-tests/artillery-auth.yml",
+    "test:stress:quick": "artillery quick --duration 30 --rate 10 http://localhost:3000",
+    "test:stress:report": "artillery run stress-tests/artillery-basic.yml --output stress-report.json && artillery report stress-report.json --output stress-report.html"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -60,6 +67,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.3",
+    "artillery": "^2.0.23",
     "eslint": "^9.25.1",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

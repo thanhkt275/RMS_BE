@@ -1,0 +1,44 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Spike test - sudden load increase
+    - duration: 30
+      arrivalRate: 10
+      name: "Baseline"
+    - duration: 60
+      arrivalRate: 100
+      name: "Spike load"
+    - duration: 30
+      arrivalRate: 10
+      name: "Recovery"
+  
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+      Accept: 'application/json'
+
+scenarios:
+  # High-intensity endpoint testing
+  - name: "High Load Public Endpoints"
+    weight: 60
+    flow:
+      - get:
+          url: "/"
+      - get:
+          url: "/tournaments"
+      - get:
+          url: "/teams"
+      - get:
+          url: "/matches"
+
+  # Authentication stress test
+  - name: "Auth Stress Test"
+    weight: 40
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            username: "admin"
+            password: "admin123"
+          expect:
+            - statusCode: [200, 401, 429]

@@ -1,13 +1,15 @@
 // File: src/prisma.service.ts
 import { INestApplication, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '../generated/prisma';
+import { withAccelerate } from '@prisma/extension-accelerate';
 
 /**
- * Service for interacting with the database via Prisma
+ * Service for interacting with the database via Prisma with Accelerate caching
  */
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   private readonly logger = new Logger(PrismaService.name);
+  private acceleratedClient: ReturnType<typeof this.createAcceleratedClient>;
 
   constructor() {
     super({
@@ -19,6 +21,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       ],
     });
 
+    // Create accelerated client
+    this.acceleratedClient = this.createAcceleratedClient();
+
     // Add query performance monitoring
     (this.$on as any)('query', (e: any) => {
       if (e.duration > 500) { // Log slow queries (over 500ms)
@@ -28,12 +33,27 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   /**
+   * Create Prisma client with Accelerate extension
+   */
+  private createAcceleratedClient() {
+    return new PrismaClient().$extends(withAccelerate());
+  }
+
+  /**
+   * Get accelerated client for cached queries
+   */
+  get accelerated() {
+    return this.acceleratedClient;
+  }
+
+  /**
    * Connect to the database when the module initializes
    */
   async onModuleInit(): Promise<void> {
     try {
       this.logger.log('Connecting to database...');
       await this.$connect();
+      await this.acceleratedClient.$connect();
       this.logger.log('Successfully connected to database');
     } catch (error) {
       this.logger.error(`Failed to connect to database: ${error.message}`);
@@ -62,5 +82,31 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       await app.close();
       this.logger.log('Database connection closed');
     });
+  }
+
+  /**
+   * Invalidate cache by tags
+   */
+  async invalidateCache(tags: string[]): Promise<void> {
+    try {
+      await this.acceleratedClient.$accelerate.invalidate({ tags });
+      this.logger.log(`Cache invalidated for tags: ${tags.join(', ')}`);
+    } catch (error) {
+      this.logger.error(`Failed to invalidate cache: ${error.message}`);
+      // Don't throw - cache invalidation failure shouldn't break functionality
+    }
+  }
+
+  /**
+   * Invalidate all cache
+   */
+  async invalidateAllCache(): Promise<void> {
+    try {
+      await this.acceleratedClient.$accelerate.invalidateAll();
+      this.logger.log('All cache invalidated');
+    } catch (error) {
+      this.logger.error(`Failed to invalidate all cache: ${error.message}`);
+      // Don't throw - cache invalidation failure shouldn't break functionality
+    }
   }
 }
