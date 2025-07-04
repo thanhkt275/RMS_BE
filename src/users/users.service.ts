@@ -9,7 +9,7 @@ import * as bcrypt from 'bcrypt';
  * Users Service with Prisma Accelerate Caching Strategy
  * 
  * Cache Strategy Overview:
- * - User Lists (findAll): TTL 10min, SWR 30min - moderate change frequency
+ * - User Lists (findAll): TTL 5min, SWR 15min - shorter for better consistency
  * - User Profiles (findOne): TTL 30min, SWR 1h - infrequent changes
  * - User Stats: TTL 30min, SWR 1.5h - very infrequent changes
  * - Search Results: TTL 5min, SWR 15min - frequent changes
@@ -20,7 +20,12 @@ import * as bcrypt from 'bcrypt';
  * Cache Tags:
  * - Functional: users_list, user_stats, users_search, user_auth
  * - Hierarchical: user_{id}, users_role_{role}, users_active_{boolean}
- * - Specific: username_exists_{username}, email_exists_{email}
+ * - Specific: username_exists_{sanitized_username}, email_exists_{sanitized_email}
+ * - Search: search_{sanitized_term}
+ * - Auth: user_auth_{sanitized_username}
+ * 
+ * Note: All cache tag values are sanitized to contain only alphanumeric characters 
+ * and underscores, with a max length of 50 characters to comply with Prisma Accelerate requirements.
  */
 @Injectable()
 export class UsersService {
@@ -53,8 +58,8 @@ export class UsersService {
         select: this.getUserSelectFields(),
       });
 
-      // Invalidate related caches
-      await this.invalidateUserCaches(['users_list', 'users_count', 'user_stats', `users_role_${createUserDto.role}`]);
+      // Invalidate related caches - use comprehensive invalidation to ensure new user appears in lists
+      await this.invalidateAllUserListCaches();
 
       return user;
     } catch (error) {
@@ -89,16 +94,16 @@ export class UsersService {
         select: this.getUserSelectFields(),
         orderBy: { createdAt: 'desc' },
         cacheStrategy: {
-          ttl: 600,    // 10 minutes - user lists change moderately
-          swr: 1800,   // 30 minutes - serve stale while refreshing
-          tags: [...cacheTagsBase, `users_page_${page}_limit_${take}`]
+          ttl: 300,    // 5 minutes - shorter TTL for better consistency
+          swr: 900,    // 15 minutes - serve stale while refreshing
+          tags: cacheTagsBase // Remove page-specific tags to make invalidation easier
         }
       }),
       this.prisma.accelerated.user.count({ 
         where,
         cacheStrategy: {
-          ttl: 900,    // 15 minutes - counts change less frequently
-          swr: 2700,   // 45 minutes
+          ttl: 600,    // 10 minutes - counts still cached longer
+          swr: 1800,   // 30 minutes
           tags: [...cacheTagsBase, 'users_count']
         }
       }),
@@ -169,7 +174,7 @@ export class UsersService {
 
       // Invalidate user-specific and related caches
       await this.invalidateUserSpecificCaches(id, existingUser.username);
-      await this.invalidateUserCaches(['users_list', 'users_search']);
+      await this.invalidateAllUserListCaches();
 
       return updatedUser;
     } catch (error) {
@@ -204,12 +209,7 @@ export class UsersService {
 
       // Invalidate role-specific and user-specific caches
       await this.invalidateUserSpecificCaches(id, user.username);
-      await this.invalidateUserCaches([
-        'users_list', 
-        'user_stats', 
-        `users_role_${user.role}`, 
-        `users_role_${newRole}`
-      ]);
+      await this.invalidateAllUserListCaches();
 
       return updatedUser;
     } catch (error) {
@@ -243,13 +243,7 @@ export class UsersService {
 
       // Invalidate all related caches
       await this.invalidateUserSpecificCaches(id, user.username);
-      await this.invalidateUserCaches([
-        'users_list', 
-        'users_count', 
-        'user_stats', 
-        `users_role_${user.role}`,
-        'users_search'
-      ]);
+      await this.invalidateAllUserListCaches();
 
       return deletedUser;
     } catch (error) {
@@ -320,7 +314,7 @@ export class UsersService {
       cacheStrategy: {
         ttl: 300,    // 5 minutes - search results change frequently
         swr: 900,    // 15 minutes
-        tags: ['users_search', `search_${searchTerm.substring(0, 10)}`] // Limited tag length
+        tags: ['users_search', `search_${this.sanitizeCacheTag(searchTerm)}`]
       }
     });
   }
@@ -365,13 +359,7 @@ export class UsersService {
       });
 
       // Invalidate all related caches
-      await this.invalidateUserCaches([
-        'users_list', 
-        'users_count', 
-        'user_stats', 
-        'users_search',
-        ...Object.values(UserRole).map(role => `users_role_${role}`)
-      ]);
+      await this.invalidateAllUserListCaches();
 
       return { deleted: result.count };
     } catch (error) {
@@ -402,11 +390,7 @@ export class UsersService {
       });
 
       // Invalidate role-specific caches
-      await this.invalidateUserCaches([
-        'users_list', 
-        'user_stats',
-        ...Object.values(UserRole).map(role => `users_role_${role}`)
-      ]);
+      await this.invalidateAllUserListCaches();
 
       return { updated: result.count };
     } catch (error) {
@@ -430,7 +414,7 @@ export class UsersService {
       cacheStrategy: {
         ttl: 3600,   // 1 hour - user auth data changes rarely
         swr: 7200,   // 2 hours
-        tags: [`user_auth_${username}`, 'user_auth']
+        tags: [`user_auth_${this.sanitizeCacheTag(username)}`, 'user_auth']
       }
     });
   }
@@ -582,7 +566,7 @@ export class UsersService {
       cacheStrategy: {
         ttl: 1800,   // 30 minutes - username existence rarely changes
         swr: 3600,   // 1 hour
-        tags: [`username_exists_${username}`, 'username_checks']
+        tags: [`username_exists_${this.sanitizeCacheTag(username)}`, 'username_checks']
       }
     });
     return count > 0;
@@ -594,7 +578,7 @@ export class UsersService {
       cacheStrategy: {
         ttl: 1800,   // 30 minutes - email existence rarely changes
         swr: 3600,   // 1 hour
-        tags: [`email_exists_${email}`, 'email_checks']
+        tags: [`email_exists_${this.sanitizeCacheTag(email)}`, 'email_checks']
       }
     });
     return count > 0;
@@ -626,6 +610,22 @@ export class UsersService {
     }
   }
 
+  /**
+   * Sanitize cache tag to only contain alphanumeric characters and underscores
+   * Max length 40 characters to leave room for prefixes (total must be under 64)
+   */
+  private sanitizeCacheTag(input: string): string {
+    if (!input) return '';
+    
+    const sanitized = input
+      .replace(/[^a-zA-Z0-9_]/g, '_')  // Replace non-alphanumeric chars with underscore
+      .substring(0, 40)                // Limit length to 40 chars for safety
+      .replace(/_+/g, '_')             // Replace multiple underscores with single
+      .replace(/^_|_$/g, '');          // Remove leading/trailing underscores
+    
+    return sanitized || 'sanitized';   // Fallback if string becomes empty
+  }
+
   // Cache management methods
 
   /**
@@ -646,8 +646,29 @@ export class UsersService {
   private async invalidateUserSpecificCaches(userId: string, username?: string): Promise<void> {
     const tags = [`user_${userId}`, 'user_profiles'];
     if (username) {
-      tags.push(`user_auth_${username}`);
+      tags.push(`user_auth_${this.sanitizeCacheTag(username)}`);
     }
+    await this.invalidateUserCaches(tags);
+  }
+
+  /**
+   * Invalidate all user list related caches
+   * This is more aggressive but ensures data consistency
+   */
+  private async invalidateAllUserListCaches(): Promise<void> {
+    const tags = [
+      'users_list',
+      'users_count', 
+      'users_search',
+      'user_profiles',
+      'user_stats',     // Include stats since they change with user creation/deletion
+      'admin_count',    // Include admin count for safety
+      // Invalidate all role-specific caches
+      ...Object.values(UserRole).map(role => `users_role_${role}`),
+      // Invalidate active/inactive caches
+      'users_active_true',
+      'users_active_false'
+    ];
     await this.invalidateUserCaches(tags);
   }
 
