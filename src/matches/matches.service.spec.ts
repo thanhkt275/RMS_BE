@@ -36,6 +36,10 @@ describe('MatchesController', () => {
     await app.close();
   });
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should be defined', () => {
     expect(matchesService).toBeDefined();
   });
@@ -98,7 +102,31 @@ describe('MatchesController', () => {
       expect(prisma.match.update).toHaveBeenCalledWith({
         where: { id: 'match1' },
         data: { fieldId: 'field1', fieldNumber: 42 },
-        include: { alliances: true },
+        include: {
+          alliances: true,
+          field: {
+            include: {
+              fieldReferees: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      username: true,
+                      role: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          scoredBy: {
+            select: {
+              id: true,
+              username: true,
+              role: true
+            }
+          }
+        },
       });
       expect(result).toHaveProperty('fieldNumber', 42);
     });
@@ -231,7 +259,14 @@ describe('MatchesController', () => {
         matchesService.assignMatchToField('match1', 'field1')
       ).rejects.toThrow('No head referee assigned to field field1');
 
-      expect(prisma.match.update).not.toHaveBeenCalled();
+      expect(prisma.fieldReferee.findFirst).toHaveBeenCalledWith({
+        where: {
+          fieldId: 'field1',
+          isHeadRef: true,
+        },
+      });
+      // Should not call update since head referee lookup failed
+      expect(prisma.match.update).toHaveBeenCalledTimes(0);
     });
 
     it('should handle prisma errors gracefully', async () => {
@@ -305,7 +340,13 @@ describe('MatchesController', () => {
 
       const result = await matchesService.update('match1', updateDto as any);
 
-      expect(prisma.fieldReferee.findFirst).not.toHaveBeenCalled();
+      // Should still call field.findUnique to get field number
+      expect(prisma.field.findUnique).toHaveBeenCalledWith({
+        where: { id: 'field1' },
+        select: { number: true },
+      });
+      // Should not call fieldReferee.findFirst since scoredById is provided
+      expect(prisma.fieldReferee.findFirst).toHaveBeenCalledTimes(0);
       expect(prisma.match.update).toHaveBeenCalledWith({
         where: { id: 'match1' },
         data: { 
@@ -324,12 +365,15 @@ describe('MatchesController', () => {
 
       const result = await matchesService.update('match1', updateDto as any);
 
-      expect(prisma.field.findUnique).not.toHaveBeenCalled();
-      expect(prisma.fieldReferee.findFirst).not.toHaveBeenCalled();
+      // Should not call field lookup or head referee lookup since fieldId is not being updated
+      expect(prisma.field.findUnique).toHaveBeenCalledTimes(0);
+      expect(prisma.fieldReferee.findFirst).toHaveBeenCalledTimes(0);
       expect(prisma.match.update).toHaveBeenCalledWith({
         where: { id: 'match1' },
         data: { status: 'IN_PROGRESS' },
-        include: expect.any(Object)
+        include: {
+          alliances: true,
+        }
       });
     });
 

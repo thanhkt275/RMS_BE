@@ -109,7 +109,7 @@ describe('StagesController - Stage Advancement', () => {
       expect(advanceTeamsSpy).toHaveBeenCalledWith('stage-1', {
         teamsToAdvance: 2,
         nextStageId: 'stage-2',
-        createNextStage: undefined,
+        createNextStage: false,
         nextStageConfig: undefined,
       });
 
