@@ -282,14 +282,7 @@ describe('TournamentsService', () => {
             name: 'Qualification',
             stageType: 'QUALIFICATION',
             status: 'PENDING',
-            matches: [
-              {
-                id: 'm1',
-                matchNumber: 1,
-                status: 'PENDING',
-                startTime: now
-              }
-            ]
+            _count: { matches: 5 }
           }
         ],
         fields: [
@@ -336,24 +329,15 @@ describe('TournamentsService', () => {
       expect(prisma.tournament.findUnique).toHaveBeenCalledWith({
         where: { id: 't1' },
         include: {
-          admin: {
-            select: {
-              id: true,
-              username: true,
-              email: true
-            }
+          admin: { 
+            select: { id: true, username: true, email: true } 
           },
           stages: {
             include: {
-              matches: {
-                select: {
-                  id: true,
-                  matchNumber: true,
-                  status: true,
-                  startTime: true,
-                  endTime: true
-                },
-                orderBy: { startDate: 'asc' }
+              _count: { 
+                select: { 
+                  matches: true
+                } 
               }
             },
             orderBy: { startDate: 'asc' }
