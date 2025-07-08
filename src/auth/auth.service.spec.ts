@@ -48,6 +48,10 @@ describe('AuthService', () => {
       DateOfBirth: null,
       phoneNumber: null,
       createdById: null,
+      avatar: null,
+      isActive: true,
+      lastLoginAt: null,
+      emailVerified: false,
     };
 
     it('should validate user with correct credentials', async () => {
@@ -73,6 +77,10 @@ describe('AuthService', () => {
         DateOfBirth: null,
         phoneNumber: null,
         createdById: null,
+        avatar: null,
+        isActive: true,
+        lastLoginAt: null,
+        emailVerified: false,
       });
     });
 

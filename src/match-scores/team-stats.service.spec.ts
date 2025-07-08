@@ -44,12 +44,13 @@ describe('TeamStatsService', () => {
           { color: 'RED', teamAlliances: [{ teamId: 't1' }] },
           { color: 'BLUE', teamAlliances: [{ teamId: 't2' }] },
         ],
-        winningAlliance: 'TIE',
+        winningAlliance: null,
         status: 'COMPLETED',
       },
     ] as any);
+    prisma.teamStats.findMany.mockResolvedValue([]); // Mock for calculateOpponentWinPercentage
     prisma.teamStats.upsert.mockResolvedValue({} as any);
-    const match = { stage: { tournament: { id: 'tournament1' } } } as any;
+    const match = { stage: { id: 'stage1', tournament: { id: 'tournament1' } } } as any;
     await expect(service.recalculateTeamStats(match, ['t1', 't2'])).resolves.toBeUndefined();
     expect(prisma.match.findMany).toHaveBeenCalled();
     expect(prisma.teamStats.upsert).toHaveBeenCalledTimes(2);
@@ -69,8 +70,9 @@ describe('TeamStatsService', () => {
         winningAlliance: 'RED',
       },
     ] as any);
+    prisma.teamStats.findMany.mockResolvedValue([]); // Mock for calculateOpponentWinPercentage
     prisma.teamStats.upsert.mockRejectedValueOnce(new Error('DB error'));
-    const match = { stage: { tournament: { id: 'tournament1' } } } as any;
+    const match = { stage: { id: 'stage1', tournament: { id: 'tournament1' } } } as any;
     await expect(service.recalculateTeamStats(match, ['t1', 't2'])).rejects.toThrow('DB error');
   });
 
@@ -84,8 +86,9 @@ describe('TeamStatsService', () => {
         winningAlliance: 'RED',
       },
     ] as any);
+    prisma.teamStats.findMany.mockResolvedValue([]); // Mock for calculateOpponentWinPercentage
     prisma.teamStats.upsert.mockResolvedValue({} as any);
-    const match = { stage: { tournament: { id: 'tournament1' } } } as any;
+    const match = { stage: { id: 'stage1', tournament: { id: 'tournament1' } } } as any;
     await service.recalculateTeamStats(match, ['t1']);
     expect(prisma.teamStats.upsert).toHaveBeenCalledWith({
       where: { teamId_tournamentId: { teamId: 't1', tournamentId: 'tournament1' } },
@@ -116,8 +119,9 @@ describe('TeamStatsService', () => {
         status: 'COMPLETED',
       },
     ] as any);
+    prisma.teamStats.findMany.mockResolvedValue([]); // Mock for calculateOpponentWinPercentage
     prisma.teamStats.upsert.mockResolvedValue({} as any);
-    const match = { stage: { tournament: { id: 'tournament1' } } } as any;
+    const match = { stage: { id: 'stage1', tournament: { id: 'tournament1' } } } as any;
     await service.recalculateTeamStats(match, ['t1', 't2']);
     expect(prisma.teamStats.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
