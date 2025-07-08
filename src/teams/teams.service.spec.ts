@@ -174,6 +174,9 @@ describe('TeamsService', () => {
     });
     
     it('should skip teams with errors and continue', async () => {
+      // Mock console.error to suppress error output during test
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       const team = createMockTeam();
       prisma.team.findMany.mockResolvedValue([]);
       prisma.team.findUnique.mockResolvedValue(null);
@@ -183,6 +186,12 @@ describe('TeamsService', () => {
       const result = await service.importTeams(dto as any);
       expect(result.success).toBe(true);
       expect(result.teams.length).toBeGreaterThan(0);
+      
+      // Verify that console.error was called for the failed team
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error creating team Team 1:', expect.any(Error));
+      
+      // Restore console.error
+      consoleErrorSpy.mockRestore();
     });
   });
 });

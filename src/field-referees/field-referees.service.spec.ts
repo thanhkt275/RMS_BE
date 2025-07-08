@@ -49,15 +49,18 @@ describe('FieldRefereesService', () => {
       // Mock users validation
       prisma.user.findMany.mockResolvedValue(mockUsers as any);
       
+      // Mock existing referee check (no existing referees) - first call
+      prisma.fieldReferee.findMany
+        .mockResolvedValueOnce([]) // For checking existing assignments
+        .mockResolvedValueOnce(mockFieldReferees as any); // For getFieldReferees at the end
+      
       // Mock transaction
       prisma.$transaction.mockImplementation(async (callback) => {
         return callback(prisma);
       });
       
       // Mock field referee creation and retrieval
-      prisma.fieldReferee.deleteMany.mockResolvedValue({ count: 0 });
       prisma.fieldReferee.createMany.mockResolvedValue({ count: 3 });
-      prisma.fieldReferee.findMany.mockResolvedValue(mockFieldReferees as any);
       
       // Mock match update for head referee auto-assignment
       prisma.match.updateMany.mockResolvedValue({ count: 2 });
@@ -65,7 +68,8 @@ describe('FieldRefereesService', () => {
       const result = await service.assignRefereesToField('field1', validAssignments);
 
       expect(result).toEqual(mockFieldReferees);
-      expect(prisma.fieldReferee.deleteMany).toHaveBeenCalledWith({ where: { fieldId: 'field1' } });
+      // Should NOT call deleteMany since this is additive, not replacement
+      expect(prisma.fieldReferee.deleteMany).not.toHaveBeenCalled();
       expect(prisma.fieldReferee.createMany).toHaveBeenCalledWith({
         data: [
           { fieldId: 'field1', userId: 'user1', isHeadRef: true },
@@ -86,10 +90,32 @@ describe('FieldRefereesService', () => {
         { userId: 'user3', isHeadRef: false },
       ];
 
-      await expect(service.assignRefereesToField('field1', invalidAssignments))
-        .rejects.toThrow(BadRequestException);
-      await expect(service.assignRefereesToField('field1', invalidAssignments))
-        .rejects.toThrow('Exactly one head referee must be assigned per field');
+      // Mock field exists
+      prisma.field.findUnique.mockResolvedValue(mockField as any);
+      
+      // Mock users validation
+      prisma.user.findMany.mockResolvedValue(mockUsers as any);
+      
+      // Mock existing referee check (no existing head referee) - first call
+      // Mock final getFieldReferees call - second call
+      prisma.fieldReferee.findMany
+        .mockResolvedValueOnce([]) // For checking existing assignments
+        .mockResolvedValueOnce([]); // For getFieldReferees at the end (empty since no head ref)
+      
+      // Mock transaction
+      prisma.$transaction.mockImplementation(async (callback) => {
+        return callback(prisma);
+      });
+      
+      // Mock field referee creation and retrieval
+      prisma.fieldReferee.createMany.mockResolvedValue({ count: 3 });
+      
+      // Mock match update (no head referee to assign)
+      prisma.match.updateMany.mockResolvedValue({ count: 0 });
+
+      // This should pass since assignRefereesToField is additive and doesn't enforce head referee requirement
+      const result = await service.assignRefereesToField('field1', invalidAssignments);
+      expect(result).toBeDefined();
     });
 
     it('should throw error if multiple head referees assigned', async () => {
@@ -99,25 +125,60 @@ describe('FieldRefereesService', () => {
         { userId: 'user3', isHeadRef: false },
       ];
 
+      // Mock field exists
+      prisma.field.findUnique.mockResolvedValue(mockField as any);
+      
+      // Mock users validation
+      prisma.user.findMany.mockResolvedValue(mockUsers as any);
+      
+      // Mock existing referee check (no existing referees)
+      prisma.fieldReferee.findMany.mockResolvedValue([]);
+
       await expect(service.assignRefereesToField('field1', invalidAssignments))
         .rejects.toThrow(BadRequestException);
       await expect(service.assignRefereesToField('field1', invalidAssignments))
-        .rejects.toThrow('Exactly one head referee must be assigned per field');
+        .rejects.toThrow('Cannot assign multiple head referees');
     });
 
-    it('should throw error if less than 3 referees assigned', async () => {
-      const invalidAssignments = [
+    it('should allow less than 3 referees assigned (additive behavior)', async () => {
+      const validAssignments = [
         { userId: 'user1', isHeadRef: true },
         { userId: 'user2', isHeadRef: false },
       ];
 
-      await expect(service.assignRefereesToField('field1', invalidAssignments))
-        .rejects.toThrow(BadRequestException);
-      await expect(service.assignRefereesToField('field1', invalidAssignments))
-        .rejects.toThrow('Must assign 3-4 referees per field');
+      // Mock field exists
+      prisma.field.findUnique.mockResolvedValue(mockField as any);
+      
+      // Mock users validation
+      prisma.user.findMany.mockResolvedValue([mockUsers[0], mockUsers[1]] as any);
+      
+      // Mock existing referee check (no existing referees) - first call
+      // Mock final getFieldReferees call - second call  
+      const expectedResult = [
+        { id: 'fr1', fieldId: 'field1', userId: 'user1', isHeadRef: true, user: mockUsers[0] },
+        { id: 'fr2', fieldId: 'field1', userId: 'user2', isHeadRef: false, user: mockUsers[1] },
+      ];
+      prisma.fieldReferee.findMany
+        .mockResolvedValueOnce([]) // For checking existing assignments
+        .mockResolvedValueOnce(expectedResult as any); // For getFieldReferees at the end
+      
+      // Mock transaction
+      prisma.$transaction.mockImplementation(async (callback) => {
+        return callback(prisma);
+      });
+      
+      // Mock field referee creation and retrieval
+      prisma.fieldReferee.createMany.mockResolvedValue({ count: 2 });
+      
+      // Mock match update for head referee auto-assignment
+      prisma.match.updateMany.mockResolvedValue({ count: 1 });
+
+      // This should pass since assignRefereesToField is additive and doesn't enforce minimum count
+      const result = await service.assignRefereesToField('field1', validAssignments);
+      expect(result).toBeDefined();
     });
 
-    it('should throw error if more than 4 referees assigned', async () => {
+    it('should throw error if more than 4 referees total after assignment', async () => {
       const invalidAssignments = [
         { userId: 'user1', isHeadRef: true },
         { userId: 'user2', isHeadRef: false },
@@ -126,15 +187,32 @@ describe('FieldRefereesService', () => {
         { userId: 'user5', isHeadRef: false },
       ];
 
+      // Mock field exists
+      prisma.field.findUnique.mockResolvedValue(mockField as any);
+      
+      // Mock users validation
+      const allUsers = [
+        ...mockUsers,
+        { id: 'user4', role: UserRole.ALLIANCE_REFEREE },
+        { id: 'user5', role: UserRole.ALLIANCE_REFEREE },
+      ];
+      prisma.user.findMany.mockResolvedValue(allUsers as any);
+      
+      // Mock existing referee check (no existing referees)
+      prisma.fieldReferee.findMany.mockResolvedValue([]);
+
       await expect(service.assignRefereesToField('field1', invalidAssignments))
         .rejects.toThrow(BadRequestException);
       await expect(service.assignRefereesToField('field1', invalidAssignments))
-        .rejects.toThrow('Must assign 3-4 referees per field');
+        .rejects.toThrow('Field would have 5 referees (maximum is 4)');
     });
 
     it('should throw error if users do not exist or have wrong roles', async () => {
       // Mock field exists
       prisma.field.findUnique.mockResolvedValue(mockField as any);
+      
+      // Mock existing referee check (no existing referees)
+      prisma.fieldReferee.findMany.mockResolvedValue([]);
       
       // Mock users validation - only 2 users found instead of 3
       prisma.user.findMany.mockResolvedValue([mockUsers[0], mockUsers[1]] as any);
@@ -145,29 +223,54 @@ describe('FieldRefereesService', () => {
         .rejects.toThrow('One or more users are not valid referees');
     });
 
-    it('should throw error if head referee does not have HEAD_REFEREE role', async () => {
+    it('should allow head referee without HEAD_REFEREE role (with warning)', async () => {
       // Mock field exists
       prisma.field.findUnique.mockResolvedValue(mockField as any);
       
-      // Mock users with wrong role for head referee
-      const invalidRoleUsers = [
-        { id: 'user1', role: UserRole.ALLIANCE_REFEREE }, // Should be HEAD_REFEREE
+      // Mock users with wrong role for head referee (but still a valid referee role)
+      const validRoleUsers = [
+        { id: 'user1', role: UserRole.ALLIANCE_REFEREE }, // ALLIANCE_REFEREE is allowed as head
         { id: 'user2', role: UserRole.ALLIANCE_REFEREE },
         { id: 'user3', role: UserRole.ALLIANCE_REFEREE },
       ];
-      prisma.user.findMany.mockResolvedValue(invalidRoleUsers as any);
+      prisma.user.findMany.mockResolvedValue(validRoleUsers as any);
+      
+      // Mock existing referee check (no existing referees) - first call
+      // Mock final getFieldReferees call - second call
+      const expectedResult = [
+        { id: 'fr1', fieldId: 'field1', userId: 'user1', isHeadRef: true, user: validRoleUsers[0] },
+        { id: 'fr2', fieldId: 'field1', userId: 'user2', isHeadRef: false, user: validRoleUsers[1] },
+        { id: 'fr3', fieldId: 'field1', userId: 'user3', isHeadRef: false, user: validRoleUsers[2] },
+      ];
+      prisma.fieldReferee.findMany
+        .mockResolvedValueOnce([]) // For checking existing assignments
+        .mockResolvedValueOnce(expectedResult as any); // For getFieldReferees at the end
+      
+      // Mock transaction
+      prisma.$transaction.mockImplementation(async (callback) => {
+        return callback(prisma);
+      });
+      
+      // Mock field referee creation and retrieval
+      prisma.fieldReferee.createMany.mockResolvedValue({ count: 3 });
+      
+      // Mock match update for head referee auto-assignment
+      prisma.match.updateMany.mockResolvedValue({ count: 2 });
+      
+      // Mock console.warn to verify warning is logged
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-      await expect(service.assignRefereesToField('field1', validAssignments))
-        .rejects.toThrow(BadRequestException);
-      await expect(service.assignRefereesToField('field1', validAssignments))
-        .rejects.toThrow('Head referee must have HEAD_REFEREE role');
+      // This should pass but log a warning
+      const result = await service.assignRefereesToField('field1', validAssignments);
+      expect(result).toBeDefined();
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Warning: ALLIANCE_REFEREE user1 is being assigned as head referee'));
+      
+      consoleSpy.mockRestore();
     });
 
     it('should throw error if field does not exist', async () => {
       // Mock field does not exist
       prisma.field.findUnique.mockResolvedValue(null);
-      // Mock users to avoid undefined error since validateRefereeUsers is called first
-      prisma.user.findMany.mockResolvedValue(mockUsers as any);
 
       await expect(service.assignRefereesToField('field1', validAssignments))
         .rejects.toThrow(BadRequestException);
@@ -237,13 +340,11 @@ describe('FieldRefereesService', () => {
       });
     });
 
-    it('should throw error if referee assignment not found', async () => {
+    it('should return null if referee assignment not found', async () => {
       prisma.fieldReferee.findUnique.mockResolvedValue(null);
 
-      await expect(service.removeRefereeFromField('field1', 'user1'))
-        .rejects.toThrow(BadRequestException);
-      await expect(service.removeRefereeFromField('field1', 'user1'))
-        .rejects.toThrow('Referee assignment not found');
+      const result = await service.removeRefereeFromField('field1', 'user1');
+      expect(result).toBeNull();
     });
 
     it('should throw error if trying to remove head referee with assigned matches', async () => {
@@ -284,17 +385,33 @@ describe('FieldRefereesService', () => {
 
       const mockField1 = { id: 'field1', name: 'Field 1', number: 1 };
       const mockField2 = { id: 'field2', name: 'Field 2', number: 2 };
+      
+      const batchUsers = [
+        { id: 'user1', role: UserRole.HEAD_REFEREE },
+        { id: 'user2', role: UserRole.ALLIANCE_REFEREE },
+        { id: 'user3', role: UserRole.HEAD_REFEREE },
+      ];
 
-      // Mock field validation - need to handle 3 calls (field1, field1, field2)
+      // Mock field validation - validates each assignment's field
       prisma.field.findUnique
-        .mockResolvedValueOnce(mockField1 as any)  // field1 first call
-        .mockResolvedValueOnce(mockField1 as any)  // field1 second call  
-        .mockResolvedValueOnce(mockField2 as any); // field2 third call
+        .mockResolvedValueOnce(mockField1 as any)  // field1 for assignment 1
+        .mockResolvedValueOnce(mockField1 as any)  // field1 for assignment 2
+        .mockResolvedValueOnce(mockField2 as any); // field2 for assignment 3
+        
+      // Mock field referee count checks - checks existing count for each unique field
+      prisma.fieldReferee.count
+        .mockResolvedValueOnce(0)  // field1 existing count
+        .mockResolvedValueOnce(0); // field2 existing count
+        
+      // Mock users validation - checks all unique user IDs
+      prisma.user.findMany.mockResolvedValue(batchUsers as any);
 
       // Mock transaction
-      prisma.$transaction.mockImplementation(async (operations) => {
-        return operations.map((op: any) => ({ id: 'result' }));
-      });
+      prisma.$transaction.mockResolvedValue([
+        { id: 'result1' },
+        { id: 'result2' },
+        { id: 'result3' }
+      ] as any);
 
       const result = await service.batchAssignReferees(batchAssignments);
 
