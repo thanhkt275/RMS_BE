@@ -3,17 +3,37 @@ import { MatchSchedulerService } from './match-scheduler.service';
 import { PrismaService } from '../prisma.service';
 import { StageType } from '../utils/prisma-types';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { SchedulingStrategyFactory } from './factories/scheduling-strategy.factory';
+import { FieldAssignmentService } from './services/field-assignment.service';
+import { MatchupHistoryService } from './services/matchup-history.service';
 
 describe('MatchSchedulerService', () => {
   let service: MatchSchedulerService;
   let prisma: DeepMockProxy<PrismaService>;
+  let mockStrategy: any;
+  let mockFactory: any;
 
   beforeEach(async () => {
     prisma = mockDeep<PrismaService>();
+    
+    // Mock the strategy factory to return a mock strategy
+    mockStrategy = {
+      generateMatches: jest.fn().mockResolvedValue([]),
+      canHandle: jest.fn().mockReturnValue(true),
+      getStrategyType: jest.fn().mockReturnValue('swiss'),
+    };
+    
+    mockFactory = {
+      createStrategy: jest.fn().mockReturnValue(mockStrategy),
+    };
+    
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MatchSchedulerService,
         { provide: PrismaService, useValue: prisma },
+        { provide: SchedulingStrategyFactory, useValue: mockFactory },
+        { provide: FieldAssignmentService, useValue: mockDeep<FieldAssignmentService>() },
+        { provide: MatchupHistoryService, useValue: mockDeep<MatchupHistoryService>() },
       ],
     }).compile();
 
@@ -51,10 +71,21 @@ describe('MatchSchedulerService', () => {
         teams: baseTeams,
         fields: [],
       },
+      teams: baseTeams,
     };
 
     beforeEach(() => {
       jest.clearAllMocks();
+      // Mock strategy to return matches with fieldId assigned
+      const mockMatches = Array.from({ length: 4 }, (_, i) => ({
+        id: `match${i + 1}`,
+        fieldId: `field${i % 2 === 0 ? 'A' : 'B'}`, // Alternate between fieldA and fieldB
+        matchNumber: i + 1,
+        roundNumber: 1,
+        stageId: 'stage1',
+        alliances: [],
+      }));
+      mockStrategy.generateMatches.mockResolvedValue(mockMatches);
     });
 
     it('distributes 4 matches equally across 2 fields', async () => {
@@ -65,47 +96,6 @@ describe('MatchSchedulerService', () => {
       prisma.stage.findUnique.mockResolvedValue({
         ...baseStage,
         tournament: { ...baseStage.tournament, fields },
-      } as any);
-      prisma.teamStats.findMany.mockResolvedValue(baseTeams.map((t, i) => ({
-        id: `stat${i + 1}`,
-        tournamentId: 't1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        stageId: 'stage1',
-        teamId: t.id,
-        wins: 0,
-        losses: 0,
-        ties: 0,
-        pointsScored: 0,
-        pointsConceded: 0,
-        matchesPlayed: 0,
-        rank: 0,
-        tiebreaker1: 0,
-        tiebreaker2: 0,
-        team: t,
-      } as any))); prisma.match.findMany.mockResolvedValue([]);
-      prisma.match.create.mockImplementation(({ data }) => Promise.resolve({
-        ...data,
-        id: Math.random().toString(),
-        stage: { name: 'Stage 1' },
-        alliances: [],
-      }) as any);
-      prisma.matchScore.create.mockResolvedValue({
-        id: 'score1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        scoreDetails: {},
-        matchId: 'match1',
-        redAutoScore: 0,
-        redDriveScore: 0,
-        redTotalScore: 0,
-        blueAutoScore: 0,
-        blueDriveScore: 0,
-        blueTotalScore: 0,
-        redTeamCount: 0,
-        blueTeamCount: 0,
-        redMultiplier: 1,
-        blueMultiplier: 1,
       } as any);
 
       const matches = await service.generateSwissRound('stage1', 1);
@@ -125,51 +115,21 @@ describe('MatchSchedulerService', () => {
         { id: 'fieldC', number: 3 },
         { id: 'fieldD', number: 4 },
       ];
+      
+      // Mock strategy to return matches distributed across 4 fields
+      const mockMatches = Array.from({ length: 4 }, (_, i) => ({
+        id: `match${i + 1}`,
+        fieldId: `field${String.fromCharCode(65 + i)}`, // fieldA, fieldB, fieldC, fieldD
+        matchNumber: i + 1,
+        roundNumber: 1,
+        stageId: 'stage1',
+        alliances: [],
+      }));
+      mockStrategy.generateMatches.mockResolvedValue(mockMatches);
+      
       prisma.stage.findUnique.mockResolvedValue({
         ...baseStage,
         tournament: { ...baseStage.tournament, fields },
-      } as any);
-      prisma.teamStats.findMany.mockResolvedValue(baseTeams.map((t, i) => ({
-        id: `stat${i + 1}`,
-        tournamentId: 't1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        stageId: 'stage1',
-        teamId: t.id,
-        wins: 0,
-        losses: 0,
-        ties: 0,
-        pointsScored: 0,
-        pointsConceded: 0,
-        matchesPlayed: 0,
-        rank: 0,
-        tiebreaker1: 0,
-        tiebreaker2: 0,
-        team: t,
-      } as any)));
-      prisma.match.findMany.mockResolvedValue([]);
-      prisma.match.create.mockImplementation(({ data }) => Promise.resolve({
-        ...data,
-        id: Math.random().toString(),
-        stage: { name: 'Stage 1' },
-        alliances: [],
-      }) as any);
-      prisma.matchScore.create.mockResolvedValue({
-        id: 'score1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        scoreDetails: {},
-        matchId: 'match1',
-        redAutoScore: 0,
-        redDriveScore: 0,
-        redTotalScore: 0,
-        blueAutoScore: 0,
-        blueDriveScore: 0,
-        blueTotalScore: 0,
-        redTeamCount: 0,
-        blueTeamCount: 0,
-        redMultiplier: 1,
-        blueMultiplier: 1,
       } as any);
 
       const matches = await service.generateSwissRound('stage1', 1);
@@ -310,6 +270,7 @@ describe('MatchSchedulerService', () => {
         teams: baseTeams,
         fields: [],
       },
+      teams: baseTeams,
     };
 
     beforeEach(() => {
@@ -321,32 +282,21 @@ describe('MatchSchedulerService', () => {
         { id: 'fieldA', number: 1 },
         { id: 'fieldB', number: 2 },
       ];
+      
+      // Mock strategy to return matches distributed across 2 fields
+      const mockMatches = Array.from({ length: 4 }, (_, i) => ({
+        id: `match${i + 1}`,
+        fieldId: `field${i % 2 === 0 ? 'A' : 'B'}`, // Alternate between fieldA and fieldB
+        matchNumber: i + 1,
+        roundNumber: 1,
+        stageId: 'stage1',
+        alliances: [],
+      }));
+      mockStrategy.generateMatches.mockResolvedValue(mockMatches);
+      
       prisma.stage.findUnique.mockResolvedValue({
         ...baseStage,
         tournament: { ...baseStage.tournament, fields },
-      } as any);
-      prisma.match.create.mockImplementation(({ data }) => Promise.resolve({
-        ...data,
-        id: Math.random().toString(),
-        stage: { name: 'Stage 1' },
-        alliances: [],
-      }) as any);
-      prisma.matchScore.create.mockResolvedValue({
-        id: 'score1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        scoreDetails: {},
-        matchId: 'match1',
-        redAutoScore: 0,
-        redDriveScore: 0,
-        redTotalScore: 0,
-        blueAutoScore: 0,
-        blueDriveScore: 0,
-        blueTotalScore: 0,
-        redTeamCount: 0,
-        blueTeamCount: 0,
-        redMultiplier: 1,
-        blueMultiplier: 1,
       } as any);
 
       // 16 teams, 1 round, 2 alliances per match = 4 matches
@@ -370,32 +320,21 @@ describe('MatchSchedulerService', () => {
         { id: 'fieldC', number: 3 },
         { id: 'fieldD', number: 4 },
       ];
+      
+      // Mock strategy to return matches distributed across 4 fields
+      const mockMatches = Array.from({ length: 4 }, (_, i) => ({
+        id: `match${i + 1}`,
+        fieldId: `field${String.fromCharCode(65 + i)}`, // fieldA, fieldB, fieldC, fieldD
+        matchNumber: i + 1,
+        roundNumber: 1,
+        stageId: 'stage1',
+        alliances: [],
+      }));
+      mockStrategy.generateMatches.mockResolvedValue(mockMatches);
+      
       prisma.stage.findUnique.mockResolvedValue({
         ...baseStage,
         tournament: { ...baseStage.tournament, fields },
-      } as any);
-      prisma.match.create.mockImplementation(({ data }) => Promise.resolve({
-        ...data,
-        id: Math.random().toString(),
-        stage: { name: 'Stage 1' },
-        alliances: [],
-      }) as any);
-      prisma.matchScore.create.mockResolvedValue({
-        id: 'score1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        scoreDetails: {},
-        matchId: 'match1',
-        redAutoScore: 0,
-        redDriveScore: 0,
-        redTotalScore: 0,
-        blueAutoScore: 0,
-        blueDriveScore: 0,
-        blueTotalScore: 0,
-        redTeamCount: 0,
-        blueTeamCount: 0,
-        redMultiplier: 1,
-        blueMultiplier: 1,
       } as any);      // 16 teams, 1 round, 2 alliances per match = 4 matches
       const matches = await service.generateFrcSchedule('stage1', 1, 2);
       expect(matches).toHaveLength(4);

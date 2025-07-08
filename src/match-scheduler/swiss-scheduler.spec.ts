@@ -581,13 +581,32 @@ describe('SwissScheduler', () => {
                 createMatch('test-match-2', 1, ['team-3', 'team-4'], ['team-5', 'team-6'], 110, 90),
             ];
 
+            // Mock stage lookup for updateSwissRankings (called twice in the method)
+            prisma.stage.findUnique.mockResolvedValue({
+                id: stageId,
+                tournamentId: 'tournament-1',
+                tournament: {
+                    id: 'tournament-1',
+                    teams: []
+                }
+            } as any);
+
             prisma.teamStats.findMany.mockResolvedValue(initialStats);
             prisma.match.findMany.mockResolvedValue(matches as any);
 
+            // Mock upsert calls that are actually used in the implementation
+            prisma.teamStats.upsert.mockResolvedValue({} as any);
+
             await swissScheduler.updateSwissRankings(stageId);
 
-            // Verify OWP calculation logic is called
-            expect(prisma.teamStats.updateMany).toHaveBeenCalled();
+            // Verify that upsert is called for team stats updates (the actual implementation)
+            expect(prisma.teamStats.upsert).toHaveBeenCalled();
+            
+            // Verify that stage lookup was called to get tournament ID
+            expect(prisma.stage.findUnique).toHaveBeenCalledWith({
+                where: { id: stageId },
+                select: { tournamentId: true }
+            });
         });
     });
 
