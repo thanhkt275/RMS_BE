@@ -79,7 +79,7 @@ describe('MatchSchedulerService', () => {
       // Mock strategy to return matches with fieldId assigned
       const mockMatches = Array.from({ length: 4 }, (_, i) => ({
         id: `match${i + 1}`,
-        fieldId: `field${i % 2 === 0 ? 'A' : 'B'}`, // Alternate between fieldA and fieldB
+        fieldId: i % 2 === 0 ? 'fieldA' : 'fieldB', // Alternate between fieldA and fieldB
         matchNumber: i + 1,
         roundNumber: 1,
         stageId: 'stage1',
@@ -286,7 +286,7 @@ describe('MatchSchedulerService', () => {
       // Mock strategy to return matches distributed across 2 fields
       const mockMatches = Array.from({ length: 4 }, (_, i) => ({
         id: `match${i + 1}`,
-        fieldId: `field${i % 2 === 0 ? 'A' : 'B'}`, // Alternate between fieldA and fieldB
+        fieldId: i % 2 === 0 ? 'fieldA' : 'fieldB', // Alternate between fieldA and fieldB
         matchNumber: i + 1,
         roundNumber: 1,
         stageId: 'stage1',
@@ -335,7 +335,9 @@ describe('MatchSchedulerService', () => {
       prisma.stage.findUnique.mockResolvedValue({
         ...baseStage,
         tournament: { ...baseStage.tournament, fields },
-      } as any);      // 16 teams, 1 round, 2 alliances per match = 4 matches
+      } as any);
+
+      // 16 teams, 1 round, 2 alliances per match = 4 matches
       const matches = await service.generateFrcSchedule('stage1', 1, 2);
       expect(matches).toHaveLength(4);
       // Count matches per field
