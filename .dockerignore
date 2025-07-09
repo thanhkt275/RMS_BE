@@ -24,12 +24,32 @@ prisma/.env
 coverage
 test
 *.spec.ts
+*.test.ts
+__tests__
 
 # Editor and IDE
 .vscode
 .idea
 *.swp
+*.swo
 
 # Docker
 Dockerfile
 docker-compose*
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+docs/
+
+# Logs
+logs
+*.log
+
+# Stress tests
+stress-tests/
