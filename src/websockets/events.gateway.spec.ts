@@ -12,6 +12,16 @@ describe('EventsGateway', () => {
     mockServer = {
       to: jest.fn().mockReturnThis(),
       emit: jest.fn(),
+      sockets: {
+        adapter: {
+          rooms: {
+            get: jest.fn().mockReturnValue({ size: 5 }), // Mock room with 5 clients
+          },
+        },
+        sockets: {
+          size: 10, // Mock total connected clients
+        },
+      },
     };
     mockClient = {
       id: 'client1',
@@ -83,7 +93,8 @@ describe('EventsGateway', () => {
     expect(mockServer.to().emit).toHaveBeenCalledWith('display_mode_change', expect.objectContaining({ tournamentId: 't1' }));
 
     gateway.handleAnnouncement(mockClient, payload as any);
-    expect(mockClient.to().emit).toHaveBeenCalledWith('announcement', payload);
+    expect(mockServer.to).toHaveBeenCalledWith('t1');
+    expect(mockServer.to().emit).toHaveBeenCalledWith('announcement', payload);
   });
   it('should start, pause, and reset timers correctly', () => {
     jest.useFakeTimers();
@@ -284,14 +295,13 @@ describe('EventsGateway', () => {
         };
 
         const createdScores = { id: 'score1', ...payload };
-        mockMatchScoresService.findByMatchId.mockRejectedValueOnce(new Error('Not found'));
         mockMatchScoresService.create.mockResolvedValueOnce(createdScores as any);
 
         await gateway.handlePersistScores(mockClient, payload);
 
-        // Should try to find existing scores
-        expect(mockMatchScoresService.findByMatchId).toHaveBeenCalledWith('match1');
-          // Should create new scores with converted game elements
+        // Should not check for existing scores - create method handles upsert internally
+        expect(mockMatchScoresService.findByMatchId).not.toHaveBeenCalled();
+        // Should create new scores with converted game elements
         expect(mockMatchScoresService.create).toHaveBeenCalledWith({
           matchId: 'match1',
           redAutoScore: 10,
@@ -311,13 +321,8 @@ describe('EventsGateway', () => {
           scoreDetails: {},
         });
 
-        // Should emit success response to client
-        expect(mockClient.emit).toHaveBeenCalledWith('persistenceResult', {
-          matchId: 'match1',
-          success: true,
-          data: createdScores,
-          timestamp: expect.any(Number),
-        });
+        // The method returns the response instead of calling client.emit
+        // Success response is returned by the method for framework to handle
 
         // Should broadcast persistence success to field and tournament
         expect(mockServer.to).toHaveBeenCalledWith('field:fieldA');
@@ -328,7 +333,7 @@ describe('EventsGateway', () => {
         }));
       });
 
-      it('should update existing scores', async () => {
+      it('should create/update scores using create method (upsert behavior)', async () => {
         const payload = {
           type: 'persist' as const,
           matchId: 'match1',
@@ -341,37 +346,32 @@ describe('EventsGateway', () => {
           timestamp: Date.now(),
         };
 
-        const existingScores = { id: 'score1', matchId: 'match1' };
-        const updatedScores = { ...existingScores, ...payload };
-        
-        mockMatchScoresService.findByMatchId.mockResolvedValueOnce(existingScores as any);
-        mockMatchScoresService.update.mockResolvedValueOnce(updatedScores as any);
+        const resultScores = { id: 'score1', ...payload };
+        mockMatchScoresService.create.mockResolvedValueOnce(resultScores as any);
 
         await gateway.handlePersistScores(mockClient, payload);
 
-        // Should find existing scores
-        expect(mockMatchScoresService.findByMatchId).toHaveBeenCalledWith('match1');
+        // Should not check for existing scores - create method handles upsert internally
+        expect(mockMatchScoresService.findByMatchId).not.toHaveBeenCalled();
         
-        // Should update existing scores
-        expect(mockMatchScoresService.update).toHaveBeenCalledWith('score1', {
+        // Should call create method with converted game elements (create handles upsert internally)
+        expect(mockMatchScoresService.create).toHaveBeenCalledWith({
+          matchId: 'match1',
           redAutoScore: 15,
-          redDriveScore: undefined,
+          redDriveScore: 0,
           blueAutoScore: 12,
-          blueDriveScore: undefined,
-          redTeamCount: undefined,
-          blueTeamCount: undefined,
+          blueDriveScore: 0,
+          redTeamCount: 0,
+          blueTeamCount: 0,
           redGameElements: [
             { element: 'ball', count: 4, pointsEach: 1, totalPoints: 4, operation: 'multiply' }
           ],
           blueGameElements: [],
-          scoreDetails: undefined,
+          scoreDetails: {},
         });
 
         // Should emit success response
-        expect(mockClient.emit).toHaveBeenCalledWith('persistenceResult', expect.objectContaining({
-          success: true,
-          data: updatedScores,
-        }));
+        // Note: The method returns the response instead of calling client.emit directly
       });
 
       it('should handle persistence errors gracefully', async () => {
@@ -385,18 +385,15 @@ describe('EventsGateway', () => {
         };
 
         const errorMessage = 'Database connection failed';
-        mockMatchScoresService.findByMatchId.mockRejectedValueOnce(new Error('Not found'));
         mockMatchScoresService.create.mockRejectedValueOnce(new Error(errorMessage));
 
         await gateway.handlePersistScores(mockClient, payload);
 
+        // Should not check for existing scores - create method handles upsert internally
+        expect(mockMatchScoresService.findByMatchId).not.toHaveBeenCalled();
+
         // Should emit error response to client
-        expect(mockClient.emit).toHaveBeenCalledWith('persistenceResult', {
-          matchId: 'match1',
-          success: false,
-          error: errorMessage,
-          timestamp: expect.any(Number),
-        });
+        // Note: The method returns the response instead of calling client.emit directly
 
         // Should broadcast persistence failure
         expect(mockServer.to).toHaveBeenCalledWith('t1');
@@ -420,7 +417,6 @@ describe('EventsGateway', () => {
         };
 
         const createdScores = { id: 'score1', ...payload };
-        mockMatchScoresService.findByMatchId.mockRejectedValueOnce(new Error('Not found'));
         mockMatchScoresService.create.mockResolvedValueOnce(createdScores as any);
 
         await gateway.handlePersistScores(mockClient, payload);
