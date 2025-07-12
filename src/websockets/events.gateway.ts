@@ -251,6 +251,8 @@ export class EventsGateway
     }
     // No DB write here: this is real-time only
   }
+
+
   // Handle score persistence requests (NEW: for database saves when explicitly triggered)
   @SubscribeMessage('persistScores')
   async handlePersistScores(

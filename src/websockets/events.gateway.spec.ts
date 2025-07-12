@@ -37,6 +37,7 @@ describe('EventsGateway', () => {
       update: jest.fn(),
     } as any;
     
+    
     gateway = new EventsGateway(mockMatchScoresService);
     gateway.server = mockServer;
     jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});

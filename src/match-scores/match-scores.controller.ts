@@ -24,11 +24,13 @@ import { CreateMatchScoresDto, UpdateMatchScoresDto } from './dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class MatchScoresController {
-  constructor(private readonly matchScoresService: MatchScoresService) {}
+  constructor(
+    private readonly matchScoresService: MatchScoresService,
+  ) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.HEAD_REFEREE, UserRole.ALLIANCE_REFEREE)
-  @ApiOperation({ summary: 'Create match scores' })
+  @Roles(UserRole.ADMIN, UserRole.HEAD_REFEREE)
+  @ApiOperation({ summary: 'Create match scores (Admin/Head Referee only)' })
   @ApiResponse({ 
     status: HttpStatus.CREATED, 
     description: 'Match scores have been created successfully.'
@@ -39,7 +41,7 @@ export class MatchScoresController {
   })
   @ApiResponse({ 
     status: HttpStatus.FORBIDDEN, 
-    description: 'Insufficient permissions.'
+    description: 'Insufficient permissions. Only Admin and Head Referee can create scores.'
   })
   create(@Body() createMatchScoresDto: CreateMatchScoresDto) {
     return this.matchScoresService.create(createMatchScoresDto);
@@ -73,6 +75,8 @@ export class MatchScoresController {
     return this.matchScoresService.findByMatchId(matchId);
   }
 
+
+
   // General ID route comes after more specific routes
   @Get(':id')
   @Public()
@@ -91,8 +95,8 @@ export class MatchScoresController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.HEAD_REFEREE, UserRole.ALLIANCE_REFEREE)
-  @ApiOperation({ summary: 'Update match scores' })
+  @Roles(UserRole.ADMIN, UserRole.HEAD_REFEREE)
+  @ApiOperation({ summary: 'Update match scores (Admin/Head Referee only)' })
   @ApiParam({ name: 'id', description: 'Match scores ID' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
@@ -104,7 +108,7 @@ export class MatchScoresController {
   })
   @ApiResponse({ 
     status: HttpStatus.FORBIDDEN, 
-    description: 'Insufficient permissions.'
+    description: 'Insufficient permissions. Only Admin and Head Referee can update scores.'
   })
   @ApiResponse({ 
     status: HttpStatus.NOT_FOUND, 

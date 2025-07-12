@@ -24,7 +24,11 @@
     "test:stress:performance": "artillery run stress-tests/artillery-performance.yml",
     "test:stress:auth": "artillery run stress-tests/artillery-auth.yml",
     "test:stress:quick": "artillery quick --duration 30 --rate 10 http://localhost:3000",
-    "test:stress:report": "artillery run stress-tests/artillery-basic.yml --output stress-report.json && artillery report stress-report.json --output stress-report.html"
+    "test:stress:report": "artillery run stress-tests/artillery-basic.yml --output stress-report.json && artillery report stress-report.json --output stress-report.html",
+    "test:stress:latency": "artillery run stress-tests/artillery-latency-focused.yml",
+    "test:stress:latency:report": "artillery run stress-tests/artillery-latency-focused.yml --output latency-report.json && artillery report latency-report.json --output latency-report.html",
+    "test:stress:comprehensive": "node stress-tests/run-latency-tests.js",
+    "test:stress:quick-latency": "artillery quick --duration 60 --rate 10 http://localhost:5000/api/"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
