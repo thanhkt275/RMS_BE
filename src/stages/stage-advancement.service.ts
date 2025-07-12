@@ -83,19 +83,34 @@ export class StageAdvancementService {
     // Step 2: Verify all matches are completed
     await this.ensureAllMatchesCompleted(stageId);
     
-    // Step 3: Get team rankings for advancement
+    // Step 3: Check if teams are available (either assigned to stage or in tournament)
+    let availableTeams: any[] = [];
+    if (stage.teams.length === 0) {
+      // For first stage, get teams from tournament
+      availableTeams = await this.prisma.team.findMany({
+        where: { tournamentId: stage.tournamentId }
+      });
+      
+      if (availableTeams.length === 0) {
+        throw new BadRequestException(`Stage "${stage.name}" has no teams available. Teams must be added to the tournament before advancement.`);
+      }
+    } else {
+      availableTeams = stage.teams;
+    }
+    
+    // Step 4: Get team rankings for advancement
     const teamRankings = await this.getTeamRankingsForStage(stageId);
     
-    // Step 4: Validate advancement parameters
+    // Step 5: Validate advancement parameters
     this.validateAdvancementOptions(teamRankings.length, options);
     
-    // Step 5: Select top teams for advancement
+    // Step 6: Select top teams for advancement
     const topTeams = this.selectTopTeams(teamRankings, options.teamsToAdvance);
     
-    // Step 6: Handle next stage (find existing or create new)
+    // Step 7: Handle next stage (find existing or create new)
     const nextStage = await this.resolveNextStage(stage, options);
     
-    // Step 7: Execute advancement in transaction
+    // Step 8: Execute advancement in transaction
     const result = await this.executeAdvancement(stage, topTeams, nextStage);
     
     this.logger.log(`Successfully advanced ${result.totalTeamsAdvanced} teams from stage ${stageId}`);
@@ -124,9 +139,9 @@ export class StageAdvancementService {
       throw new BadRequestException(`Stage "${stage.name}" has already been completed`);
     }
 
-    if (stage.teams.length === 0) {
-      throw new BadRequestException(`Stage "${stage.name}" has no teams to advance`);
-    }
+    // Don't require teams to be assigned to the stage for readiness check
+    // Teams are only assigned when they advance from a previous stage
+    // The readiness check should only verify that all matches are completed
 
     return stage;
   }
@@ -163,7 +178,8 @@ export class StageAdvancementService {
    * Uses TeamStats to get performance metrics and calculates final rankings.
    */
   private async getTeamRankingsForStage(stageId: string): Promise<TeamRanking[]> {
-    const teamStats = await this.prisma.teamStats.findMany({
+    // First, try to get team stats for this specific stage
+    let teamStats = await this.prisma.teamStats.findMany({
       where: { stageId },
       include: {
         team: true
@@ -177,8 +193,35 @@ export class StageAdvancementService {
       ]
     });
 
+    // If no team stats found for this stage, try to get stats from tournament
     if (teamStats.length === 0) {
-      throw new BadRequestException('No team statistics found for this stage');
+      const stage = await this.prisma.stage.findUnique({
+        where: { id: stageId },
+        select: { tournamentId: true }
+      });
+      
+      if (stage) {
+        teamStats = await this.prisma.teamStats.findMany({
+          where: { 
+            tournamentId: stage.tournamentId,
+            stageId: null // Get stats that are not stage-specific
+          },
+          include: {
+            team: true
+          },
+          orderBy: [
+            { rankingPoints: 'desc' },
+            { pointDifferential: 'desc' },
+            { pointsScored: 'desc' },
+            { tiebreaker1: 'desc' },
+            { tiebreaker2: 'desc' }
+          ]
+        });
+      }
+    }
+
+    if (teamStats.length === 0) {
+      throw new BadRequestException('No team statistics found for this stage or tournament');
     }
 
     // Convert to ranking format and assign ranks
@@ -357,9 +400,35 @@ export class StageAdvancementService {
       const stage = await this.validateStageForAdvancement(stageId);
       await this.ensureAllMatchesCompleted(stageId);
       
+      // For the first stage, check if there are teams in the tournament
+      // For subsequent stages, check if teams are assigned to this stage
+      let teams: any[] = [];
+      let totalTeams = 0;
+      
+      if (stage.teams.length === 0) {
+        // Check if this is the first stage by looking for teams in the tournament
+        const tournamentTeams = await this.prisma.team.findMany({
+          where: { tournamentId: stage.tournamentId }
+        });
+        
+        if (tournamentTeams.length === 0) {
+          return {
+            ready: false,
+            reason: "No teams found in this tournament. Teams must be added to the tournament before advancement.",
+            totalTeams: 0
+          };
+        }
+        
+        teams = tournamentTeams;
+        totalTeams = tournamentTeams.length;
+      } else {
+        teams = stage.teams;
+        totalTeams = stage.teams.length;
+      }
+      
       return {
         ready: true,
-        totalTeams: stage.teams.length
+        totalTeams: totalTeams
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
