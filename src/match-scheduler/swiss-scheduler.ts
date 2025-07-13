@@ -160,12 +160,8 @@ export class SwissScheduler {
     // Update team stats with calculated values
     const statsUpdates: Promise<any>[] = [];
     for (const [teamId, result] of teamResults.entries()) {
-      let owp = 0;
-      if (result.opponents.size > 0) {
-        owp = Array.from(result.opponents)
-          .map(opId => winPercents.get(opId) ?? 0)
-          .reduce((a, b) => a + b, 0) / result.opponents.size;
-      }
+      const totalMatches = result.wins + result.losses + result.ties;
+      const owp = totalMatches > 0 ? result.losses / totalMatches : 0;
       const pointDiff = result.pointsScored - result.pointsConceded;
       const rankingPoints = result.wins * 2 + result.ties;
       
@@ -190,7 +186,9 @@ export class SwissScheduler {
             matchesPlayed: result.wins + result.losses + result.ties,
             rankingPoints,
             opponentWinPercentage: owp,
-            pointDifferential: pointDiff
+            pointDifferential: pointDiff,
+            tiebreaker1: result.pointsScored,
+            tiebreaker2: pointDiff
           },
           update: {
             stageId, // Update stageId to current stage
@@ -202,7 +200,9 @@ export class SwissScheduler {
             matchesPlayed: result.wins + result.losses + result.ties,
             rankingPoints,
             opponentWinPercentage: owp,
-            pointDifferential: pointDiff
+            pointDifferential: pointDiff,
+            tiebreaker1: result.pointsScored,
+            tiebreaker2: pointDiff
           }
         })
       );

@@ -26,9 +26,9 @@ export interface TeamRanking {
   pointsConceded: number;
   pointDifferential: number;
   rankingPoints: number;
-  tiebreaker1: number;
-  tiebreaker2: number;
   rank?: number;
+  opponentWinPercentage?: number;
+  matchesPlayed?: number;
 }
 
 /**
@@ -186,10 +186,9 @@ export class StageAdvancementService {
       },
       orderBy: [
         { rankingPoints: 'desc' },
+        { opponentWinPercentage: 'desc' },
         { pointDifferential: 'desc' },
-        { pointsScored: 'desc' },
-        { tiebreaker1: 'desc' },
-        { tiebreaker2: 'desc' }
+        { matchesPlayed: 'desc' }
       ]
     });
 
@@ -211,10 +210,9 @@ export class StageAdvancementService {
           },
           orderBy: [
             { rankingPoints: 'desc' },
+            { opponentWinPercentage: 'desc' },
             { pointDifferential: 'desc' },
-            { pointsScored: 'desc' },
-            { tiebreaker1: 'desc' },
-            { tiebreaker2: 'desc' }
+            { matchesPlayed: 'desc' }
           ]
         });
       }
@@ -222,6 +220,14 @@ export class StageAdvancementService {
 
     if (teamStats.length === 0) {
       throw new BadRequestException('No team statistics found for this stage or tournament');
+    }
+
+    // Calculate OWP for each team using losses/total matches
+    const teamOWP = new Map<string, number>();
+    for (const stat of teamStats) {
+      const totalMatches = stat.wins + stat.losses + stat.ties;
+      const owp = totalMatches > 0 ? stat.losses / totalMatches : 0;
+      teamOWP.set(stat.teamId, owp);
     }
 
     // Convert to ranking format and assign ranks
@@ -236,9 +242,9 @@ export class StageAdvancementService {
       pointsConceded: stat.pointsConceded,
       pointDifferential: stat.pointDifferential,
       rankingPoints: stat.rankingPoints,
-      tiebreaker1: stat.tiebreaker1,
-      tiebreaker2: stat.tiebreaker2,
-      rank: index + 1
+      rank: index + 1,
+      opponentWinPercentage: teamOWP.get(stat.teamId) ?? 0,
+      matchesPlayed: stat.matchesPlayed ?? (stat.wins + stat.losses + stat.ties)
     }));
   }
 

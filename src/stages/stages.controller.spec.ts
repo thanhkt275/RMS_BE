@@ -207,9 +207,9 @@ describe('StagesController - Stage Advancement', () => {
         pointsConceded: 80,
         pointDifferential: 70,
         rankingPoints: 15,
-        tiebreaker1: 25.0,
-        tiebreaker2: 0.8,
         rank: 1,
+        matchesPlayed: 0,
+        opponentWinPercentage: 0,
       },
       {
         teamId: 'team-2',
@@ -222,9 +222,9 @@ describe('StagesController - Stage Advancement', () => {
         pointsConceded: 90,
         pointDifferential: 50,
         rankingPoints: 12,
-        tiebreaker1: 23.3,
-        tiebreaker2: 0.7,
         rank: 2,
+        matchesPlayed: 0,
+        opponentWinPercentage: 0,
       },
     ];    it('should return stage rankings successfully', async () => {
       const getRankingsSpy = jest.spyOn(stageAdvancementService, 'getStageRankings').mockResolvedValue(mockRankings);
@@ -295,10 +295,10 @@ describe('StagesController - Stage Advancement', () => {
   });
   describe('previewAdvancement', () => {
     const mockRankings = [
-      { teamId: 'team-1', teamNumber: '1001', teamName: 'Team A', rank: 1, wins: 5, losses: 1, ties: 0, pointsScored: 150, pointsConceded: 80, pointDifferential: 70, rankingPoints: 15, tiebreaker1: 25.0, tiebreaker2: 0.8 },
-      { teamId: 'team-2', teamNumber: '1002', teamName: 'Team B', rank: 2, wins: 4, losses: 2, ties: 0, pointsScored: 140, pointsConceded: 90, pointDifferential: 50, rankingPoints: 12, tiebreaker1: 23.3, tiebreaker2: 0.7 },
-      { teamId: 'team-3', teamNumber: '1003', teamName: 'Team C', rank: 3, wins: 3, losses: 3, ties: 0, pointsScored: 120, pointsConceded: 110, pointDifferential: 10, rankingPoints: 9, tiebreaker1: 20.0, tiebreaker2: 0.6 },
-      { teamId: 'team-4', teamNumber: '1004', teamName: 'Team D', rank: 4, wins: 2, losses: 4, ties: 0, pointsScored: 100, pointsConceded: 130, pointDifferential: -30, rankingPoints: 6, tiebreaker1: 16.7, tiebreaker2: 0.5 },
+      { teamId: 'team-1', teamNumber: '1001', teamName: 'Team A', rank: 1, wins: 5, losses: 1, ties: 0, pointsScored: 150, pointsConceded: 80, pointDifferential: 70, rankingPoints: 15, matchesPlayed: 0, opponentWinPercentage: 0 },
+      { teamId: 'team-2', teamNumber: '1002', teamName: 'Team B', rank: 2, wins: 4, losses: 2, ties: 0, pointsScored: 140, pointsConceded: 90, pointDifferential: 50, rankingPoints: 12, matchesPlayed: 0, opponentWinPercentage: 0 },
+      { teamId: 'team-3', teamNumber: '1003', teamName: 'Team C', rank: 3, wins: 3, losses: 3, ties: 0, pointsScored: 120, pointsConceded: 110, pointDifferential: 10, rankingPoints: 9, matchesPlayed: 0, opponentWinPercentage: 0 },
+      { teamId: 'team-4', teamNumber: '1004', teamName: 'Team D', rank: 4, wins: 2, losses: 4, ties: 0, pointsScored: 100, pointsConceded: 130, pointDifferential: -30, rankingPoints: 6, matchesPlayed: 0, opponentWinPercentage: 0 },
     ];
 
     beforeEach(() => {
@@ -379,8 +379,8 @@ describe('StagesController - Stage Advancement', () => {
         pointsConceded: 80 + i * 10,
         pointDifferential: 70 - i * 20,
         rankingPoints: 15 - i * 2,
-        tiebreaker1: 25.0 - i * 1.5,
-        tiebreaker2: 0.8 - i * 0.1,
+        matchesPlayed: 0,
+        opponentWinPercentage: 0,
       }));
 
       const getRankingsSpy3 = jest.spyOn(stageAdvancementService, 'getStageRankings').mockResolvedValue(mockRankings);

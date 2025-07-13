@@ -90,4 +90,15 @@ export class StagesService {
       where: { id },
     });
   }
+
+  async getStageTeams(stageId: string) {
+    return this.prisma.team.findMany({
+      where: {
+        currentStageId: stageId,
+      },
+      orderBy: {
+        teamNumber: 'asc',
+      },
+    });
+  }
 }

@@ -151,9 +151,9 @@ export class StagesController {
           pointsConceded: ranking.pointsConceded,
           pointDifferential: ranking.pointDifferential,
           rankingPoints: ranking.rankingPoints,
-          tiebreaker1: ranking.tiebreaker1,
-          tiebreaker2: ranking.tiebreaker2,
           rank: ranking.rank,
+          opponentWinPercentage: ranking.opponentWinPercentage ?? 0,
+          matchesPlayed: ranking.matchesPlayed ?? 0,
         })),
       };
     } catch (error) {
@@ -162,6 +162,38 @@ export class StagesController {
           success: false,
           message: error.message || 'Failed to retrieve stage rankings',
           error: error.name || 'RankingError',
+        },
+        error.status || HttpStatus.BAD_REQUEST
+      );
+    }
+  }
+
+  /**
+   * Get teams assigned to a stage
+   * Available to all authenticated users
+   */
+  @Get(':id/teams')
+  @UseGuards(JwtAuthGuard)
+  async getStageTeams(@Param('id') id: string) {
+    try {
+      const teams = await this.stagesService.getStageTeams(id);
+
+      return {
+        success: true,
+        message: `Retrieved teams for stage`,
+        data: teams.map(team => ({
+          teamId: team.id,
+          teamNumber: team.teamNumber,
+          teamName: team.name,
+          organization: team.organization,
+        })),
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to retrieve stage teams',
+          error: error.name || 'TeamError',
         },
         error.status || HttpStatus.BAD_REQUEST
       );

@@ -4,13 +4,7 @@ WORKDIR /app
 
 # Install dependencies only (use pnpm if available, fallback to npm)
 COPY package.json pnpm-lock.yaml* package-lock.json* ./
-RUN if [ -f pnpm-lock.yaml ]; then \
-      npm install -g pnpm && pnpm install --frozen-lockfile; \
-    elif [ -f package-lock.json ]; then \
-      npm ci; \
-    else \
-      npm install; \
-    fi
+RUN npm ci
 
 # Copy source files and configuration
 COPY prisma ./prisma
@@ -34,21 +28,13 @@ RUN apk add --no-cache curl
 
 # Install only production dependencies
 COPY package.json pnpm-lock.yaml* package-lock.json* ./
-RUN if [ -f pnpm-lock.yaml ]; then \
-      npm install -g pnpm && pnpm install --prod --frozen-lockfile; \
-    elif [ -f package-lock.json ]; then \
-      npm ci --only=production; \
-    else \
-      npm install --only=production; \
-    fi
+RUN npm ci
 
 # Copy built app and Prisma client from builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/generated ./generated
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-ENV NODE_ENV=production
 
 # Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
