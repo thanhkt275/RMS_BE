@@ -5,9 +5,9 @@ WORKDIR /app
 # Add build arguments for environment variables
 ARG NODE_ENV=production
 
-# Install dependencies only (use pnpm if available, fallback to npm)
+# Install ALL dependencies (including dev dependencies) for building
 COPY package.json pnpm-lock.yaml* package-lock.json* ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # Copy source files and configuration
 COPY prisma ./prisma
@@ -37,7 +37,7 @@ RUN apk add --no-cache curl
 
 # Install only production dependencies
 COPY package.json pnpm-lock.yaml* package-lock.json* ./
-RUN npm ci
+RUN npm ci --only=production
 
 # Copy built app and Prisma client from builder
 COPY --from=builder /app/dist ./dist
