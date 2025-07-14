@@ -2,6 +2,14 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
+# Add build arguments for environment variables
+ARG DATABASE_URL
+ARG JWT_SECRET
+ARG JWT_EXPIRES_IN
+ARG PORT
+ARG NODE_ENV
+ARG CORS_ORIGIN
+
 # Install ALL dependencies (including dev dependencies) for building
 COPY package.json pnpm-lock.yaml* package-lock.json* ./
 RUN npm ci --include=dev
@@ -13,8 +21,13 @@ COPY tsconfig*.json ./
 COPY nest-cli.json ./
 COPY webpack-hmr.config.js ./
 
-# Copy .env file created by GitHub Actions (this will override any local .env)
-COPY .env ./
+# Create .env file from build arguments
+RUN echo "DATABASE_URL=$DATABASE_URL" > .env && \
+    echo "JWT_SECRET=$JWT_SECRET" >> .env && \
+    echo "FRONTEND_URL=$FRONTEND_URL" >> .env && \
+    echo "PORT=$PORT" >> .env && \
+    echo "NODE_ENV=$NODE_ENV" >> .env && \
+
 
 # Generate Prisma client (for Alpine)
 RUN npx prisma generate --schema=./prisma/schema.prisma
