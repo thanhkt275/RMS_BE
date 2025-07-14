@@ -55,6 +55,24 @@ jobs:
         username: ${{ env.DOCKER_HUB_USERNAME }}
         password: ${{ env.DOCKER_HUB_TOKEN }}
     
+    - name: Create .env file from secrets
+      run: |
+        cat > .env << EOF
+
+        NODE_ENV=${{ secrets.NODE_ENV }}
+        # Database Configuration
+        DATABASE_URL=${{ secrets.DATABASE_URL }}
+        
+        # JWT Configuration
+        JWT_SECRET=${{ secrets.JWT_SECRET }}
+        
+        # Server Configuration
+        PORT=${{ secrets.PORT }}
+        # CORS Configuration
+        FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+
+        EOF
+    
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
@@ -78,3 +96,5 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         platforms: linux/amd64,linux/arm64
+        build-args: |
+          NODE_ENV=${{ secrets.NODE_ENV }}

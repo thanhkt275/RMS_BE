@@ -1,0 +1,32 @@
+#version: '3.8'
+
+services:
+  rms-fe:
+    image: thanhkt/rms-fe:latest
+    container_name: rms-fe
+    env_file:
+      - .env.production
+    ports:
+      - "3030:3000"
+    restart: unless-stopped
+
+  rms-be:
+    image: thanhkt/rms-be:latest
+    container_name: rms-be
+    env_file:
+      - .env.production
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    container_name: rms-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - rms-be
+      - rms-fe
+    restart: unless-stopped 
