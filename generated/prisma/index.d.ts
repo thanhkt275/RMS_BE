@@ -49,6 +49,11 @@ export type Alliance = $Result.DefaultSelection<Prisma.$AlliancePayload>
  */
 export type Team = $Result.DefaultSelection<Prisma.$TeamPayload>
 /**
+ * Model TeamMember
+ * 
+ */
+export type TeamMember = $Result.DefaultSelection<Prisma.$TeamMemberPayload>
+/**
  * Model TeamAlliance
  * 
  */
@@ -218,6 +223,15 @@ export const ElementType: {
 
 export type ElementType = (typeof ElementType)[keyof typeof ElementType]
 
+
+export const Gender: {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
+  OTHER: 'OTHER'
+};
+
+export type Gender = (typeof Gender)[keyof typeof Gender]
+
 }
 
 export type UserRole = $Enums.UserRole
@@ -267,6 +281,10 @@ export const MatchErrorType: typeof $Enums.MatchErrorType
 export type ElementType = $Enums.ElementType
 
 export const ElementType: typeof $Enums.ElementType
+
+export type Gender = $Enums.Gender
+
+export const Gender: typeof $Enums.Gender
 
 /**
  * ##  Prisma Client ʲˢ
@@ -464,6 +482,16 @@ export class PrismaClient<
   get team(): Prisma.TeamDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.teamMember`: Exposes CRUD operations for the **TeamMember** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TeamMembers
+    * const teamMembers = await prisma.teamMember.findMany()
+    * ```
+    */
+  get teamMember(): Prisma.TeamMemberDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.teamAlliance`: Exposes CRUD operations for the **TeamAlliance** model.
     * Example usage:
     * ```ts
@@ -620,8 +648,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.6.0
-   * Query Engine version: f676762280b54cd07c770017ed3711ddde35f37a
+   * Prisma Client JS version: 6.11.1
+   * Query Engine version: f40f79ec31188888a2e33acda0ecc8fd10a853a9
    */
   export type PrismaVersion = {
     client: string
@@ -1009,6 +1037,7 @@ export namespace Prisma {
     MatchReferee: 'MatchReferee',
     Alliance: 'Alliance',
     Team: 'Team',
+    TeamMember: 'TeamMember',
     TeamAlliance: 'TeamAlliance',
     TeamStats: 'TeamStats',
     Field: 'Field',
@@ -1037,7 +1066,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "tournament" | "stage" | "match" | "matchReferee" | "alliance" | "team" | "teamAlliance" | "teamStats" | "field" | "fieldDisplay" | "fieldReferee" | "scoreConfig" | "scoreElement" | "bonusCondition" | "penaltyCondition" | "matchScore"
+      modelProps: "user" | "tournament" | "stage" | "match" | "matchReferee" | "alliance" | "team" | "teamMember" | "teamAlliance" | "teamStats" | "field" | "fieldDisplay" | "fieldReferee" | "scoreConfig" | "scoreElement" | "bonusCondition" | "penaltyCondition" | "matchScore"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1556,6 +1585,80 @@ export namespace Prisma {
           count: {
             args: Prisma.TeamCountArgs<ExtArgs>
             result: $Utils.Optional<TeamCountAggregateOutputType> | number
+          }
+        }
+      }
+      TeamMember: {
+        payload: Prisma.$TeamMemberPayload<ExtArgs>
+        fields: Prisma.TeamMemberFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TeamMemberFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TeamMemberFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload>
+          }
+          findFirst: {
+            args: Prisma.TeamMemberFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TeamMemberFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload>
+          }
+          findMany: {
+            args: Prisma.TeamMemberFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload>[]
+          }
+          create: {
+            args: Prisma.TeamMemberCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload>
+          }
+          createMany: {
+            args: Prisma.TeamMemberCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TeamMemberCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload>[]
+          }
+          delete: {
+            args: Prisma.TeamMemberDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload>
+          }
+          update: {
+            args: Prisma.TeamMemberUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload>
+          }
+          deleteMany: {
+            args: Prisma.TeamMemberDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TeamMemberUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TeamMemberUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload>[]
+          }
+          upsert: {
+            args: Prisma.TeamMemberUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TeamMemberPayload>
+          }
+          aggregate: {
+            args: Prisma.TeamMemberAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTeamMember>
+          }
+          groupBy: {
+            args: Prisma.TeamMemberGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TeamMemberGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TeamMemberCountArgs<ExtArgs>
+            result: $Utils.Optional<TeamMemberCountAggregateOutputType> | number
           }
         }
       }
@@ -2390,6 +2493,7 @@ export namespace Prisma {
     matchReferee?: MatchRefereeOmit
     alliance?: AllianceOmit
     team?: TeamOmit
+    teamMember?: TeamMemberOmit
     teamAlliance?: TeamAllianceOmit
     teamStats?: TeamStatsOmit
     field?: FieldOmit
@@ -2500,6 +2604,7 @@ export namespace Prisma {
     matchReferees: number
     fieldDisplays: number
     fieldReferees: number
+    Team: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2509,6 +2614,7 @@ export namespace Prisma {
     matchReferees?: boolean | UserCountOutputTypeCountMatchRefereesArgs
     fieldDisplays?: boolean | UserCountOutputTypeCountFieldDisplaysArgs
     fieldReferees?: boolean | UserCountOutputTypeCountFieldRefereesArgs
+    Team?: boolean | UserCountOutputTypeCountTeamArgs
   }
 
   // Custom InputTypes
@@ -2562,6 +2668,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountFieldRefereesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: FieldRefereeWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTeamArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TeamWhereInput
   }
 
 
@@ -2786,11 +2899,13 @@ export namespace Prisma {
   export type TeamCountOutputType = {
     teamAlliances: number
     teamStats: number
+    teamMembers: number
   }
 
   export type TeamCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     teamAlliances?: boolean | TeamCountOutputTypeCountTeamAlliancesArgs
     teamStats?: boolean | TeamCountOutputTypeCountTeamStatsArgs
+    teamMembers?: boolean | TeamCountOutputTypeCountTeamMembersArgs
   }
 
   // Custom InputTypes
@@ -2816,6 +2931,13 @@ export namespace Prisma {
    */
   export type TeamCountOutputTypeCountTeamStatsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: TeamStatsWhereInput
+  }
+
+  /**
+   * TeamCountOutputType without action
+   */
+  export type TeamCountOutputTypeCountTeamMembersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TeamMemberWhereInput
   }
 
 
@@ -2958,11 +3080,10 @@ export namespace Prisma {
     username: string | null
     password: string | null
     role: $Enums.UserRole | null
+    name: string | null
     email: string | null
-    gender: boolean | null
-    DateOfBirth: Date | null
-    phoneNumber: string | null
-    avatar: string | null
+    phone: string | null
+    gender: $Enums.Gender | null
     isActive: boolean | null
     lastLoginAt: Date | null
     emailVerified: boolean | null
@@ -2976,11 +3097,10 @@ export namespace Prisma {
     username: string | null
     password: string | null
     role: $Enums.UserRole | null
+    name: string | null
     email: string | null
-    gender: boolean | null
-    DateOfBirth: Date | null
-    phoneNumber: string | null
-    avatar: string | null
+    phone: string | null
+    gender: $Enums.Gender | null
     isActive: boolean | null
     lastLoginAt: Date | null
     emailVerified: boolean | null
@@ -2994,11 +3114,10 @@ export namespace Prisma {
     username: number
     password: number
     role: number
+    name: number
     email: number
+    phone: number
     gender: number
-    DateOfBirth: number
-    phoneNumber: number
-    avatar: number
     isActive: number
     lastLoginAt: number
     emailVerified: number
@@ -3014,11 +3133,10 @@ export namespace Prisma {
     username?: true
     password?: true
     role?: true
+    name?: true
     email?: true
+    phone?: true
     gender?: true
-    DateOfBirth?: true
-    phoneNumber?: true
-    avatar?: true
     isActive?: true
     lastLoginAt?: true
     emailVerified?: true
@@ -3032,11 +3150,10 @@ export namespace Prisma {
     username?: true
     password?: true
     role?: true
+    name?: true
     email?: true
+    phone?: true
     gender?: true
-    DateOfBirth?: true
-    phoneNumber?: true
-    avatar?: true
     isActive?: true
     lastLoginAt?: true
     emailVerified?: true
@@ -3050,11 +3167,10 @@ export namespace Prisma {
     username?: true
     password?: true
     role?: true
+    name?: true
     email?: true
+    phone?: true
     gender?: true
-    DateOfBirth?: true
-    phoneNumber?: true
-    avatar?: true
     isActive?: true
     lastLoginAt?: true
     emailVerified?: true
@@ -3141,11 +3257,10 @@ export namespace Prisma {
     username: string
     password: string
     role: $Enums.UserRole
-    email: string | null
-    gender: boolean | null
-    DateOfBirth: Date | null
-    phoneNumber: string | null
-    avatar: string | null
+    name: string
+    email: string
+    phone: string
+    gender: $Enums.Gender | null
     isActive: boolean
     lastLoginAt: Date | null
     emailVerified: boolean
@@ -3176,11 +3291,10 @@ export namespace Prisma {
     username?: boolean
     password?: boolean
     role?: boolean
+    name?: boolean
     email?: boolean
+    phone?: boolean
     gender?: boolean
-    DateOfBirth?: boolean
-    phoneNumber?: boolean
-    avatar?: boolean
     isActive?: boolean
     lastLoginAt?: boolean
     emailVerified?: boolean
@@ -3194,6 +3308,7 @@ export namespace Prisma {
     matchReferees?: boolean | User$matchRefereesArgs<ExtArgs>
     fieldDisplays?: boolean | User$fieldDisplaysArgs<ExtArgs>
     fieldReferees?: boolean | User$fieldRefereesArgs<ExtArgs>
+    Team?: boolean | User$TeamArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -3202,11 +3317,10 @@ export namespace Prisma {
     username?: boolean
     password?: boolean
     role?: boolean
+    name?: boolean
     email?: boolean
+    phone?: boolean
     gender?: boolean
-    DateOfBirth?: boolean
-    phoneNumber?: boolean
-    avatar?: boolean
     isActive?: boolean
     lastLoginAt?: boolean
     emailVerified?: boolean
@@ -3221,11 +3335,10 @@ export namespace Prisma {
     username?: boolean
     password?: boolean
     role?: boolean
+    name?: boolean
     email?: boolean
+    phone?: boolean
     gender?: boolean
-    DateOfBirth?: boolean
-    phoneNumber?: boolean
-    avatar?: boolean
     isActive?: boolean
     lastLoginAt?: boolean
     emailVerified?: boolean
@@ -3240,11 +3353,10 @@ export namespace Prisma {
     username?: boolean
     password?: boolean
     role?: boolean
+    name?: boolean
     email?: boolean
+    phone?: boolean
     gender?: boolean
-    DateOfBirth?: boolean
-    phoneNumber?: boolean
-    avatar?: boolean
     isActive?: boolean
     lastLoginAt?: boolean
     emailVerified?: boolean
@@ -3253,7 +3365,7 @@ export namespace Prisma {
     createdById?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "role" | "email" | "gender" | "DateOfBirth" | "phoneNumber" | "avatar" | "isActive" | "lastLoginAt" | "emailVerified" | "createdAt" | "updatedAt" | "createdById", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "role" | "name" | "email" | "phone" | "gender" | "isActive" | "lastLoginAt" | "emailVerified" | "createdAt" | "updatedAt" | "createdById", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     createdBy?: boolean | User$createdByArgs<ExtArgs>
     createdUsers?: boolean | User$createdUsersArgs<ExtArgs>
@@ -3262,6 +3374,7 @@ export namespace Prisma {
     matchReferees?: boolean | User$matchRefereesArgs<ExtArgs>
     fieldDisplays?: boolean | User$fieldDisplaysArgs<ExtArgs>
     fieldReferees?: boolean | User$fieldRefereesArgs<ExtArgs>
+    Team?: boolean | User$TeamArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3281,17 +3394,17 @@ export namespace Prisma {
       matchReferees: Prisma.$MatchRefereePayload<ExtArgs>[]
       fieldDisplays: Prisma.$FieldDisplayPayload<ExtArgs>[]
       fieldReferees: Prisma.$FieldRefereePayload<ExtArgs>[]
+      Team: Prisma.$TeamPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       username: string
       password: string
       role: $Enums.UserRole
-      email: string | null
-      gender: boolean | null
-      DateOfBirth: Date | null
-      phoneNumber: string | null
-      avatar: string | null
+      name: string
+      email: string
+      phone: string
+      gender: $Enums.Gender | null
       isActive: boolean
       lastLoginAt: Date | null
       emailVerified: boolean
@@ -3699,6 +3812,7 @@ export namespace Prisma {
     matchReferees<T extends User$matchRefereesArgs<ExtArgs> = {}>(args?: Subset<T, User$matchRefereesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MatchRefereePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     fieldDisplays<T extends User$fieldDisplaysArgs<ExtArgs> = {}>(args?: Subset<T, User$fieldDisplaysArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FieldDisplayPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     fieldReferees<T extends User$fieldRefereesArgs<ExtArgs> = {}>(args?: Subset<T, User$fieldRefereesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FieldRefereePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    Team<T extends User$TeamArgs<ExtArgs> = {}>(args?: Subset<T, User$TeamArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TeamPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3732,11 +3846,10 @@ export namespace Prisma {
     readonly username: FieldRef<"User", 'String'>
     readonly password: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'UserRole'>
+    readonly name: FieldRef<"User", 'String'>
     readonly email: FieldRef<"User", 'String'>
-    readonly gender: FieldRef<"User", 'Boolean'>
-    readonly DateOfBirth: FieldRef<"User", 'DateTime'>
-    readonly phoneNumber: FieldRef<"User", 'String'>
-    readonly avatar: FieldRef<"User", 'String'>
+    readonly phone: FieldRef<"User", 'String'>
+    readonly gender: FieldRef<"User", 'Gender'>
     readonly isActive: FieldRef<"User", 'Boolean'>
     readonly lastLoginAt: FieldRef<"User", 'DateTime'>
     readonly emailVerified: FieldRef<"User", 'Boolean'>
@@ -4302,6 +4415,30 @@ export namespace Prisma {
   }
 
   /**
+   * User.Team
+   */
+  export type User$TeamArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Team
+     */
+    select?: TeamSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Team
+     */
+    omit?: TeamOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamInclude<ExtArgs> | null
+    where?: TeamWhereInput
+    orderBy?: TeamOrderByWithRelationInput | TeamOrderByWithRelationInput[]
+    cursor?: TeamWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TeamScalarFieldEnum | TeamScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4334,10 +4471,16 @@ export namespace Prisma {
 
   export type TournamentAvgAggregateOutputType = {
     numberOfFields: number | null
+    maxTeams: number | null
+    maxTeamMembers: number | null
+    minTeamMembers: number | null
   }
 
   export type TournamentSumAggregateOutputType = {
     numberOfFields: number | null
+    maxTeams: number | null
+    maxTeamMembers: number | null
+    minTeamMembers: number | null
   }
 
   export type TournamentMinAggregateOutputType = {
@@ -4350,6 +4493,9 @@ export namespace Prisma {
     updatedAt: Date | null
     adminId: string | null
     numberOfFields: number | null
+    maxTeams: number | null
+    maxTeamMembers: number | null
+    minTeamMembers: number | null
   }
 
   export type TournamentMaxAggregateOutputType = {
@@ -4362,6 +4508,9 @@ export namespace Prisma {
     updatedAt: Date | null
     adminId: string | null
     numberOfFields: number | null
+    maxTeams: number | null
+    maxTeamMembers: number | null
+    minTeamMembers: number | null
   }
 
   export type TournamentCountAggregateOutputType = {
@@ -4374,16 +4523,25 @@ export namespace Prisma {
     updatedAt: number
     adminId: number
     numberOfFields: number
+    maxTeams: number
+    maxTeamMembers: number
+    minTeamMembers: number
     _all: number
   }
 
 
   export type TournamentAvgAggregateInputType = {
     numberOfFields?: true
+    maxTeams?: true
+    maxTeamMembers?: true
+    minTeamMembers?: true
   }
 
   export type TournamentSumAggregateInputType = {
     numberOfFields?: true
+    maxTeams?: true
+    maxTeamMembers?: true
+    minTeamMembers?: true
   }
 
   export type TournamentMinAggregateInputType = {
@@ -4396,6 +4554,9 @@ export namespace Prisma {
     updatedAt?: true
     adminId?: true
     numberOfFields?: true
+    maxTeams?: true
+    maxTeamMembers?: true
+    minTeamMembers?: true
   }
 
   export type TournamentMaxAggregateInputType = {
@@ -4408,6 +4569,9 @@ export namespace Prisma {
     updatedAt?: true
     adminId?: true
     numberOfFields?: true
+    maxTeams?: true
+    maxTeamMembers?: true
+    minTeamMembers?: true
   }
 
   export type TournamentCountAggregateInputType = {
@@ -4420,6 +4584,9 @@ export namespace Prisma {
     updatedAt?: true
     adminId?: true
     numberOfFields?: true
+    maxTeams?: true
+    maxTeamMembers?: true
+    minTeamMembers?: true
     _all?: true
   }
 
@@ -4519,6 +4686,9 @@ export namespace Prisma {
     updatedAt: Date
     adminId: string
     numberOfFields: number
+    maxTeams: number | null
+    maxTeamMembers: number | null
+    minTeamMembers: number | null
     _count: TournamentCountAggregateOutputType | null
     _avg: TournamentAvgAggregateOutputType | null
     _sum: TournamentSumAggregateOutputType | null
@@ -4550,6 +4720,9 @@ export namespace Prisma {
     updatedAt?: boolean
     adminId?: boolean
     numberOfFields?: boolean
+    maxTeams?: boolean
+    maxTeamMembers?: boolean
+    minTeamMembers?: boolean
     admin?: boolean | UserDefaultArgs<ExtArgs>
     stages?: boolean | Tournament$stagesArgs<ExtArgs>
     teams?: boolean | Tournament$teamsArgs<ExtArgs>
@@ -4569,6 +4742,9 @@ export namespace Prisma {
     updatedAt?: boolean
     adminId?: boolean
     numberOfFields?: boolean
+    maxTeams?: boolean
+    maxTeamMembers?: boolean
+    minTeamMembers?: boolean
     admin?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["tournament"]>
 
@@ -4582,6 +4758,9 @@ export namespace Prisma {
     updatedAt?: boolean
     adminId?: boolean
     numberOfFields?: boolean
+    maxTeams?: boolean
+    maxTeamMembers?: boolean
+    minTeamMembers?: boolean
     admin?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["tournament"]>
 
@@ -4595,9 +4774,12 @@ export namespace Prisma {
     updatedAt?: boolean
     adminId?: boolean
     numberOfFields?: boolean
+    maxTeams?: boolean
+    maxTeamMembers?: boolean
+    minTeamMembers?: boolean
   }
 
-  export type TournamentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "startDate" | "endDate" | "createdAt" | "updatedAt" | "adminId" | "numberOfFields", ExtArgs["result"]["tournament"]>
+  export type TournamentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "startDate" | "endDate" | "createdAt" | "updatedAt" | "adminId" | "numberOfFields" | "maxTeams" | "maxTeamMembers" | "minTeamMembers", ExtArgs["result"]["tournament"]>
   export type TournamentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     admin?: boolean | UserDefaultArgs<ExtArgs>
     stages?: boolean | Tournament$stagesArgs<ExtArgs>
@@ -4634,6 +4816,9 @@ export namespace Prisma {
       updatedAt: Date
       adminId: string
       numberOfFields: number
+      maxTeams: number | null
+      maxTeamMembers: number | null
+      minTeamMembers: number | null
     }, ExtArgs["result"]["tournament"]>
     composites: {}
   }
@@ -5072,6 +5257,9 @@ export namespace Prisma {
     readonly updatedAt: FieldRef<"Tournament", 'DateTime'>
     readonly adminId: FieldRef<"Tournament", 'String'>
     readonly numberOfFields: FieldRef<"Tournament", 'Int'>
+    readonly maxTeams: FieldRef<"Tournament", 'Int'>
+    readonly maxTeamMembers: FieldRef<"Tournament", 'Int'>
+    readonly minTeamMembers: FieldRef<"Tournament", 'Int'>
   }
     
 
@@ -10580,46 +10768,36 @@ export namespace Prisma {
     id: string | null
     teamNumber: string | null
     name: string | null
-    organization: string | null
-    avatar: string | null
-    description: string | null
-    teamLead: string | null
-    teamLeadId: string | null
     tournamentId: string | null
     currentStageId: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    userId: string | null
+    referralSource: string | null
   }
 
   export type TeamMaxAggregateOutputType = {
     id: string | null
     teamNumber: string | null
     name: string | null
-    organization: string | null
-    avatar: string | null
-    description: string | null
-    teamLead: string | null
-    teamLeadId: string | null
     tournamentId: string | null
     currentStageId: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    userId: string | null
+    referralSource: string | null
   }
 
   export type TeamCountAggregateOutputType = {
     id: number
     teamNumber: number
     name: number
-    organization: number
-    avatar: number
-    description: number
-    teamLead: number
-    teamLeadId: number
-    teamMembers: number
     tournamentId: number
     currentStageId: number
     createdAt: number
     updatedAt: number
+    userId: number
+    referralSource: number
     _all: number
   }
 
@@ -10628,46 +10806,36 @@ export namespace Prisma {
     id?: true
     teamNumber?: true
     name?: true
-    organization?: true
-    avatar?: true
-    description?: true
-    teamLead?: true
-    teamLeadId?: true
     tournamentId?: true
     currentStageId?: true
     createdAt?: true
     updatedAt?: true
+    userId?: true
+    referralSource?: true
   }
 
   export type TeamMaxAggregateInputType = {
     id?: true
     teamNumber?: true
     name?: true
-    organization?: true
-    avatar?: true
-    description?: true
-    teamLead?: true
-    teamLeadId?: true
     tournamentId?: true
     currentStageId?: true
     createdAt?: true
     updatedAt?: true
+    userId?: true
+    referralSource?: true
   }
 
   export type TeamCountAggregateInputType = {
     id?: true
     teamNumber?: true
     name?: true
-    organization?: true
-    avatar?: true
-    description?: true
-    teamLead?: true
-    teamLeadId?: true
-    teamMembers?: true
     tournamentId?: true
     currentStageId?: true
     createdAt?: true
     updatedAt?: true
+    userId?: true
+    referralSource?: true
     _all?: true
   }
 
@@ -10747,16 +10915,12 @@ export namespace Prisma {
     id: string
     teamNumber: string
     name: string
-    organization: string | null
-    avatar: string | null
-    description: string | null
-    teamLead: string | null
-    teamLeadId: string | null
-    teamMembers: JsonValue | null
-    tournamentId: string | null
+    tournamentId: string
     currentStageId: string | null
     createdAt: Date
     updatedAt: Date
+    userId: string
+    referralSource: string
     _count: TeamCountAggregateOutputType | null
     _min: TeamMinAggregateOutputType | null
     _max: TeamMaxAggregateOutputType | null
@@ -10780,20 +10944,18 @@ export namespace Prisma {
     id?: boolean
     teamNumber?: boolean
     name?: boolean
-    organization?: boolean
-    avatar?: boolean
-    description?: boolean
-    teamLead?: boolean
-    teamLeadId?: boolean
-    teamMembers?: boolean
     tournamentId?: boolean
     currentStageId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    tournament?: boolean | Team$tournamentArgs<ExtArgs>
+    userId?: boolean
+    referralSource?: boolean
+    tournament?: boolean | TournamentDefaultArgs<ExtArgs>
     currentStage?: boolean | Team$currentStageArgs<ExtArgs>
     teamAlliances?: boolean | Team$teamAlliancesArgs<ExtArgs>
     teamStats?: boolean | Team$teamStatsArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    teamMembers?: boolean | Team$teamMembersArgs<ExtArgs>
     _count?: boolean | TeamCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["team"]>
 
@@ -10801,93 +10963,85 @@ export namespace Prisma {
     id?: boolean
     teamNumber?: boolean
     name?: boolean
-    organization?: boolean
-    avatar?: boolean
-    description?: boolean
-    teamLead?: boolean
-    teamLeadId?: boolean
-    teamMembers?: boolean
     tournamentId?: boolean
     currentStageId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    tournament?: boolean | Team$tournamentArgs<ExtArgs>
+    userId?: boolean
+    referralSource?: boolean
+    tournament?: boolean | TournamentDefaultArgs<ExtArgs>
     currentStage?: boolean | Team$currentStageArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["team"]>
 
   export type TeamSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     teamNumber?: boolean
     name?: boolean
-    organization?: boolean
-    avatar?: boolean
-    description?: boolean
-    teamLead?: boolean
-    teamLeadId?: boolean
-    teamMembers?: boolean
     tournamentId?: boolean
     currentStageId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    tournament?: boolean | Team$tournamentArgs<ExtArgs>
+    userId?: boolean
+    referralSource?: boolean
+    tournament?: boolean | TournamentDefaultArgs<ExtArgs>
     currentStage?: boolean | Team$currentStageArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["team"]>
 
   export type TeamSelectScalar = {
     id?: boolean
     teamNumber?: boolean
     name?: boolean
-    organization?: boolean
-    avatar?: boolean
-    description?: boolean
-    teamLead?: boolean
-    teamLeadId?: boolean
-    teamMembers?: boolean
     tournamentId?: boolean
     currentStageId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    userId?: boolean
+    referralSource?: boolean
   }
 
-  export type TeamOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "teamNumber" | "name" | "organization" | "avatar" | "description" | "teamLead" | "teamLeadId" | "teamMembers" | "tournamentId" | "currentStageId" | "createdAt" | "updatedAt", ExtArgs["result"]["team"]>
+  export type TeamOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "teamNumber" | "name" | "tournamentId" | "currentStageId" | "createdAt" | "updatedAt" | "userId" | "referralSource", ExtArgs["result"]["team"]>
   export type TeamInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    tournament?: boolean | Team$tournamentArgs<ExtArgs>
+    tournament?: boolean | TournamentDefaultArgs<ExtArgs>
     currentStage?: boolean | Team$currentStageArgs<ExtArgs>
     teamAlliances?: boolean | Team$teamAlliancesArgs<ExtArgs>
     teamStats?: boolean | Team$teamStatsArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    teamMembers?: boolean | Team$teamMembersArgs<ExtArgs>
     _count?: boolean | TeamCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type TeamIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    tournament?: boolean | Team$tournamentArgs<ExtArgs>
+    tournament?: boolean | TournamentDefaultArgs<ExtArgs>
     currentStage?: boolean | Team$currentStageArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
   }
   export type TeamIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    tournament?: boolean | Team$tournamentArgs<ExtArgs>
+    tournament?: boolean | TournamentDefaultArgs<ExtArgs>
     currentStage?: boolean | Team$currentStageArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
   }
 
   export type $TeamPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Team"
     objects: {
-      tournament: Prisma.$TournamentPayload<ExtArgs> | null
+      tournament: Prisma.$TournamentPayload<ExtArgs>
       currentStage: Prisma.$StagePayload<ExtArgs> | null
       teamAlliances: Prisma.$TeamAlliancePayload<ExtArgs>[]
       teamStats: Prisma.$TeamStatsPayload<ExtArgs>[]
+      user: Prisma.$UserPayload<ExtArgs>
+      teamMembers: Prisma.$TeamMemberPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       teamNumber: string
       name: string
-      organization: string | null
-      avatar: string | null
-      description: string | null
-      teamLead: string | null
-      teamLeadId: string | null
-      teamMembers: Prisma.JsonValue | null
-      tournamentId: string | null
+      tournamentId: string
       currentStageId: string | null
       createdAt: Date
       updatedAt: Date
+      userId: string
+      referralSource: string
     }, ExtArgs["result"]["team"]>
     composites: {}
   }
@@ -11282,10 +11436,12 @@ export namespace Prisma {
    */
   export interface Prisma__TeamClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    tournament<T extends Team$tournamentArgs<ExtArgs> = {}>(args?: Subset<T, Team$tournamentArgs<ExtArgs>>): Prisma__TournamentClient<$Result.GetResult<Prisma.$TournamentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    tournament<T extends TournamentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TournamentDefaultArgs<ExtArgs>>): Prisma__TournamentClient<$Result.GetResult<Prisma.$TournamentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     currentStage<T extends Team$currentStageArgs<ExtArgs> = {}>(args?: Subset<T, Team$currentStageArgs<ExtArgs>>): Prisma__StageClient<$Result.GetResult<Prisma.$StagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     teamAlliances<T extends Team$teamAlliancesArgs<ExtArgs> = {}>(args?: Subset<T, Team$teamAlliancesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TeamAlliancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     teamStats<T extends Team$teamStatsArgs<ExtArgs> = {}>(args?: Subset<T, Team$teamStatsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TeamStatsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    teamMembers<T extends Team$teamMembersArgs<ExtArgs> = {}>(args?: Subset<T, Team$teamMembersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11318,16 +11474,12 @@ export namespace Prisma {
     readonly id: FieldRef<"Team", 'String'>
     readonly teamNumber: FieldRef<"Team", 'String'>
     readonly name: FieldRef<"Team", 'String'>
-    readonly organization: FieldRef<"Team", 'String'>
-    readonly avatar: FieldRef<"Team", 'String'>
-    readonly description: FieldRef<"Team", 'String'>
-    readonly teamLead: FieldRef<"Team", 'String'>
-    readonly teamLeadId: FieldRef<"Team", 'String'>
-    readonly teamMembers: FieldRef<"Team", 'Json'>
     readonly tournamentId: FieldRef<"Team", 'String'>
     readonly currentStageId: FieldRef<"Team", 'String'>
     readonly createdAt: FieldRef<"Team", 'DateTime'>
     readonly updatedAt: FieldRef<"Team", 'DateTime'>
+    readonly userId: FieldRef<"Team", 'String'>
+    readonly referralSource: FieldRef<"Team", 'String'>
   }
     
 
@@ -11724,25 +11876,6 @@ export namespace Prisma {
   }
 
   /**
-   * Team.tournament
-   */
-  export type Team$tournamentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Tournament
-     */
-    select?: TournamentSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Tournament
-     */
-    omit?: TournamentOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: TournamentInclude<ExtArgs> | null
-    where?: TournamentWhereInput
-  }
-
-  /**
    * Team.currentStage
    */
   export type Team$currentStageArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11810,6 +11943,30 @@ export namespace Prisma {
   }
 
   /**
+   * Team.teamMembers
+   */
+  export type Team$teamMembersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    where?: TeamMemberWhereInput
+    orderBy?: TeamMemberOrderByWithRelationInput | TeamMemberOrderByWithRelationInput[]
+    cursor?: TeamMemberWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TeamMemberScalarFieldEnum | TeamMemberScalarFieldEnum[]
+  }
+
+  /**
    * Team without action
    */
   export type TeamDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11825,6 +11982,1155 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: TeamInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TeamMember
+   */
+
+  export type AggregateTeamMember = {
+    _count: TeamMemberCountAggregateOutputType | null
+    _min: TeamMemberMinAggregateOutputType | null
+    _max: TeamMemberMaxAggregateOutputType | null
+  }
+
+  export type TeamMemberMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    gender: $Enums.Gender | null
+    phone: string | null
+    email: string | null
+    province: string | null
+    ward: string | null
+    organization: string | null
+    organizationAddress: string | null
+    teamId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TeamMemberMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    gender: $Enums.Gender | null
+    phone: string | null
+    email: string | null
+    province: string | null
+    ward: string | null
+    organization: string | null
+    organizationAddress: string | null
+    teamId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TeamMemberCountAggregateOutputType = {
+    id: number
+    name: number
+    gender: number
+    phone: number
+    email: number
+    province: number
+    ward: number
+    organization: number
+    organizationAddress: number
+    teamId: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TeamMemberMinAggregateInputType = {
+    id?: true
+    name?: true
+    gender?: true
+    phone?: true
+    email?: true
+    province?: true
+    ward?: true
+    organization?: true
+    organizationAddress?: true
+    teamId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TeamMemberMaxAggregateInputType = {
+    id?: true
+    name?: true
+    gender?: true
+    phone?: true
+    email?: true
+    province?: true
+    ward?: true
+    organization?: true
+    organizationAddress?: true
+    teamId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TeamMemberCountAggregateInputType = {
+    id?: true
+    name?: true
+    gender?: true
+    phone?: true
+    email?: true
+    province?: true
+    ward?: true
+    organization?: true
+    organizationAddress?: true
+    teamId?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TeamMemberAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TeamMember to aggregate.
+     */
+    where?: TeamMemberWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TeamMembers to fetch.
+     */
+    orderBy?: TeamMemberOrderByWithRelationInput | TeamMemberOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TeamMemberWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TeamMembers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TeamMembers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TeamMembers
+    **/
+    _count?: true | TeamMemberCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TeamMemberMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TeamMemberMaxAggregateInputType
+  }
+
+  export type GetTeamMemberAggregateType<T extends TeamMemberAggregateArgs> = {
+        [P in keyof T & keyof AggregateTeamMember]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTeamMember[P]>
+      : GetScalarType<T[P], AggregateTeamMember[P]>
+  }
+
+
+
+
+  export type TeamMemberGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TeamMemberWhereInput
+    orderBy?: TeamMemberOrderByWithAggregationInput | TeamMemberOrderByWithAggregationInput[]
+    by: TeamMemberScalarFieldEnum[] | TeamMemberScalarFieldEnum
+    having?: TeamMemberScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TeamMemberCountAggregateInputType | true
+    _min?: TeamMemberMinAggregateInputType
+    _max?: TeamMemberMaxAggregateInputType
+  }
+
+  export type TeamMemberGroupByOutputType = {
+    id: string
+    name: string
+    gender: $Enums.Gender | null
+    phone: string | null
+    email: string | null
+    province: string
+    ward: string
+    organization: string | null
+    organizationAddress: string | null
+    teamId: string
+    createdAt: Date
+    updatedAt: Date
+    _count: TeamMemberCountAggregateOutputType | null
+    _min: TeamMemberMinAggregateOutputType | null
+    _max: TeamMemberMaxAggregateOutputType | null
+  }
+
+  type GetTeamMemberGroupByPayload<T extends TeamMemberGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TeamMemberGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TeamMemberGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TeamMemberGroupByOutputType[P]>
+            : GetScalarType<T[P], TeamMemberGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TeamMemberSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    gender?: boolean
+    phone?: boolean
+    email?: boolean
+    province?: boolean
+    ward?: boolean
+    organization?: boolean
+    organizationAddress?: boolean
+    teamId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    team?: boolean | TeamDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["teamMember"]>
+
+  export type TeamMemberSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    gender?: boolean
+    phone?: boolean
+    email?: boolean
+    province?: boolean
+    ward?: boolean
+    organization?: boolean
+    organizationAddress?: boolean
+    teamId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    team?: boolean | TeamDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["teamMember"]>
+
+  export type TeamMemberSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    gender?: boolean
+    phone?: boolean
+    email?: boolean
+    province?: boolean
+    ward?: boolean
+    organization?: boolean
+    organizationAddress?: boolean
+    teamId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    team?: boolean | TeamDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["teamMember"]>
+
+  export type TeamMemberSelectScalar = {
+    id?: boolean
+    name?: boolean
+    gender?: boolean
+    phone?: boolean
+    email?: boolean
+    province?: boolean
+    ward?: boolean
+    organization?: boolean
+    organizationAddress?: boolean
+    teamId?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TeamMemberOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "gender" | "phone" | "email" | "province" | "ward" | "organization" | "organizationAddress" | "teamId" | "createdAt" | "updatedAt", ExtArgs["result"]["teamMember"]>
+  export type TeamMemberInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    team?: boolean | TeamDefaultArgs<ExtArgs>
+  }
+  export type TeamMemberIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    team?: boolean | TeamDefaultArgs<ExtArgs>
+  }
+  export type TeamMemberIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    team?: boolean | TeamDefaultArgs<ExtArgs>
+  }
+
+  export type $TeamMemberPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TeamMember"
+    objects: {
+      team: Prisma.$TeamPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      gender: $Enums.Gender | null
+      phone: string | null
+      email: string | null
+      province: string
+      ward: string
+      organization: string | null
+      organizationAddress: string | null
+      teamId: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["teamMember"]>
+    composites: {}
+  }
+
+  type TeamMemberGetPayload<S extends boolean | null | undefined | TeamMemberDefaultArgs> = $Result.GetResult<Prisma.$TeamMemberPayload, S>
+
+  type TeamMemberCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TeamMemberFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TeamMemberCountAggregateInputType | true
+    }
+
+  export interface TeamMemberDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TeamMember'], meta: { name: 'TeamMember' } }
+    /**
+     * Find zero or one TeamMember that matches the filter.
+     * @param {TeamMemberFindUniqueArgs} args - Arguments to find a TeamMember
+     * @example
+     * // Get one TeamMember
+     * const teamMember = await prisma.teamMember.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TeamMemberFindUniqueArgs>(args: SelectSubset<T, TeamMemberFindUniqueArgs<ExtArgs>>): Prisma__TeamMemberClient<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TeamMember that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TeamMemberFindUniqueOrThrowArgs} args - Arguments to find a TeamMember
+     * @example
+     * // Get one TeamMember
+     * const teamMember = await prisma.teamMember.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TeamMemberFindUniqueOrThrowArgs>(args: SelectSubset<T, TeamMemberFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TeamMemberClient<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TeamMember that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TeamMemberFindFirstArgs} args - Arguments to find a TeamMember
+     * @example
+     * // Get one TeamMember
+     * const teamMember = await prisma.teamMember.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TeamMemberFindFirstArgs>(args?: SelectSubset<T, TeamMemberFindFirstArgs<ExtArgs>>): Prisma__TeamMemberClient<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TeamMember that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TeamMemberFindFirstOrThrowArgs} args - Arguments to find a TeamMember
+     * @example
+     * // Get one TeamMember
+     * const teamMember = await prisma.teamMember.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TeamMemberFindFirstOrThrowArgs>(args?: SelectSubset<T, TeamMemberFindFirstOrThrowArgs<ExtArgs>>): Prisma__TeamMemberClient<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TeamMembers that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TeamMemberFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TeamMembers
+     * const teamMembers = await prisma.teamMember.findMany()
+     * 
+     * // Get first 10 TeamMembers
+     * const teamMembers = await prisma.teamMember.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const teamMemberWithIdOnly = await prisma.teamMember.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TeamMemberFindManyArgs>(args?: SelectSubset<T, TeamMemberFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TeamMember.
+     * @param {TeamMemberCreateArgs} args - Arguments to create a TeamMember.
+     * @example
+     * // Create one TeamMember
+     * const TeamMember = await prisma.teamMember.create({
+     *   data: {
+     *     // ... data to create a TeamMember
+     *   }
+     * })
+     * 
+     */
+    create<T extends TeamMemberCreateArgs>(args: SelectSubset<T, TeamMemberCreateArgs<ExtArgs>>): Prisma__TeamMemberClient<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TeamMembers.
+     * @param {TeamMemberCreateManyArgs} args - Arguments to create many TeamMembers.
+     * @example
+     * // Create many TeamMembers
+     * const teamMember = await prisma.teamMember.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TeamMemberCreateManyArgs>(args?: SelectSubset<T, TeamMemberCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TeamMembers and returns the data saved in the database.
+     * @param {TeamMemberCreateManyAndReturnArgs} args - Arguments to create many TeamMembers.
+     * @example
+     * // Create many TeamMembers
+     * const teamMember = await prisma.teamMember.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TeamMembers and only return the `id`
+     * const teamMemberWithIdOnly = await prisma.teamMember.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TeamMemberCreateManyAndReturnArgs>(args?: SelectSubset<T, TeamMemberCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TeamMember.
+     * @param {TeamMemberDeleteArgs} args - Arguments to delete one TeamMember.
+     * @example
+     * // Delete one TeamMember
+     * const TeamMember = await prisma.teamMember.delete({
+     *   where: {
+     *     // ... filter to delete one TeamMember
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TeamMemberDeleteArgs>(args: SelectSubset<T, TeamMemberDeleteArgs<ExtArgs>>): Prisma__TeamMemberClient<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TeamMember.
+     * @param {TeamMemberUpdateArgs} args - Arguments to update one TeamMember.
+     * @example
+     * // Update one TeamMember
+     * const teamMember = await prisma.teamMember.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TeamMemberUpdateArgs>(args: SelectSubset<T, TeamMemberUpdateArgs<ExtArgs>>): Prisma__TeamMemberClient<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TeamMembers.
+     * @param {TeamMemberDeleteManyArgs} args - Arguments to filter TeamMembers to delete.
+     * @example
+     * // Delete a few TeamMembers
+     * const { count } = await prisma.teamMember.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TeamMemberDeleteManyArgs>(args?: SelectSubset<T, TeamMemberDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TeamMembers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TeamMemberUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TeamMembers
+     * const teamMember = await prisma.teamMember.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TeamMemberUpdateManyArgs>(args: SelectSubset<T, TeamMemberUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TeamMembers and returns the data updated in the database.
+     * @param {TeamMemberUpdateManyAndReturnArgs} args - Arguments to update many TeamMembers.
+     * @example
+     * // Update many TeamMembers
+     * const teamMember = await prisma.teamMember.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TeamMembers and only return the `id`
+     * const teamMemberWithIdOnly = await prisma.teamMember.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TeamMemberUpdateManyAndReturnArgs>(args: SelectSubset<T, TeamMemberUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TeamMember.
+     * @param {TeamMemberUpsertArgs} args - Arguments to update or create a TeamMember.
+     * @example
+     * // Update or create a TeamMember
+     * const teamMember = await prisma.teamMember.upsert({
+     *   create: {
+     *     // ... data to create a TeamMember
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TeamMember we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TeamMemberUpsertArgs>(args: SelectSubset<T, TeamMemberUpsertArgs<ExtArgs>>): Prisma__TeamMemberClient<$Result.GetResult<Prisma.$TeamMemberPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TeamMembers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TeamMemberCountArgs} args - Arguments to filter TeamMembers to count.
+     * @example
+     * // Count the number of TeamMembers
+     * const count = await prisma.teamMember.count({
+     *   where: {
+     *     // ... the filter for the TeamMembers we want to count
+     *   }
+     * })
+    **/
+    count<T extends TeamMemberCountArgs>(
+      args?: Subset<T, TeamMemberCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TeamMemberCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TeamMember.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TeamMemberAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TeamMemberAggregateArgs>(args: Subset<T, TeamMemberAggregateArgs>): Prisma.PrismaPromise<GetTeamMemberAggregateType<T>>
+
+    /**
+     * Group by TeamMember.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TeamMemberGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TeamMemberGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TeamMemberGroupByArgs['orderBy'] }
+        : { orderBy?: TeamMemberGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TeamMemberGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTeamMemberGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TeamMember model
+   */
+  readonly fields: TeamMemberFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TeamMember.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TeamMemberClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    team<T extends TeamDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TeamDefaultArgs<ExtArgs>>): Prisma__TeamClient<$Result.GetResult<Prisma.$TeamPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TeamMember model
+   */
+  interface TeamMemberFieldRefs {
+    readonly id: FieldRef<"TeamMember", 'String'>
+    readonly name: FieldRef<"TeamMember", 'String'>
+    readonly gender: FieldRef<"TeamMember", 'Gender'>
+    readonly phone: FieldRef<"TeamMember", 'String'>
+    readonly email: FieldRef<"TeamMember", 'String'>
+    readonly province: FieldRef<"TeamMember", 'String'>
+    readonly ward: FieldRef<"TeamMember", 'String'>
+    readonly organization: FieldRef<"TeamMember", 'String'>
+    readonly organizationAddress: FieldRef<"TeamMember", 'String'>
+    readonly teamId: FieldRef<"TeamMember", 'String'>
+    readonly createdAt: FieldRef<"TeamMember", 'DateTime'>
+    readonly updatedAt: FieldRef<"TeamMember", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TeamMember findUnique
+   */
+  export type TeamMemberFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    /**
+     * Filter, which TeamMember to fetch.
+     */
+    where: TeamMemberWhereUniqueInput
+  }
+
+  /**
+   * TeamMember findUniqueOrThrow
+   */
+  export type TeamMemberFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    /**
+     * Filter, which TeamMember to fetch.
+     */
+    where: TeamMemberWhereUniqueInput
+  }
+
+  /**
+   * TeamMember findFirst
+   */
+  export type TeamMemberFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    /**
+     * Filter, which TeamMember to fetch.
+     */
+    where?: TeamMemberWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TeamMembers to fetch.
+     */
+    orderBy?: TeamMemberOrderByWithRelationInput | TeamMemberOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TeamMembers.
+     */
+    cursor?: TeamMemberWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TeamMembers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TeamMembers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TeamMembers.
+     */
+    distinct?: TeamMemberScalarFieldEnum | TeamMemberScalarFieldEnum[]
+  }
+
+  /**
+   * TeamMember findFirstOrThrow
+   */
+  export type TeamMemberFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    /**
+     * Filter, which TeamMember to fetch.
+     */
+    where?: TeamMemberWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TeamMembers to fetch.
+     */
+    orderBy?: TeamMemberOrderByWithRelationInput | TeamMemberOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TeamMembers.
+     */
+    cursor?: TeamMemberWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TeamMembers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TeamMembers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TeamMembers.
+     */
+    distinct?: TeamMemberScalarFieldEnum | TeamMemberScalarFieldEnum[]
+  }
+
+  /**
+   * TeamMember findMany
+   */
+  export type TeamMemberFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    /**
+     * Filter, which TeamMembers to fetch.
+     */
+    where?: TeamMemberWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TeamMembers to fetch.
+     */
+    orderBy?: TeamMemberOrderByWithRelationInput | TeamMemberOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TeamMembers.
+     */
+    cursor?: TeamMemberWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TeamMembers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TeamMembers.
+     */
+    skip?: number
+    distinct?: TeamMemberScalarFieldEnum | TeamMemberScalarFieldEnum[]
+  }
+
+  /**
+   * TeamMember create
+   */
+  export type TeamMemberCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TeamMember.
+     */
+    data: XOR<TeamMemberCreateInput, TeamMemberUncheckedCreateInput>
+  }
+
+  /**
+   * TeamMember createMany
+   */
+  export type TeamMemberCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TeamMembers.
+     */
+    data: TeamMemberCreateManyInput | TeamMemberCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TeamMember createManyAndReturn
+   */
+  export type TeamMemberCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * The data used to create many TeamMembers.
+     */
+    data: TeamMemberCreateManyInput | TeamMemberCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TeamMember update
+   */
+  export type TeamMemberUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TeamMember.
+     */
+    data: XOR<TeamMemberUpdateInput, TeamMemberUncheckedUpdateInput>
+    /**
+     * Choose, which TeamMember to update.
+     */
+    where: TeamMemberWhereUniqueInput
+  }
+
+  /**
+   * TeamMember updateMany
+   */
+  export type TeamMemberUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TeamMembers.
+     */
+    data: XOR<TeamMemberUpdateManyMutationInput, TeamMemberUncheckedUpdateManyInput>
+    /**
+     * Filter which TeamMembers to update
+     */
+    where?: TeamMemberWhereInput
+    /**
+     * Limit how many TeamMembers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TeamMember updateManyAndReturn
+   */
+  export type TeamMemberUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * The data used to update TeamMembers.
+     */
+    data: XOR<TeamMemberUpdateManyMutationInput, TeamMemberUncheckedUpdateManyInput>
+    /**
+     * Filter which TeamMembers to update
+     */
+    where?: TeamMemberWhereInput
+    /**
+     * Limit how many TeamMembers to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TeamMember upsert
+   */
+  export type TeamMemberUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TeamMember to update in case it exists.
+     */
+    where: TeamMemberWhereUniqueInput
+    /**
+     * In case the TeamMember found by the `where` argument doesn't exist, create a new TeamMember with this data.
+     */
+    create: XOR<TeamMemberCreateInput, TeamMemberUncheckedCreateInput>
+    /**
+     * In case the TeamMember was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TeamMemberUpdateInput, TeamMemberUncheckedUpdateInput>
+  }
+
+  /**
+   * TeamMember delete
+   */
+  export type TeamMemberDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
+    /**
+     * Filter which TeamMember to delete.
+     */
+    where: TeamMemberWhereUniqueInput
+  }
+
+  /**
+   * TeamMember deleteMany
+   */
+  export type TeamMemberDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TeamMembers to delete
+     */
+    where?: TeamMemberWhereInput
+    /**
+     * Limit how many TeamMembers to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TeamMember without action
+   */
+  export type TeamMemberDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TeamMember
+     */
+    select?: TeamMemberSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TeamMember
+     */
+    omit?: TeamMemberOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TeamMemberInclude<ExtArgs> | null
   }
 
 
@@ -23542,11 +24848,10 @@ export namespace Prisma {
     username: 'username',
     password: 'password',
     role: 'role',
+    name: 'name',
     email: 'email',
+    phone: 'phone',
     gender: 'gender',
-    DateOfBirth: 'DateOfBirth',
-    phoneNumber: 'phoneNumber',
-    avatar: 'avatar',
     isActive: 'isActive',
     lastLoginAt: 'lastLoginAt',
     emailVerified: 'emailVerified',
@@ -23567,7 +24872,10 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     adminId: 'adminId',
-    numberOfFields: 'numberOfFields'
+    numberOfFields: 'numberOfFields',
+    maxTeams: 'maxTeams',
+    maxTeamMembers: 'maxTeamMembers',
+    minTeamMembers: 'minTeamMembers'
   };
 
   export type TournamentScalarFieldEnum = (typeof TournamentScalarFieldEnum)[keyof typeof TournamentScalarFieldEnum]
@@ -23643,19 +24951,33 @@ export namespace Prisma {
     id: 'id',
     teamNumber: 'teamNumber',
     name: 'name',
-    organization: 'organization',
-    avatar: 'avatar',
-    description: 'description',
-    teamLead: 'teamLead',
-    teamLeadId: 'teamLeadId',
-    teamMembers: 'teamMembers',
     tournamentId: 'tournamentId',
     currentStageId: 'currentStageId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    userId: 'userId',
+    referralSource: 'referralSource'
+  };
+
+  export type TeamScalarFieldEnum = (typeof TeamScalarFieldEnum)[keyof typeof TeamScalarFieldEnum]
+
+
+  export const TeamMemberScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    gender: 'gender',
+    phone: 'phone',
+    email: 'email',
+    province: 'province',
+    ward: 'ward',
+    organization: 'organization',
+    organizationAddress: 'organizationAddress',
+    teamId: 'teamId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
-  export type TeamScalarFieldEnum = (typeof TeamScalarFieldEnum)[keyof typeof TeamScalarFieldEnum]
+  export type TeamMemberScalarFieldEnum = (typeof TeamMemberScalarFieldEnum)[keyof typeof TeamMemberScalarFieldEnum]
 
 
   export const TeamAllianceScalarFieldEnum: {
@@ -23815,14 +25137,6 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-  export const NullableJsonNullValueInput: {
-    DbNull: typeof DbNull,
-    JsonNull: typeof JsonNull
-  };
-
-  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
-
-
   export const JsonNullValueInput: {
     JsonNull: typeof JsonNull
   };
@@ -23885,6 +25199,20 @@ export namespace Prisma {
    * Reference to a field of type 'UserRole[]'
    */
   export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Gender'
+   */
+  export type EnumGenderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Gender'>
+    
+
+
+  /**
+   * Reference to a field of type 'Gender[]'
+   */
+  export type ListEnumGenderFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Gender[]'>
     
 
 
@@ -24008,20 +25336,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Json'
-   */
-  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-  /**
-   * Reference to a field of type 'QueryMode'
-   */
-  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -24061,6 +25375,20 @@ export namespace Prisma {
    */
   export type ListEnumElementTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ElementType[]'>
     
+
+
+  /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
   /**
    * Deep Input Types
    */
@@ -24074,11 +25402,10 @@ export namespace Prisma {
     username?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
     role?: EnumUserRoleFilter<"User"> | $Enums.UserRole
-    email?: StringNullableFilter<"User"> | string | null
-    gender?: BoolNullableFilter<"User"> | boolean | null
-    DateOfBirth?: DateTimeNullableFilter<"User"> | Date | string | null
-    phoneNumber?: StringNullableFilter<"User"> | string | null
-    avatar?: StringNullableFilter<"User"> | string | null
+    name?: StringFilter<"User"> | string
+    email?: StringFilter<"User"> | string
+    phone?: StringFilter<"User"> | string
+    gender?: EnumGenderNullableFilter<"User"> | $Enums.Gender | null
     isActive?: BoolFilter<"User"> | boolean
     lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     emailVerified?: BoolFilter<"User"> | boolean
@@ -24092,6 +25419,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeListRelationFilter
     fieldDisplays?: FieldDisplayListRelationFilter
     fieldReferees?: FieldRefereeListRelationFilter
+    Team?: TeamListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -24099,11 +25427,10 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     role?: SortOrder
-    email?: SortOrderInput | SortOrder
+    name?: SortOrder
+    email?: SortOrder
+    phone?: SortOrder
     gender?: SortOrderInput | SortOrder
-    DateOfBirth?: SortOrderInput | SortOrder
-    phoneNumber?: SortOrderInput | SortOrder
-    avatar?: SortOrderInput | SortOrder
     isActive?: SortOrder
     lastLoginAt?: SortOrderInput | SortOrder
     emailVerified?: SortOrder
@@ -24117,6 +25444,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeOrderByRelationAggregateInput
     fieldDisplays?: FieldDisplayOrderByRelationAggregateInput
     fieldReferees?: FieldRefereeOrderByRelationAggregateInput
+    Team?: TeamOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -24128,10 +25456,9 @@ export namespace Prisma {
     NOT?: UserWhereInput | UserWhereInput[]
     password?: StringFilter<"User"> | string
     role?: EnumUserRoleFilter<"User"> | $Enums.UserRole
-    gender?: BoolNullableFilter<"User"> | boolean | null
-    DateOfBirth?: DateTimeNullableFilter<"User"> | Date | string | null
-    phoneNumber?: StringNullableFilter<"User"> | string | null
-    avatar?: StringNullableFilter<"User"> | string | null
+    name?: StringFilter<"User"> | string
+    phone?: StringFilter<"User"> | string
+    gender?: EnumGenderNullableFilter<"User"> | $Enums.Gender | null
     isActive?: BoolFilter<"User"> | boolean
     lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     emailVerified?: BoolFilter<"User"> | boolean
@@ -24145,6 +25472,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeListRelationFilter
     fieldDisplays?: FieldDisplayListRelationFilter
     fieldReferees?: FieldRefereeListRelationFilter
+    Team?: TeamListRelationFilter
   }, "id" | "username" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -24152,11 +25480,10 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     role?: SortOrder
-    email?: SortOrderInput | SortOrder
+    name?: SortOrder
+    email?: SortOrder
+    phone?: SortOrder
     gender?: SortOrderInput | SortOrder
-    DateOfBirth?: SortOrderInput | SortOrder
-    phoneNumber?: SortOrderInput | SortOrder
-    avatar?: SortOrderInput | SortOrder
     isActive?: SortOrder
     lastLoginAt?: SortOrderInput | SortOrder
     emailVerified?: SortOrder
@@ -24176,11 +25503,10 @@ export namespace Prisma {
     username?: StringWithAggregatesFilter<"User"> | string
     password?: StringWithAggregatesFilter<"User"> | string
     role?: EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
-    email?: StringNullableWithAggregatesFilter<"User"> | string | null
-    gender?: BoolNullableWithAggregatesFilter<"User"> | boolean | null
-    DateOfBirth?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
-    phoneNumber?: StringNullableWithAggregatesFilter<"User"> | string | null
-    avatar?: StringNullableWithAggregatesFilter<"User"> | string | null
+    name?: StringWithAggregatesFilter<"User"> | string
+    email?: StringWithAggregatesFilter<"User"> | string
+    phone?: StringWithAggregatesFilter<"User"> | string
+    gender?: EnumGenderNullableWithAggregatesFilter<"User"> | $Enums.Gender | null
     isActive?: BoolWithAggregatesFilter<"User"> | boolean
     lastLoginAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     emailVerified?: BoolWithAggregatesFilter<"User"> | boolean
@@ -24202,6 +25528,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Tournament"> | Date | string
     adminId?: StringFilter<"Tournament"> | string
     numberOfFields?: IntFilter<"Tournament"> | number
+    maxTeams?: IntNullableFilter<"Tournament"> | number | null
+    maxTeamMembers?: IntNullableFilter<"Tournament"> | number | null
+    minTeamMembers?: IntNullableFilter<"Tournament"> | number | null
     admin?: XOR<UserScalarRelationFilter, UserWhereInput>
     stages?: StageListRelationFilter
     teams?: TeamListRelationFilter
@@ -24220,6 +25549,9 @@ export namespace Prisma {
     updatedAt?: SortOrder
     adminId?: SortOrder
     numberOfFields?: SortOrder
+    maxTeams?: SortOrderInput | SortOrder
+    maxTeamMembers?: SortOrderInput | SortOrder
+    minTeamMembers?: SortOrderInput | SortOrder
     admin?: UserOrderByWithRelationInput
     stages?: StageOrderByRelationAggregateInput
     teams?: TeamOrderByRelationAggregateInput
@@ -24241,6 +25573,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Tournament"> | Date | string
     adminId?: StringFilter<"Tournament"> | string
     numberOfFields?: IntFilter<"Tournament"> | number
+    maxTeams?: IntNullableFilter<"Tournament"> | number | null
+    maxTeamMembers?: IntNullableFilter<"Tournament"> | number | null
+    minTeamMembers?: IntNullableFilter<"Tournament"> | number | null
     admin?: XOR<UserScalarRelationFilter, UserWhereInput>
     stages?: StageListRelationFilter
     teams?: TeamListRelationFilter
@@ -24259,6 +25594,9 @@ export namespace Prisma {
     updatedAt?: SortOrder
     adminId?: SortOrder
     numberOfFields?: SortOrder
+    maxTeams?: SortOrderInput | SortOrder
+    maxTeamMembers?: SortOrderInput | SortOrder
+    minTeamMembers?: SortOrderInput | SortOrder
     _count?: TournamentCountOrderByAggregateInput
     _avg?: TournamentAvgOrderByAggregateInput
     _max?: TournamentMaxOrderByAggregateInput
@@ -24279,6 +25617,9 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"Tournament"> | Date | string
     adminId?: StringWithAggregatesFilter<"Tournament"> | string
     numberOfFields?: IntWithAggregatesFilter<"Tournament"> | number
+    maxTeams?: IntNullableWithAggregatesFilter<"Tournament"> | number | null
+    maxTeamMembers?: IntNullableWithAggregatesFilter<"Tournament"> | number | null
+    minTeamMembers?: IntNullableWithAggregatesFilter<"Tournament"> | number | null
   }
 
   export type StageWhereInput = {
@@ -24661,40 +26002,36 @@ export namespace Prisma {
     id?: StringFilter<"Team"> | string
     teamNumber?: StringFilter<"Team"> | string
     name?: StringFilter<"Team"> | string
-    organization?: StringNullableFilter<"Team"> | string | null
-    avatar?: StringNullableFilter<"Team"> | string | null
-    description?: StringNullableFilter<"Team"> | string | null
-    teamLead?: StringNullableFilter<"Team"> | string | null
-    teamLeadId?: StringNullableFilter<"Team"> | string | null
-    teamMembers?: JsonNullableFilter<"Team">
-    tournamentId?: StringNullableFilter<"Team"> | string | null
+    tournamentId?: StringFilter<"Team"> | string
     currentStageId?: StringNullableFilter<"Team"> | string | null
     createdAt?: DateTimeFilter<"Team"> | Date | string
     updatedAt?: DateTimeFilter<"Team"> | Date | string
-    tournament?: XOR<TournamentNullableScalarRelationFilter, TournamentWhereInput> | null
+    userId?: StringFilter<"Team"> | string
+    referralSource?: StringFilter<"Team"> | string
+    tournament?: XOR<TournamentScalarRelationFilter, TournamentWhereInput>
     currentStage?: XOR<StageNullableScalarRelationFilter, StageWhereInput> | null
     teamAlliances?: TeamAllianceListRelationFilter
     teamStats?: TeamStatsListRelationFilter
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    teamMembers?: TeamMemberListRelationFilter
   }
 
   export type TeamOrderByWithRelationInput = {
     id?: SortOrder
     teamNumber?: SortOrder
     name?: SortOrder
-    organization?: SortOrderInput | SortOrder
-    avatar?: SortOrderInput | SortOrder
-    description?: SortOrderInput | SortOrder
-    teamLead?: SortOrderInput | SortOrder
-    teamLeadId?: SortOrderInput | SortOrder
-    teamMembers?: SortOrderInput | SortOrder
-    tournamentId?: SortOrderInput | SortOrder
+    tournamentId?: SortOrder
     currentStageId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    userId?: SortOrder
+    referralSource?: SortOrder
     tournament?: TournamentOrderByWithRelationInput
     currentStage?: StageOrderByWithRelationInput
     teamAlliances?: TeamAllianceOrderByRelationAggregateInput
     teamStats?: TeamStatsOrderByRelationAggregateInput
+    user?: UserOrderByWithRelationInput
+    teamMembers?: TeamMemberOrderByRelationAggregateInput
   }
 
   export type TeamWhereUniqueInput = Prisma.AtLeast<{
@@ -24704,36 +26041,30 @@ export namespace Prisma {
     OR?: TeamWhereInput[]
     NOT?: TeamWhereInput | TeamWhereInput[]
     name?: StringFilter<"Team"> | string
-    organization?: StringNullableFilter<"Team"> | string | null
-    avatar?: StringNullableFilter<"Team"> | string | null
-    description?: StringNullableFilter<"Team"> | string | null
-    teamLead?: StringNullableFilter<"Team"> | string | null
-    teamLeadId?: StringNullableFilter<"Team"> | string | null
-    teamMembers?: JsonNullableFilter<"Team">
-    tournamentId?: StringNullableFilter<"Team"> | string | null
+    tournamentId?: StringFilter<"Team"> | string
     currentStageId?: StringNullableFilter<"Team"> | string | null
     createdAt?: DateTimeFilter<"Team"> | Date | string
     updatedAt?: DateTimeFilter<"Team"> | Date | string
-    tournament?: XOR<TournamentNullableScalarRelationFilter, TournamentWhereInput> | null
+    userId?: StringFilter<"Team"> | string
+    referralSource?: StringFilter<"Team"> | string
+    tournament?: XOR<TournamentScalarRelationFilter, TournamentWhereInput>
     currentStage?: XOR<StageNullableScalarRelationFilter, StageWhereInput> | null
     teamAlliances?: TeamAllianceListRelationFilter
     teamStats?: TeamStatsListRelationFilter
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    teamMembers?: TeamMemberListRelationFilter
   }, "id" | "teamNumber">
 
   export type TeamOrderByWithAggregationInput = {
     id?: SortOrder
     teamNumber?: SortOrder
     name?: SortOrder
-    organization?: SortOrderInput | SortOrder
-    avatar?: SortOrderInput | SortOrder
-    description?: SortOrderInput | SortOrder
-    teamLead?: SortOrderInput | SortOrder
-    teamLeadId?: SortOrderInput | SortOrder
-    teamMembers?: SortOrderInput | SortOrder
-    tournamentId?: SortOrderInput | SortOrder
+    tournamentId?: SortOrder
     currentStageId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    userId?: SortOrder
+    referralSource?: SortOrder
     _count?: TeamCountOrderByAggregateInput
     _max?: TeamMaxOrderByAggregateInput
     _min?: TeamMinOrderByAggregateInput
@@ -24746,16 +26077,102 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Team"> | string
     teamNumber?: StringWithAggregatesFilter<"Team"> | string
     name?: StringWithAggregatesFilter<"Team"> | string
-    organization?: StringNullableWithAggregatesFilter<"Team"> | string | null
-    avatar?: StringNullableWithAggregatesFilter<"Team"> | string | null
-    description?: StringNullableWithAggregatesFilter<"Team"> | string | null
-    teamLead?: StringNullableWithAggregatesFilter<"Team"> | string | null
-    teamLeadId?: StringNullableWithAggregatesFilter<"Team"> | string | null
-    teamMembers?: JsonNullableWithAggregatesFilter<"Team">
-    tournamentId?: StringNullableWithAggregatesFilter<"Team"> | string | null
+    tournamentId?: StringWithAggregatesFilter<"Team"> | string
     currentStageId?: StringNullableWithAggregatesFilter<"Team"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Team"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Team"> | Date | string
+    userId?: StringWithAggregatesFilter<"Team"> | string
+    referralSource?: StringWithAggregatesFilter<"Team"> | string
+  }
+
+  export type TeamMemberWhereInput = {
+    AND?: TeamMemberWhereInput | TeamMemberWhereInput[]
+    OR?: TeamMemberWhereInput[]
+    NOT?: TeamMemberWhereInput | TeamMemberWhereInput[]
+    id?: StringFilter<"TeamMember"> | string
+    name?: StringFilter<"TeamMember"> | string
+    gender?: EnumGenderNullableFilter<"TeamMember"> | $Enums.Gender | null
+    phone?: StringNullableFilter<"TeamMember"> | string | null
+    email?: StringNullableFilter<"TeamMember"> | string | null
+    province?: StringFilter<"TeamMember"> | string
+    ward?: StringFilter<"TeamMember"> | string
+    organization?: StringNullableFilter<"TeamMember"> | string | null
+    organizationAddress?: StringNullableFilter<"TeamMember"> | string | null
+    teamId?: StringFilter<"TeamMember"> | string
+    createdAt?: DateTimeFilter<"TeamMember"> | Date | string
+    updatedAt?: DateTimeFilter<"TeamMember"> | Date | string
+    team?: XOR<TeamScalarRelationFilter, TeamWhereInput>
+  }
+
+  export type TeamMemberOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    gender?: SortOrderInput | SortOrder
+    phone?: SortOrderInput | SortOrder
+    email?: SortOrderInput | SortOrder
+    province?: SortOrder
+    ward?: SortOrder
+    organization?: SortOrderInput | SortOrder
+    organizationAddress?: SortOrderInput | SortOrder
+    teamId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    team?: TeamOrderByWithRelationInput
+  }
+
+  export type TeamMemberWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TeamMemberWhereInput | TeamMemberWhereInput[]
+    OR?: TeamMemberWhereInput[]
+    NOT?: TeamMemberWhereInput | TeamMemberWhereInput[]
+    name?: StringFilter<"TeamMember"> | string
+    gender?: EnumGenderNullableFilter<"TeamMember"> | $Enums.Gender | null
+    phone?: StringNullableFilter<"TeamMember"> | string | null
+    email?: StringNullableFilter<"TeamMember"> | string | null
+    province?: StringFilter<"TeamMember"> | string
+    ward?: StringFilter<"TeamMember"> | string
+    organization?: StringNullableFilter<"TeamMember"> | string | null
+    organizationAddress?: StringNullableFilter<"TeamMember"> | string | null
+    teamId?: StringFilter<"TeamMember"> | string
+    createdAt?: DateTimeFilter<"TeamMember"> | Date | string
+    updatedAt?: DateTimeFilter<"TeamMember"> | Date | string
+    team?: XOR<TeamScalarRelationFilter, TeamWhereInput>
+  }, "id">
+
+  export type TeamMemberOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    gender?: SortOrderInput | SortOrder
+    phone?: SortOrderInput | SortOrder
+    email?: SortOrderInput | SortOrder
+    province?: SortOrder
+    ward?: SortOrder
+    organization?: SortOrderInput | SortOrder
+    organizationAddress?: SortOrderInput | SortOrder
+    teamId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TeamMemberCountOrderByAggregateInput
+    _max?: TeamMemberMaxOrderByAggregateInput
+    _min?: TeamMemberMinOrderByAggregateInput
+  }
+
+  export type TeamMemberScalarWhereWithAggregatesInput = {
+    AND?: TeamMemberScalarWhereWithAggregatesInput | TeamMemberScalarWhereWithAggregatesInput[]
+    OR?: TeamMemberScalarWhereWithAggregatesInput[]
+    NOT?: TeamMemberScalarWhereWithAggregatesInput | TeamMemberScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TeamMember"> | string
+    name?: StringWithAggregatesFilter<"TeamMember"> | string
+    gender?: EnumGenderNullableWithAggregatesFilter<"TeamMember"> | $Enums.Gender | null
+    phone?: StringNullableWithAggregatesFilter<"TeamMember"> | string | null
+    email?: StringNullableWithAggregatesFilter<"TeamMember"> | string | null
+    province?: StringWithAggregatesFilter<"TeamMember"> | string
+    ward?: StringWithAggregatesFilter<"TeamMember"> | string
+    organization?: StringNullableWithAggregatesFilter<"TeamMember"> | string | null
+    organizationAddress?: StringNullableWithAggregatesFilter<"TeamMember"> | string | null
+    teamId?: StringWithAggregatesFilter<"TeamMember"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"TeamMember"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TeamMember"> | Date | string
   }
 
   export type TeamAllianceWhereInput = {
@@ -25574,12 +26991,11 @@ export namespace Prisma {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -25592,18 +27008,18 @@ export namespace Prisma {
     matchReferees?: MatchRefereeCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeCreateNestedManyWithoutUserInput
+    Team?: TeamCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -25616,6 +27032,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayUncheckedCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeUncheckedCreateNestedManyWithoutUserInput
+    Team?: TeamUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -25623,11 +27040,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -25640,6 +27056,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUpdateManyWithoutUserNestedInput
+    Team?: TeamUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -25647,11 +27064,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -25664,18 +27080,18 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUncheckedUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUncheckedUpdateManyWithoutUserNestedInput
+    Team?: TeamUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -25689,11 +27105,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -25706,11 +27121,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -25728,6 +27142,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     admin: UserCreateNestedOneWithoutTournamentsInput
     stages?: StageCreateNestedManyWithoutTournamentInput
     teams?: TeamCreateNestedManyWithoutTournamentInput
@@ -25746,6 +27163,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     adminId: string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     stages?: StageUncheckedCreateNestedManyWithoutTournamentInput
     teams?: TeamUncheckedCreateNestedManyWithoutTournamentInput
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTournamentInput
@@ -25762,6 +27182,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     admin?: UserUpdateOneRequiredWithoutTournamentsNestedInput
     stages?: StageUpdateManyWithoutTournamentNestedInput
     teams?: TeamUpdateManyWithoutTournamentNestedInput
@@ -25780,6 +27203,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     adminId?: StringFieldUpdateOperationsInput | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     stages?: StageUncheckedUpdateManyWithoutTournamentNestedInput
     teams?: TeamUncheckedUpdateManyWithoutTournamentNestedInput
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTournamentNestedInput
@@ -25797,6 +27223,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     adminId: string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
   }
 
   export type TournamentUpdateManyMutationInput = {
@@ -25808,6 +27237,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type TournamentUncheckedUpdateManyInput = {
@@ -25820,6 +27252,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     adminId?: StringFieldUpdateOperationsInput | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type StageCreateInput = {
@@ -26233,116 +27668,195 @@ export namespace Prisma {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
-    tournament?: TournamentCreateNestedOneWithoutTeamsInput
+    referralSource: string
+    tournament: TournamentCreateNestedOneWithoutTeamsInput
     currentStage?: StageCreateNestedOneWithoutTeamsInput
     teamAlliances?: TeamAllianceCreateNestedManyWithoutTeamInput
     teamStats?: TeamStatsCreateNestedManyWithoutTeamInput
+    user: UserCreateNestedOneWithoutTeamInput
+    teamMembers?: TeamMemberCreateNestedManyWithoutTeamInput
   }
 
   export type TeamUncheckedCreateInput = {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: string | null
+    tournamentId: string
     currentStageId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    userId: string
+    referralSource: string
     teamAlliances?: TeamAllianceUncheckedCreateNestedManyWithoutTeamInput
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTeamInput
+    teamMembers?: TeamMemberUncheckedCreateNestedManyWithoutTeamInput
   }
 
   export type TeamUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    tournament?: TournamentUpdateOneWithoutTeamsNestedInput
+    referralSource?: StringFieldUpdateOperationsInput | string
+    tournament?: TournamentUpdateOneRequiredWithoutTeamsNestedInput
     currentStage?: StageUpdateOneWithoutTeamsNestedInput
     teamAlliances?: TeamAllianceUpdateManyWithoutTeamNestedInput
     teamStats?: TeamStatsUpdateManyWithoutTeamNestedInput
+    user?: UserUpdateOneRequiredWithoutTeamNestedInput
+    teamMembers?: TeamMemberUpdateManyWithoutTeamNestedInput
   }
 
   export type TeamUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: NullableStringFieldUpdateOperationsInput | string | null
+    tournamentId?: StringFieldUpdateOperationsInput | string
     currentStageId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    referralSource?: StringFieldUpdateOperationsInput | string
     teamAlliances?: TeamAllianceUncheckedUpdateManyWithoutTeamNestedInput
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTeamNestedInput
+    teamMembers?: TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
   }
 
   export type TeamCreateManyInput = {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: string | null
+    tournamentId: string
     currentStageId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    userId: string
+    referralSource: string
   }
 
   export type TeamUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    referralSource?: StringFieldUpdateOperationsInput | string
   }
 
   export type TeamUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: NullableStringFieldUpdateOperationsInput | string | null
+    tournamentId?: StringFieldUpdateOperationsInput | string
     currentStageId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    referralSource?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type TeamMemberCreateInput = {
+    id?: string
+    name: string
+    gender?: $Enums.Gender | null
+    phone?: string | null
+    email?: string | null
+    province: string
+    ward: string
+    organization?: string | null
+    organizationAddress?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    team: TeamCreateNestedOneWithoutTeamMembersInput
+  }
+
+  export type TeamMemberUncheckedCreateInput = {
+    id?: string
+    name: string
+    gender?: $Enums.Gender | null
+    phone?: string | null
+    email?: string | null
+    province: string
+    ward: string
+    organization?: string | null
+    organizationAddress?: string | null
+    teamId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TeamMemberUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    province?: StringFieldUpdateOperationsInput | string
+    ward?: StringFieldUpdateOperationsInput | string
+    organization?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    team?: TeamUpdateOneRequiredWithoutTeamMembersNestedInput
+  }
+
+  export type TeamMemberUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    province?: StringFieldUpdateOperationsInput | string
+    ward?: StringFieldUpdateOperationsInput | string
+    organization?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    teamId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TeamMemberCreateManyInput = {
+    id?: string
+    name: string
+    gender?: $Enums.Gender | null
+    phone?: string | null
+    email?: string | null
+    province: string
+    ward: string
+    organization?: string | null
+    organizationAddress?: string | null
+    teamId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TeamMemberUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    province?: StringFieldUpdateOperationsInput | string
+    ward?: StringFieldUpdateOperationsInput | string
+    organization?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TeamMemberUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    province?: StringFieldUpdateOperationsInput | string
+    ward?: StringFieldUpdateOperationsInput | string
+    organization?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    teamId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27212,24 +28726,16 @@ export namespace Prisma {
     not?: NestedEnumUserRoleFilter<$PrismaModel> | $Enums.UserRole
   }
 
-  export type StringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  export type EnumGenderNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.Gender | EnumGenderFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumGenderNullableFilter<$PrismaModel> | $Enums.Gender | null
   }
 
-  export type BoolNullableFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
-    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
@@ -27243,11 +28749,6 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -27257,6 +28758,21 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
   export type UserNullableScalarRelationFilter = {
@@ -27300,6 +28816,12 @@ export namespace Prisma {
     none?: FieldRefereeWhereInput
   }
 
+  export type TeamListRelationFilter = {
+    every?: TeamWhereInput
+    some?: TeamWhereInput
+    none?: TeamWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -27329,16 +28851,19 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type TeamOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
     username?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    name?: SortOrder
     email?: SortOrder
+    phone?: SortOrder
     gender?: SortOrder
-    DateOfBirth?: SortOrder
-    phoneNumber?: SortOrder
-    avatar?: SortOrder
     isActive?: SortOrder
     lastLoginAt?: SortOrder
     emailVerified?: SortOrder
@@ -27352,11 +28877,10 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    name?: SortOrder
     email?: SortOrder
+    phone?: SortOrder
     gender?: SortOrder
-    DateOfBirth?: SortOrder
-    phoneNumber?: SortOrder
-    avatar?: SortOrder
     isActive?: SortOrder
     lastLoginAt?: SortOrder
     emailVerified?: SortOrder
@@ -27370,11 +28894,10 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    name?: SortOrder
     email?: SortOrder
+    phone?: SortOrder
     gender?: SortOrder
-    DateOfBirth?: SortOrder
-    phoneNumber?: SortOrder
-    avatar?: SortOrder
     isActive?: SortOrder
     lastLoginAt?: SortOrder
     emailVerified?: SortOrder
@@ -27411,6 +28934,52 @@ export namespace Prisma {
     _max?: NestedEnumUserRoleFilter<$PrismaModel>
   }
 
+  export type EnumGenderNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Gender | EnumGenderFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumGenderNullableWithAggregatesFilter<$PrismaModel> | $Enums.Gender | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumGenderNullableFilter<$PrismaModel>
+    _max?: NestedEnumGenderNullableFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
   export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -27429,50 +28998,6 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
-  export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
-    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedBoolNullableFilter<$PrismaModel>
-    _max?: NestedBoolNullableFilter<$PrismaModel>
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
-  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
   export type IntFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -27484,6 +29009,17 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
@@ -27493,12 +29029,6 @@ export namespace Prisma {
     every?: StageWhereInput
     some?: StageWhereInput
     none?: StageWhereInput
-  }
-
-  export type TeamListRelationFilter = {
-    every?: TeamWhereInput
-    some?: TeamWhereInput
-    none?: TeamWhereInput
   }
 
   export type TeamStatsListRelationFilter = {
@@ -27520,10 +29050,6 @@ export namespace Prisma {
   }
 
   export type StageOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type TeamOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -27549,10 +29075,16 @@ export namespace Prisma {
     updatedAt?: SortOrder
     adminId?: SortOrder
     numberOfFields?: SortOrder
+    maxTeams?: SortOrder
+    maxTeamMembers?: SortOrder
+    minTeamMembers?: SortOrder
   }
 
   export type TournamentAvgOrderByAggregateInput = {
     numberOfFields?: SortOrder
+    maxTeams?: SortOrder
+    maxTeamMembers?: SortOrder
+    minTeamMembers?: SortOrder
   }
 
   export type TournamentMaxOrderByAggregateInput = {
@@ -27565,6 +29097,9 @@ export namespace Prisma {
     updatedAt?: SortOrder
     adminId?: SortOrder
     numberOfFields?: SortOrder
+    maxTeams?: SortOrder
+    maxTeamMembers?: SortOrder
+    minTeamMembers?: SortOrder
   }
 
   export type TournamentMinOrderByAggregateInput = {
@@ -27577,10 +29112,16 @@ export namespace Prisma {
     updatedAt?: SortOrder
     adminId?: SortOrder
     numberOfFields?: SortOrder
+    maxTeams?: SortOrder
+    maxTeamMembers?: SortOrder
+    minTeamMembers?: SortOrder
   }
 
   export type TournamentSumOrderByAggregateInput = {
     numberOfFields?: SortOrder
+    maxTeams?: SortOrder
+    maxTeamMembers?: SortOrder
+    minTeamMembers?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -27597,6 +29138,22 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type EnumStageTypeFilter<$PrismaModel = never> = {
@@ -27683,17 +29240,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumStageStatusFilter<$PrismaModel>
     _max?: NestedEnumStageStatusFilter<$PrismaModel>
-  }
-
-  export type IntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
   export type EnumMatchStateFilter<$PrismaModel = never> = {
@@ -27826,22 +29372,6 @@ export namespace Prisma {
     roundNumber?: SortOrder
     duration?: SortOrder
     matchDuration?: SortOrder
-  }
-
-  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedIntNullableFilter<$PrismaModel>
-    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type EnumMatchStateWithAggregatesFilter<$PrismaModel = never> = {
@@ -27995,115 +29525,106 @@ export namespace Prisma {
     _min?: NestedEnumAllianceColorFilter<$PrismaModel>
     _max?: NestedEnumAllianceColorFilter<$PrismaModel>
   }
-  export type JsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
-
-  export type TournamentNullableScalarRelationFilter = {
-    is?: TournamentWhereInput | null
-    isNot?: TournamentWhereInput | null
-  }
 
   export type StageNullableScalarRelationFilter = {
     is?: StageWhereInput | null
     isNot?: StageWhereInput | null
   }
 
+  export type TeamMemberListRelationFilter = {
+    every?: TeamMemberWhereInput
+    some?: TeamMemberWhereInput
+    none?: TeamMemberWhereInput
+  }
+
+  export type TeamMemberOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type TeamCountOrderByAggregateInput = {
     id?: SortOrder
     teamNumber?: SortOrder
     name?: SortOrder
-    organization?: SortOrder
-    avatar?: SortOrder
-    description?: SortOrder
-    teamLead?: SortOrder
-    teamLeadId?: SortOrder
-    teamMembers?: SortOrder
     tournamentId?: SortOrder
     currentStageId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    userId?: SortOrder
+    referralSource?: SortOrder
   }
 
   export type TeamMaxOrderByAggregateInput = {
     id?: SortOrder
     teamNumber?: SortOrder
     name?: SortOrder
-    organization?: SortOrder
-    avatar?: SortOrder
-    description?: SortOrder
-    teamLead?: SortOrder
-    teamLeadId?: SortOrder
     tournamentId?: SortOrder
     currentStageId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    userId?: SortOrder
+    referralSource?: SortOrder
   }
 
   export type TeamMinOrderByAggregateInput = {
     id?: SortOrder
     teamNumber?: SortOrder
     name?: SortOrder
-    organization?: SortOrder
-    avatar?: SortOrder
-    description?: SortOrder
-    teamLead?: SortOrder
-    teamLeadId?: SortOrder
     tournamentId?: SortOrder
     currentStageId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedJsonNullableFilter<$PrismaModel>
-    _max?: NestedJsonNullableFilter<$PrismaModel>
+    userId?: SortOrder
+    referralSource?: SortOrder
   }
 
   export type TeamScalarRelationFilter = {
     is?: TeamWhereInput
     isNot?: TeamWhereInput
+  }
+
+  export type TeamMemberCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    gender?: SortOrder
+    phone?: SortOrder
+    email?: SortOrder
+    province?: SortOrder
+    ward?: SortOrder
+    organization?: SortOrder
+    organizationAddress?: SortOrder
+    teamId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TeamMemberMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    gender?: SortOrder
+    phone?: SortOrder
+    email?: SortOrder
+    province?: SortOrder
+    ward?: SortOrder
+    organization?: SortOrder
+    organizationAddress?: SortOrder
+    teamId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TeamMemberMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    gender?: SortOrder
+    phone?: SortOrder
+    email?: SortOrder
+    province?: SortOrder
+    ward?: SortOrder
+    organization?: SortOrder
+    organizationAddress?: SortOrder
+    teamId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type AllianceScalarRelationFilter = {
@@ -28804,6 +30325,13 @@ export namespace Prisma {
     connect?: FieldRefereeWhereUniqueInput | FieldRefereeWhereUniqueInput[]
   }
 
+  export type TeamCreateNestedManyWithoutUserInput = {
+    create?: XOR<TeamCreateWithoutUserInput, TeamUncheckedCreateWithoutUserInput> | TeamCreateWithoutUserInput[] | TeamUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TeamCreateOrConnectWithoutUserInput | TeamCreateOrConnectWithoutUserInput[]
+    createMany?: TeamCreateManyUserInputEnvelope
+    connect?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+  }
+
   export type UserUncheckedCreateNestedManyWithoutCreatedByInput = {
     create?: XOR<UserCreateWithoutCreatedByInput, UserUncheckedCreateWithoutCreatedByInput> | UserCreateWithoutCreatedByInput[] | UserUncheckedCreateWithoutCreatedByInput[]
     connectOrCreate?: UserCreateOrConnectWithoutCreatedByInput | UserCreateOrConnectWithoutCreatedByInput[]
@@ -28846,6 +30374,13 @@ export namespace Prisma {
     connect?: FieldRefereeWhereUniqueInput | FieldRefereeWhereUniqueInput[]
   }
 
+  export type TeamUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<TeamCreateWithoutUserInput, TeamUncheckedCreateWithoutUserInput> | TeamCreateWithoutUserInput[] | TeamUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TeamCreateOrConnectWithoutUserInput | TeamCreateOrConnectWithoutUserInput[]
+    createMany?: TeamCreateManyUserInputEnvelope
+    connect?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -28854,20 +30389,16 @@ export namespace Prisma {
     set?: $Enums.UserRole
   }
 
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
-  }
-
-  export type NullableBoolFieldUpdateOperationsInput = {
-    set?: boolean | null
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
+  export type NullableEnumGenderFieldUpdateOperationsInput = {
+    set?: $Enums.Gender | null
   }
 
   export type BoolFieldUpdateOperationsInput = {
     set?: boolean
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
@@ -28968,6 +30499,24 @@ export namespace Prisma {
     deleteMany?: FieldRefereeScalarWhereInput | FieldRefereeScalarWhereInput[]
   }
 
+  export type TeamUpdateManyWithoutUserNestedInput = {
+    create?: XOR<TeamCreateWithoutUserInput, TeamUncheckedCreateWithoutUserInput> | TeamCreateWithoutUserInput[] | TeamUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TeamCreateOrConnectWithoutUserInput | TeamCreateOrConnectWithoutUserInput[]
+    upsert?: TeamUpsertWithWhereUniqueWithoutUserInput | TeamUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: TeamCreateManyUserInputEnvelope
+    set?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+    disconnect?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+    delete?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+    connect?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+    update?: TeamUpdateWithWhereUniqueWithoutUserInput | TeamUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: TeamUpdateManyWithWhereWithoutUserInput | TeamUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: TeamScalarWhereInput | TeamScalarWhereInput[]
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
   export type UserUncheckedUpdateManyWithoutCreatedByNestedInput = {
     create?: XOR<UserCreateWithoutCreatedByInput, UserUncheckedCreateWithoutCreatedByInput> | UserCreateWithoutCreatedByInput[] | UserUncheckedCreateWithoutCreatedByInput[]
     connectOrCreate?: UserCreateOrConnectWithoutCreatedByInput | UserCreateOrConnectWithoutCreatedByInput[]
@@ -29052,6 +30601,20 @@ export namespace Prisma {
     deleteMany?: FieldRefereeScalarWhereInput | FieldRefereeScalarWhereInput[]
   }
 
+  export type TeamUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<TeamCreateWithoutUserInput, TeamUncheckedCreateWithoutUserInput> | TeamCreateWithoutUserInput[] | TeamUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: TeamCreateOrConnectWithoutUserInput | TeamCreateOrConnectWithoutUserInput[]
+    upsert?: TeamUpsertWithWhereUniqueWithoutUserInput | TeamUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: TeamCreateManyUserInputEnvelope
+    set?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+    disconnect?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+    delete?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+    connect?: TeamWhereUniqueInput | TeamWhereUniqueInput[]
+    update?: TeamUpdateWithWhereUniqueWithoutUserInput | TeamUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: TeamUpdateManyWithWhereWithoutUserInput | TeamUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: TeamScalarWhereInput | TeamScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutTournamentsInput = {
     create?: XOR<UserCreateWithoutTournamentsInput, UserUncheckedCreateWithoutTournamentsInput>
     connectOrCreate?: UserCreateOrConnectWithoutTournamentsInput
@@ -29130,6 +30693,14 @@ export namespace Prisma {
 
   export type IntFieldUpdateOperationsInput = {
     set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
     increment?: number
     decrement?: number
     multiply?: number
@@ -29506,14 +31077,6 @@ export namespace Prisma {
     connect?: FieldDisplayWhereUniqueInput | FieldDisplayWhereUniqueInput[]
   }
 
-  export type NullableIntFieldUpdateOperationsInput = {
-    set?: number | null
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
   export type EnumMatchStateFieldUpdateOperationsInput = {
     set?: $Enums.MatchState
   }
@@ -29826,6 +31389,19 @@ export namespace Prisma {
     connect?: TeamStatsWhereUniqueInput | TeamStatsWhereUniqueInput[]
   }
 
+  export type UserCreateNestedOneWithoutTeamInput = {
+    create?: XOR<UserCreateWithoutTeamInput, UserUncheckedCreateWithoutTeamInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTeamInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type TeamMemberCreateNestedManyWithoutTeamInput = {
+    create?: XOR<TeamMemberCreateWithoutTeamInput, TeamMemberUncheckedCreateWithoutTeamInput> | TeamMemberCreateWithoutTeamInput[] | TeamMemberUncheckedCreateWithoutTeamInput[]
+    connectOrCreate?: TeamMemberCreateOrConnectWithoutTeamInput | TeamMemberCreateOrConnectWithoutTeamInput[]
+    createMany?: TeamMemberCreateManyTeamInputEnvelope
+    connect?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+  }
+
   export type TeamAllianceUncheckedCreateNestedManyWithoutTeamInput = {
     create?: XOR<TeamAllianceCreateWithoutTeamInput, TeamAllianceUncheckedCreateWithoutTeamInput> | TeamAllianceCreateWithoutTeamInput[] | TeamAllianceUncheckedCreateWithoutTeamInput[]
     connectOrCreate?: TeamAllianceCreateOrConnectWithoutTeamInput | TeamAllianceCreateOrConnectWithoutTeamInput[]
@@ -29840,12 +31416,17 @@ export namespace Prisma {
     connect?: TeamStatsWhereUniqueInput | TeamStatsWhereUniqueInput[]
   }
 
-  export type TournamentUpdateOneWithoutTeamsNestedInput = {
+  export type TeamMemberUncheckedCreateNestedManyWithoutTeamInput = {
+    create?: XOR<TeamMemberCreateWithoutTeamInput, TeamMemberUncheckedCreateWithoutTeamInput> | TeamMemberCreateWithoutTeamInput[] | TeamMemberUncheckedCreateWithoutTeamInput[]
+    connectOrCreate?: TeamMemberCreateOrConnectWithoutTeamInput | TeamMemberCreateOrConnectWithoutTeamInput[]
+    createMany?: TeamMemberCreateManyTeamInputEnvelope
+    connect?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+  }
+
+  export type TournamentUpdateOneRequiredWithoutTeamsNestedInput = {
     create?: XOR<TournamentCreateWithoutTeamsInput, TournamentUncheckedCreateWithoutTeamsInput>
     connectOrCreate?: TournamentCreateOrConnectWithoutTeamsInput
     upsert?: TournamentUpsertWithoutTeamsInput
-    disconnect?: TournamentWhereInput | boolean
-    delete?: TournamentWhereInput | boolean
     connect?: TournamentWhereUniqueInput
     update?: XOR<XOR<TournamentUpdateToOneWithWhereWithoutTeamsInput, TournamentUpdateWithoutTeamsInput>, TournamentUncheckedUpdateWithoutTeamsInput>
   }
@@ -29888,6 +31469,28 @@ export namespace Prisma {
     deleteMany?: TeamStatsScalarWhereInput | TeamStatsScalarWhereInput[]
   }
 
+  export type UserUpdateOneRequiredWithoutTeamNestedInput = {
+    create?: XOR<UserCreateWithoutTeamInput, UserUncheckedCreateWithoutTeamInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTeamInput
+    upsert?: UserUpsertWithoutTeamInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTeamInput, UserUpdateWithoutTeamInput>, UserUncheckedUpdateWithoutTeamInput>
+  }
+
+  export type TeamMemberUpdateManyWithoutTeamNestedInput = {
+    create?: XOR<TeamMemberCreateWithoutTeamInput, TeamMemberUncheckedCreateWithoutTeamInput> | TeamMemberCreateWithoutTeamInput[] | TeamMemberUncheckedCreateWithoutTeamInput[]
+    connectOrCreate?: TeamMemberCreateOrConnectWithoutTeamInput | TeamMemberCreateOrConnectWithoutTeamInput[]
+    upsert?: TeamMemberUpsertWithWhereUniqueWithoutTeamInput | TeamMemberUpsertWithWhereUniqueWithoutTeamInput[]
+    createMany?: TeamMemberCreateManyTeamInputEnvelope
+    set?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+    disconnect?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+    delete?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+    connect?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+    update?: TeamMemberUpdateWithWhereUniqueWithoutTeamInput | TeamMemberUpdateWithWhereUniqueWithoutTeamInput[]
+    updateMany?: TeamMemberUpdateManyWithWhereWithoutTeamInput | TeamMemberUpdateManyWithWhereWithoutTeamInput[]
+    deleteMany?: TeamMemberScalarWhereInput | TeamMemberScalarWhereInput[]
+  }
+
   export type TeamAllianceUncheckedUpdateManyWithoutTeamNestedInput = {
     create?: XOR<TeamAllianceCreateWithoutTeamInput, TeamAllianceUncheckedCreateWithoutTeamInput> | TeamAllianceCreateWithoutTeamInput[] | TeamAllianceUncheckedCreateWithoutTeamInput[]
     connectOrCreate?: TeamAllianceCreateOrConnectWithoutTeamInput | TeamAllianceCreateOrConnectWithoutTeamInput[]
@@ -29914,6 +31517,34 @@ export namespace Prisma {
     update?: TeamStatsUpdateWithWhereUniqueWithoutTeamInput | TeamStatsUpdateWithWhereUniqueWithoutTeamInput[]
     updateMany?: TeamStatsUpdateManyWithWhereWithoutTeamInput | TeamStatsUpdateManyWithWhereWithoutTeamInput[]
     deleteMany?: TeamStatsScalarWhereInput | TeamStatsScalarWhereInput[]
+  }
+
+  export type TeamMemberUncheckedUpdateManyWithoutTeamNestedInput = {
+    create?: XOR<TeamMemberCreateWithoutTeamInput, TeamMemberUncheckedCreateWithoutTeamInput> | TeamMemberCreateWithoutTeamInput[] | TeamMemberUncheckedCreateWithoutTeamInput[]
+    connectOrCreate?: TeamMemberCreateOrConnectWithoutTeamInput | TeamMemberCreateOrConnectWithoutTeamInput[]
+    upsert?: TeamMemberUpsertWithWhereUniqueWithoutTeamInput | TeamMemberUpsertWithWhereUniqueWithoutTeamInput[]
+    createMany?: TeamMemberCreateManyTeamInputEnvelope
+    set?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+    disconnect?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+    delete?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+    connect?: TeamMemberWhereUniqueInput | TeamMemberWhereUniqueInput[]
+    update?: TeamMemberUpdateWithWhereUniqueWithoutTeamInput | TeamMemberUpdateWithWhereUniqueWithoutTeamInput[]
+    updateMany?: TeamMemberUpdateManyWithWhereWithoutTeamInput | TeamMemberUpdateManyWithWhereWithoutTeamInput[]
+    deleteMany?: TeamMemberScalarWhereInput | TeamMemberScalarWhereInput[]
+  }
+
+  export type TeamCreateNestedOneWithoutTeamMembersInput = {
+    create?: XOR<TeamCreateWithoutTeamMembersInput, TeamUncheckedCreateWithoutTeamMembersInput>
+    connectOrCreate?: TeamCreateOrConnectWithoutTeamMembersInput
+    connect?: TeamWhereUniqueInput
+  }
+
+  export type TeamUpdateOneRequiredWithoutTeamMembersNestedInput = {
+    create?: XOR<TeamCreateWithoutTeamMembersInput, TeamUncheckedCreateWithoutTeamMembersInput>
+    connectOrCreate?: TeamCreateOrConnectWithoutTeamMembersInput
+    upsert?: TeamUpsertWithoutTeamMembersInput
+    connect?: TeamWhereUniqueInput
+    update?: XOR<XOR<TeamUpdateToOneWithWhereWithoutTeamMembersInput, TeamUpdateWithoutTeamMembersInput>, TeamUncheckedUpdateWithoutTeamMembersInput>
   }
 
   export type TeamCreateNestedOneWithoutTeamAlliancesInput = {
@@ -30495,23 +32126,16 @@ export namespace Prisma {
     not?: NestedEnumUserRoleFilter<$PrismaModel> | $Enums.UserRole
   }
 
-  export type NestedStringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  export type NestedEnumGenderNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.Gender | EnumGenderFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumGenderNullableFilter<$PrismaModel> | $Enums.Gender | null
   }
 
-  export type NestedBoolNullableFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
-    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
@@ -30525,11 +32149,6 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type NestedDateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -30539,6 +32158,20 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
@@ -30579,21 +32212,14 @@ export namespace Prisma {
     _max?: NestedEnumUserRoleFilter<$PrismaModel>
   }
 
-  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+  export type NestedEnumGenderNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Gender | EnumGenderFieldRefInput<$PrismaModel> | null
+    in?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.Gender[] | ListEnumGenderFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumGenderNullableWithAggregatesFilter<$PrismaModel> | $Enums.Gender | null
     _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
+    _min?: NestedEnumGenderNullableFilter<$PrismaModel>
+    _max?: NestedEnumGenderNullableFilter<$PrismaModel>
   }
 
   export type NestedIntNullableFilter<$PrismaModel = never> = {
@@ -30607,12 +32233,12 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
-  export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
-    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedBoolNullableFilter<$PrismaModel>
-    _max?: NestedBoolNullableFilter<$PrismaModel>
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -30629,14 +32255,6 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -30649,6 +32267,23 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -30676,6 +32311,33 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedEnumStageTypeFilter<$PrismaModel = never> = {
@@ -30740,33 +32402,6 @@ export namespace Prisma {
     not?: NestedEnumMatchTypeFilter<$PrismaModel> | $Enums.MatchType
   }
 
-  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedIntNullableFilter<$PrismaModel>
-    _max?: NestedIntNullableFilter<$PrismaModel>
-  }
-
-  export type NestedFloatNullableFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
-  }
-
   export type NestedEnumMatchStateWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.MatchState | EnumMatchStateFieldRefInput<$PrismaModel>
     in?: $Enums.MatchState[] | ListEnumMatchStateFieldRefInput<$PrismaModel>
@@ -30822,29 +32457,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumAllianceColorFilter<$PrismaModel>
     _max?: NestedEnumAllianceColorFilter<$PrismaModel>
-  }
-  export type NestedJsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
@@ -30924,12 +32536,11 @@ export namespace Prisma {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -30941,18 +32552,18 @@ export namespace Prisma {
     matchReferees?: MatchRefereeCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeCreateNestedManyWithoutUserInput
+    Team?: TeamCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCreatedUsersInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -30964,6 +32575,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayUncheckedCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeUncheckedCreateNestedManyWithoutUserInput
+    Team?: TeamUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCreatedUsersInput = {
@@ -30975,12 +32587,11 @@ export namespace Prisma {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -30992,18 +32603,18 @@ export namespace Prisma {
     matchReferees?: MatchRefereeCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeCreateNestedManyWithoutUserInput
+    Team?: TeamCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCreatedByInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -31015,6 +32626,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayUncheckedCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeUncheckedCreateNestedManyWithoutUserInput
+    Team?: TeamUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCreatedByInput = {
@@ -31036,6 +32648,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     stages?: StageCreateNestedManyWithoutTournamentInput
     teams?: TeamCreateNestedManyWithoutTournamentInput
     teamStats?: TeamStatsCreateNestedManyWithoutTournamentInput
@@ -31052,6 +32667,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     stages?: StageUncheckedCreateNestedManyWithoutTournamentInput
     teams?: TeamUncheckedCreateNestedManyWithoutTournamentInput
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTournamentInput
@@ -31211,6 +32829,44 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type TeamCreateWithoutUserInput = {
+    id?: string
+    teamNumber: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    referralSource: string
+    tournament: TournamentCreateNestedOneWithoutTeamsInput
+    currentStage?: StageCreateNestedOneWithoutTeamsInput
+    teamAlliances?: TeamAllianceCreateNestedManyWithoutTeamInput
+    teamStats?: TeamStatsCreateNestedManyWithoutTeamInput
+    teamMembers?: TeamMemberCreateNestedManyWithoutTeamInput
+  }
+
+  export type TeamUncheckedCreateWithoutUserInput = {
+    id?: string
+    teamNumber: string
+    name: string
+    tournamentId: string
+    currentStageId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    referralSource: string
+    teamAlliances?: TeamAllianceUncheckedCreateNestedManyWithoutTeamInput
+    teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTeamInput
+    teamMembers?: TeamMemberUncheckedCreateNestedManyWithoutTeamInput
+  }
+
+  export type TeamCreateOrConnectWithoutUserInput = {
+    where: TeamWhereUniqueInput
+    create: XOR<TeamCreateWithoutUserInput, TeamUncheckedCreateWithoutUserInput>
+  }
+
+  export type TeamCreateManyUserInputEnvelope = {
+    data: TeamCreateManyUserInput | TeamCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutCreatedUsersInput = {
     update: XOR<UserUpdateWithoutCreatedUsersInput, UserUncheckedUpdateWithoutCreatedUsersInput>
     create: XOR<UserCreateWithoutCreatedUsersInput, UserUncheckedCreateWithoutCreatedUsersInput>
@@ -31227,11 +32883,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -31243,6 +32898,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUpdateManyWithoutUserNestedInput
+    Team?: TeamUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCreatedUsersInput = {
@@ -31250,11 +32906,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -31266,6 +32921,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUncheckedUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUncheckedUpdateManyWithoutUserNestedInput
+    Team?: TeamUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithWhereUniqueWithoutCreatedByInput = {
@@ -31292,11 +32948,10 @@ export namespace Prisma {
     username?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
     role?: EnumUserRoleFilter<"User"> | $Enums.UserRole
-    email?: StringNullableFilter<"User"> | string | null
-    gender?: BoolNullableFilter<"User"> | boolean | null
-    DateOfBirth?: DateTimeNullableFilter<"User"> | Date | string | null
-    phoneNumber?: StringNullableFilter<"User"> | string | null
-    avatar?: StringNullableFilter<"User"> | string | null
+    name?: StringFilter<"User"> | string
+    email?: StringFilter<"User"> | string
+    phone?: StringFilter<"User"> | string
+    gender?: EnumGenderNullableFilter<"User"> | $Enums.Gender | null
     isActive?: BoolFilter<"User"> | boolean
     lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     emailVerified?: BoolFilter<"User"> | boolean
@@ -31334,6 +32989,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Tournament"> | Date | string
     adminId?: StringFilter<"Tournament"> | string
     numberOfFields?: IntFilter<"Tournament"> | number
+    maxTeams?: IntNullableFilter<"Tournament"> | number | null
+    maxTeamMembers?: IntNullableFilter<"Tournament"> | number | null
+    minTeamMembers?: IntNullableFilter<"Tournament"> | number | null
   }
 
   export type MatchUpsertWithWhereUniqueWithoutScoredByInput = {
@@ -31463,16 +33121,46 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"FieldReferee"> | Date | string
   }
 
+  export type TeamUpsertWithWhereUniqueWithoutUserInput = {
+    where: TeamWhereUniqueInput
+    update: XOR<TeamUpdateWithoutUserInput, TeamUncheckedUpdateWithoutUserInput>
+    create: XOR<TeamCreateWithoutUserInput, TeamUncheckedCreateWithoutUserInput>
+  }
+
+  export type TeamUpdateWithWhereUniqueWithoutUserInput = {
+    where: TeamWhereUniqueInput
+    data: XOR<TeamUpdateWithoutUserInput, TeamUncheckedUpdateWithoutUserInput>
+  }
+
+  export type TeamUpdateManyWithWhereWithoutUserInput = {
+    where: TeamScalarWhereInput
+    data: XOR<TeamUpdateManyMutationInput, TeamUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type TeamScalarWhereInput = {
+    AND?: TeamScalarWhereInput | TeamScalarWhereInput[]
+    OR?: TeamScalarWhereInput[]
+    NOT?: TeamScalarWhereInput | TeamScalarWhereInput[]
+    id?: StringFilter<"Team"> | string
+    teamNumber?: StringFilter<"Team"> | string
+    name?: StringFilter<"Team"> | string
+    tournamentId?: StringFilter<"Team"> | string
+    currentStageId?: StringNullableFilter<"Team"> | string | null
+    createdAt?: DateTimeFilter<"Team"> | Date | string
+    updatedAt?: DateTimeFilter<"Team"> | Date | string
+    userId?: StringFilter<"Team"> | string
+    referralSource?: StringFilter<"Team"> | string
+  }
+
   export type UserCreateWithoutTournamentsInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -31484,18 +33172,18 @@ export namespace Prisma {
     matchReferees?: MatchRefereeCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeCreateNestedManyWithoutUserInput
+    Team?: TeamCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTournamentsInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -31507,6 +33195,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayUncheckedCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeUncheckedCreateNestedManyWithoutUserInput
+    Team?: TeamUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTournamentsInput = {
@@ -31558,34 +33247,28 @@ export namespace Prisma {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    referralSource: string
     currentStage?: StageCreateNestedOneWithoutTeamsInput
     teamAlliances?: TeamAllianceCreateNestedManyWithoutTeamInput
     teamStats?: TeamStatsCreateNestedManyWithoutTeamInput
+    user: UserCreateNestedOneWithoutTeamInput
+    teamMembers?: TeamMemberCreateNestedManyWithoutTeamInput
   }
 
   export type TeamUncheckedCreateWithoutTournamentInput = {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     currentStageId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    userId: string
+    referralSource: string
     teamAlliances?: TeamAllianceUncheckedCreateNestedManyWithoutTeamInput
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTeamInput
+    teamMembers?: TeamMemberUncheckedCreateNestedManyWithoutTeamInput
   }
 
   export type TeamCreateOrConnectWithoutTournamentInput = {
@@ -31732,11 +33415,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -31748,6 +33430,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUpdateManyWithoutUserNestedInput
+    Team?: TeamUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTournamentsInput = {
@@ -31755,11 +33438,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -31771,6 +33453,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUncheckedUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUncheckedUpdateManyWithoutUserNestedInput
+    Team?: TeamUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type StageUpsertWithWhereUniqueWithoutTournamentInput = {
@@ -31819,25 +33502,6 @@ export namespace Prisma {
   export type TeamUpdateManyWithWhereWithoutTournamentInput = {
     where: TeamScalarWhereInput
     data: XOR<TeamUpdateManyMutationInput, TeamUncheckedUpdateManyWithoutTournamentInput>
-  }
-
-  export type TeamScalarWhereInput = {
-    AND?: TeamScalarWhereInput | TeamScalarWhereInput[]
-    OR?: TeamScalarWhereInput[]
-    NOT?: TeamScalarWhereInput | TeamScalarWhereInput[]
-    id?: StringFilter<"Team"> | string
-    teamNumber?: StringFilter<"Team"> | string
-    name?: StringFilter<"Team"> | string
-    organization?: StringNullableFilter<"Team"> | string | null
-    avatar?: StringNullableFilter<"Team"> | string | null
-    description?: StringNullableFilter<"Team"> | string | null
-    teamLead?: StringNullableFilter<"Team"> | string | null
-    teamLeadId?: StringNullableFilter<"Team"> | string | null
-    teamMembers?: JsonNullableFilter<"Team">
-    tournamentId?: StringNullableFilter<"Team"> | string | null
-    currentStageId?: StringNullableFilter<"Team"> | string | null
-    createdAt?: DateTimeFilter<"Team"> | Date | string
-    updatedAt?: DateTimeFilter<"Team"> | Date | string
   }
 
   export type TeamStatsUpsertWithWhereUniqueWithoutTournamentInput = {
@@ -31947,6 +33611,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     admin: UserCreateNestedOneWithoutTournamentsInput
     teams?: TeamCreateNestedManyWithoutTournamentInput
     teamStats?: TeamStatsCreateNestedManyWithoutTournamentInput
@@ -31964,6 +33631,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     adminId: string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     teams?: TeamUncheckedCreateNestedManyWithoutTournamentInput
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTournamentInput
     fields?: FieldUncheckedCreateNestedManyWithoutTournamentInput
@@ -32085,34 +33755,28 @@ export namespace Prisma {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
-    tournament?: TournamentCreateNestedOneWithoutTeamsInput
+    referralSource: string
+    tournament: TournamentCreateNestedOneWithoutTeamsInput
     teamAlliances?: TeamAllianceCreateNestedManyWithoutTeamInput
     teamStats?: TeamStatsCreateNestedManyWithoutTeamInput
+    user: UserCreateNestedOneWithoutTeamInput
+    teamMembers?: TeamMemberCreateNestedManyWithoutTeamInput
   }
 
   export type TeamUncheckedCreateWithoutCurrentStageInput = {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: string | null
+    tournamentId: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    userId: string
+    referralSource: string
     teamAlliances?: TeamAllianceUncheckedCreateNestedManyWithoutTeamInput
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTeamInput
+    teamMembers?: TeamMemberUncheckedCreateNestedManyWithoutTeamInput
   }
 
   export type TeamCreateOrConnectWithoutCurrentStageInput = {
@@ -32145,6 +33809,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     admin?: UserUpdateOneRequiredWithoutTournamentsNestedInput
     teams?: TeamUpdateManyWithoutTournamentNestedInput
     teamStats?: TeamStatsUpdateManyWithoutTournamentNestedInput
@@ -32162,6 +33829,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     adminId?: StringFieldUpdateOperationsInput | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     teams?: TeamUncheckedUpdateManyWithoutTournamentNestedInput
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTournamentNestedInput
     fields?: FieldUncheckedUpdateManyWithoutTournamentNestedInput
@@ -32289,12 +33959,11 @@ export namespace Prisma {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -32306,18 +33975,18 @@ export namespace Prisma {
     matchReferees?: MatchRefereeCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeCreateNestedManyWithoutUserInput
+    Team?: TeamCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutScoredMatchesInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -32329,6 +33998,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayUncheckedCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeUncheckedCreateNestedManyWithoutUserInput
+    Team?: TeamUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutScoredMatchesInput = {
@@ -32544,11 +34214,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -32560,6 +34229,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUpdateManyWithoutUserNestedInput
+    Team?: TeamUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutScoredMatchesInput = {
@@ -32567,11 +34237,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -32583,6 +34252,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUncheckedUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUncheckedUpdateManyWithoutUserNestedInput
+    Team?: TeamUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type MatchRefereeUpsertWithWhereUniqueWithoutMatchInput = {
@@ -32739,12 +34409,11 @@ export namespace Prisma {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -32756,18 +34425,18 @@ export namespace Prisma {
     scoredMatches?: MatchCreateNestedManyWithoutScoredByInput
     fieldDisplays?: FieldDisplayCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeCreateNestedManyWithoutUserInput
+    Team?: TeamCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutMatchRefereesInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -32779,6 +34448,7 @@ export namespace Prisma {
     scoredMatches?: MatchUncheckedCreateNestedManyWithoutScoredByInput
     fieldDisplays?: FieldDisplayUncheckedCreateNestedManyWithoutLastUpdatedUserInput
     fieldReferees?: FieldRefereeUncheckedCreateNestedManyWithoutUserInput
+    Team?: TeamUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutMatchRefereesInput = {
@@ -32859,11 +34529,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -32875,6 +34544,7 @@ export namespace Prisma {
     scoredMatches?: MatchUpdateManyWithoutScoredByNestedInput
     fieldDisplays?: FieldDisplayUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUpdateManyWithoutUserNestedInput
+    Team?: TeamUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMatchRefereesInput = {
@@ -32882,11 +34552,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -32898,6 +34567,7 @@ export namespace Prisma {
     scoredMatches?: MatchUncheckedUpdateManyWithoutScoredByNestedInput
     fieldDisplays?: FieldDisplayUncheckedUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUncheckedUpdateManyWithoutUserNestedInput
+    Team?: TeamUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type MatchCreateWithoutAlliancesInput = {
@@ -33120,6 +34790,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     admin: UserCreateNestedOneWithoutTournamentsInput
     stages?: StageCreateNestedManyWithoutTournamentInput
     teamStats?: TeamStatsCreateNestedManyWithoutTournamentInput
@@ -33137,6 +34810,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     adminId: string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     stages?: StageUncheckedCreateNestedManyWithoutTournamentInput
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTournamentInput
     fields?: FieldUncheckedCreateNestedManyWithoutTournamentInput
@@ -33261,6 +34937,95 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type UserCreateWithoutTeamInput = {
+    id?: string
+    username: string
+    password: string
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
+    isActive?: boolean
+    lastLoginAt?: Date | string | null
+    emailVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdBy?: UserCreateNestedOneWithoutCreatedUsersInput
+    createdUsers?: UserCreateNestedManyWithoutCreatedByInput
+    tournaments?: TournamentCreateNestedManyWithoutAdminInput
+    scoredMatches?: MatchCreateNestedManyWithoutScoredByInput
+    matchReferees?: MatchRefereeCreateNestedManyWithoutUserInput
+    fieldDisplays?: FieldDisplayCreateNestedManyWithoutLastUpdatedUserInput
+    fieldReferees?: FieldRefereeCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutTeamInput = {
+    id?: string
+    username: string
+    password: string
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
+    isActive?: boolean
+    lastLoginAt?: Date | string | null
+    emailVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    createdById?: string | null
+    createdUsers?: UserUncheckedCreateNestedManyWithoutCreatedByInput
+    tournaments?: TournamentUncheckedCreateNestedManyWithoutAdminInput
+    scoredMatches?: MatchUncheckedCreateNestedManyWithoutScoredByInput
+    matchReferees?: MatchRefereeUncheckedCreateNestedManyWithoutUserInput
+    fieldDisplays?: FieldDisplayUncheckedCreateNestedManyWithoutLastUpdatedUserInput
+    fieldReferees?: FieldRefereeUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTeamInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTeamInput, UserUncheckedCreateWithoutTeamInput>
+  }
+
+  export type TeamMemberCreateWithoutTeamInput = {
+    id?: string
+    name: string
+    gender?: $Enums.Gender | null
+    phone?: string | null
+    email?: string | null
+    province: string
+    ward: string
+    organization?: string | null
+    organizationAddress?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TeamMemberUncheckedCreateWithoutTeamInput = {
+    id?: string
+    name: string
+    gender?: $Enums.Gender | null
+    phone?: string | null
+    email?: string | null
+    province: string
+    ward: string
+    organization?: string | null
+    organizationAddress?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TeamMemberCreateOrConnectWithoutTeamInput = {
+    where: TeamMemberWhereUniqueInput
+    create: XOR<TeamMemberCreateWithoutTeamInput, TeamMemberUncheckedCreateWithoutTeamInput>
+  }
+
+  export type TeamMemberCreateManyTeamInputEnvelope = {
+    data: TeamMemberCreateManyTeamInput | TeamMemberCreateManyTeamInput[]
+    skipDuplicates?: boolean
+  }
+
   export type TournamentUpsertWithoutTeamsInput = {
     update: XOR<TournamentUpdateWithoutTeamsInput, TournamentUncheckedUpdateWithoutTeamsInput>
     create: XOR<TournamentCreateWithoutTeamsInput, TournamentUncheckedCreateWithoutTeamsInput>
@@ -33281,6 +35046,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     admin?: UserUpdateOneRequiredWithoutTournamentsNestedInput
     stages?: StageUpdateManyWithoutTournamentNestedInput
     teamStats?: TeamStatsUpdateManyWithoutTournamentNestedInput
@@ -33298,6 +35066,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     adminId?: StringFieldUpdateOperationsInput | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     stages?: StageUncheckedUpdateManyWithoutTournamentNestedInput
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTournamentNestedInput
     fields?: FieldUncheckedUpdateManyWithoutTournamentNestedInput
@@ -33377,38 +35148,195 @@ export namespace Prisma {
     data: XOR<TeamStatsUpdateManyMutationInput, TeamStatsUncheckedUpdateManyWithoutTeamInput>
   }
 
+  export type UserUpsertWithoutTeamInput = {
+    update: XOR<UserUpdateWithoutTeamInput, UserUncheckedUpdateWithoutTeamInput>
+    create: XOR<UserCreateWithoutTeamInput, UserUncheckedCreateWithoutTeamInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTeamInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTeamInput, UserUncheckedUpdateWithoutTeamInput>
+  }
+
+  export type UserUpdateWithoutTeamInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdBy?: UserUpdateOneWithoutCreatedUsersNestedInput
+    createdUsers?: UserUpdateManyWithoutCreatedByNestedInput
+    tournaments?: TournamentUpdateManyWithoutAdminNestedInput
+    scoredMatches?: MatchUpdateManyWithoutScoredByNestedInput
+    matchReferees?: MatchRefereeUpdateManyWithoutUserNestedInput
+    fieldDisplays?: FieldDisplayUpdateManyWithoutLastUpdatedUserNestedInput
+    fieldReferees?: FieldRefereeUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTeamInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdUsers?: UserUncheckedUpdateManyWithoutCreatedByNestedInput
+    tournaments?: TournamentUncheckedUpdateManyWithoutAdminNestedInput
+    scoredMatches?: MatchUncheckedUpdateManyWithoutScoredByNestedInput
+    matchReferees?: MatchRefereeUncheckedUpdateManyWithoutUserNestedInput
+    fieldDisplays?: FieldDisplayUncheckedUpdateManyWithoutLastUpdatedUserNestedInput
+    fieldReferees?: FieldRefereeUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type TeamMemberUpsertWithWhereUniqueWithoutTeamInput = {
+    where: TeamMemberWhereUniqueInput
+    update: XOR<TeamMemberUpdateWithoutTeamInput, TeamMemberUncheckedUpdateWithoutTeamInput>
+    create: XOR<TeamMemberCreateWithoutTeamInput, TeamMemberUncheckedCreateWithoutTeamInput>
+  }
+
+  export type TeamMemberUpdateWithWhereUniqueWithoutTeamInput = {
+    where: TeamMemberWhereUniqueInput
+    data: XOR<TeamMemberUpdateWithoutTeamInput, TeamMemberUncheckedUpdateWithoutTeamInput>
+  }
+
+  export type TeamMemberUpdateManyWithWhereWithoutTeamInput = {
+    where: TeamMemberScalarWhereInput
+    data: XOR<TeamMemberUpdateManyMutationInput, TeamMemberUncheckedUpdateManyWithoutTeamInput>
+  }
+
+  export type TeamMemberScalarWhereInput = {
+    AND?: TeamMemberScalarWhereInput | TeamMemberScalarWhereInput[]
+    OR?: TeamMemberScalarWhereInput[]
+    NOT?: TeamMemberScalarWhereInput | TeamMemberScalarWhereInput[]
+    id?: StringFilter<"TeamMember"> | string
+    name?: StringFilter<"TeamMember"> | string
+    gender?: EnumGenderNullableFilter<"TeamMember"> | $Enums.Gender | null
+    phone?: StringNullableFilter<"TeamMember"> | string | null
+    email?: StringNullableFilter<"TeamMember"> | string | null
+    province?: StringFilter<"TeamMember"> | string
+    ward?: StringFilter<"TeamMember"> | string
+    organization?: StringNullableFilter<"TeamMember"> | string | null
+    organizationAddress?: StringNullableFilter<"TeamMember"> | string | null
+    teamId?: StringFilter<"TeamMember"> | string
+    createdAt?: DateTimeFilter<"TeamMember"> | Date | string
+    updatedAt?: DateTimeFilter<"TeamMember"> | Date | string
+  }
+
+  export type TeamCreateWithoutTeamMembersInput = {
+    id?: string
+    teamNumber: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    referralSource: string
+    tournament: TournamentCreateNestedOneWithoutTeamsInput
+    currentStage?: StageCreateNestedOneWithoutTeamsInput
+    teamAlliances?: TeamAllianceCreateNestedManyWithoutTeamInput
+    teamStats?: TeamStatsCreateNestedManyWithoutTeamInput
+    user: UserCreateNestedOneWithoutTeamInput
+  }
+
+  export type TeamUncheckedCreateWithoutTeamMembersInput = {
+    id?: string
+    teamNumber: string
+    name: string
+    tournamentId: string
+    currentStageId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    userId: string
+    referralSource: string
+    teamAlliances?: TeamAllianceUncheckedCreateNestedManyWithoutTeamInput
+    teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTeamInput
+  }
+
+  export type TeamCreateOrConnectWithoutTeamMembersInput = {
+    where: TeamWhereUniqueInput
+    create: XOR<TeamCreateWithoutTeamMembersInput, TeamUncheckedCreateWithoutTeamMembersInput>
+  }
+
+  export type TeamUpsertWithoutTeamMembersInput = {
+    update: XOR<TeamUpdateWithoutTeamMembersInput, TeamUncheckedUpdateWithoutTeamMembersInput>
+    create: XOR<TeamCreateWithoutTeamMembersInput, TeamUncheckedCreateWithoutTeamMembersInput>
+    where?: TeamWhereInput
+  }
+
+  export type TeamUpdateToOneWithWhereWithoutTeamMembersInput = {
+    where?: TeamWhereInput
+    data: XOR<TeamUpdateWithoutTeamMembersInput, TeamUncheckedUpdateWithoutTeamMembersInput>
+  }
+
+  export type TeamUpdateWithoutTeamMembersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    teamNumber?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    referralSource?: StringFieldUpdateOperationsInput | string
+    tournament?: TournamentUpdateOneRequiredWithoutTeamsNestedInput
+    currentStage?: StageUpdateOneWithoutTeamsNestedInput
+    teamAlliances?: TeamAllianceUpdateManyWithoutTeamNestedInput
+    teamStats?: TeamStatsUpdateManyWithoutTeamNestedInput
+    user?: UserUpdateOneRequiredWithoutTeamNestedInput
+  }
+
+  export type TeamUncheckedUpdateWithoutTeamMembersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    teamNumber?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    tournamentId?: StringFieldUpdateOperationsInput | string
+    currentStageId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    referralSource?: StringFieldUpdateOperationsInput | string
+    teamAlliances?: TeamAllianceUncheckedUpdateManyWithoutTeamNestedInput
+    teamStats?: TeamStatsUncheckedUpdateManyWithoutTeamNestedInput
+  }
+
   export type TeamCreateWithoutTeamAlliancesInput = {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
-    tournament?: TournamentCreateNestedOneWithoutTeamsInput
+    referralSource: string
+    tournament: TournamentCreateNestedOneWithoutTeamsInput
     currentStage?: StageCreateNestedOneWithoutTeamsInput
     teamStats?: TeamStatsCreateNestedManyWithoutTeamInput
+    user: UserCreateNestedOneWithoutTeamInput
+    teamMembers?: TeamMemberCreateNestedManyWithoutTeamInput
   }
 
   export type TeamUncheckedCreateWithoutTeamAlliancesInput = {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: string | null
+    tournamentId: string
     currentStageId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    userId: string
+    referralSource: string
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTeamInput
+    teamMembers?: TeamMemberUncheckedCreateNestedManyWithoutTeamInput
   }
 
   export type TeamCreateOrConnectWithoutTeamAlliancesInput = {
@@ -33460,34 +35388,28 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    tournament?: TournamentUpdateOneWithoutTeamsNestedInput
+    referralSource?: StringFieldUpdateOperationsInput | string
+    tournament?: TournamentUpdateOneRequiredWithoutTeamsNestedInput
     currentStage?: StageUpdateOneWithoutTeamsNestedInput
     teamStats?: TeamStatsUpdateManyWithoutTeamNestedInput
+    user?: UserUpdateOneRequiredWithoutTeamNestedInput
+    teamMembers?: TeamMemberUpdateManyWithoutTeamNestedInput
   }
 
   export type TeamUncheckedUpdateWithoutTeamAlliancesInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: NullableStringFieldUpdateOperationsInput | string | null
+    tournamentId?: StringFieldUpdateOperationsInput | string
     currentStageId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    referralSource?: StringFieldUpdateOperationsInput | string
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTeamNestedInput
+    teamMembers?: TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
   }
 
   export type AllianceUpsertWithoutTeamAlliancesInput = {
@@ -33529,34 +35451,28 @@ export namespace Prisma {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
-    tournament?: TournamentCreateNestedOneWithoutTeamsInput
+    referralSource: string
+    tournament: TournamentCreateNestedOneWithoutTeamsInput
     currentStage?: StageCreateNestedOneWithoutTeamsInput
     teamAlliances?: TeamAllianceCreateNestedManyWithoutTeamInput
+    user: UserCreateNestedOneWithoutTeamInput
+    teamMembers?: TeamMemberCreateNestedManyWithoutTeamInput
   }
 
   export type TeamUncheckedCreateWithoutTeamStatsInput = {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: string | null
+    tournamentId: string
     currentStageId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    userId: string
+    referralSource: string
     teamAlliances?: TeamAllianceUncheckedCreateNestedManyWithoutTeamInput
+    teamMembers?: TeamMemberUncheckedCreateNestedManyWithoutTeamInput
   }
 
   export type TeamCreateOrConnectWithoutTeamStatsInput = {
@@ -33573,6 +35489,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     admin: UserCreateNestedOneWithoutTournamentsInput
     stages?: StageCreateNestedManyWithoutTournamentInput
     teams?: TeamCreateNestedManyWithoutTournamentInput
@@ -33590,6 +35509,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     adminId: string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     stages?: StageUncheckedCreateNestedManyWithoutTournamentInput
     teams?: TeamUncheckedCreateNestedManyWithoutTournamentInput
     fields?: FieldUncheckedCreateNestedManyWithoutTournamentInput
@@ -33651,34 +35573,28 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    tournament?: TournamentUpdateOneWithoutTeamsNestedInput
+    referralSource?: StringFieldUpdateOperationsInput | string
+    tournament?: TournamentUpdateOneRequiredWithoutTeamsNestedInput
     currentStage?: StageUpdateOneWithoutTeamsNestedInput
     teamAlliances?: TeamAllianceUpdateManyWithoutTeamNestedInput
+    user?: UserUpdateOneRequiredWithoutTeamNestedInput
+    teamMembers?: TeamMemberUpdateManyWithoutTeamNestedInput
   }
 
   export type TeamUncheckedUpdateWithoutTeamStatsInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: NullableStringFieldUpdateOperationsInput | string | null
+    tournamentId?: StringFieldUpdateOperationsInput | string
     currentStageId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    referralSource?: StringFieldUpdateOperationsInput | string
     teamAlliances?: TeamAllianceUncheckedUpdateManyWithoutTeamNestedInput
+    teamMembers?: TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
   }
 
   export type TournamentUpsertWithoutTeamStatsInput = {
@@ -33701,6 +35617,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     admin?: UserUpdateOneRequiredWithoutTournamentsNestedInput
     stages?: StageUpdateManyWithoutTournamentNestedInput
     teams?: TeamUpdateManyWithoutTournamentNestedInput
@@ -33718,6 +35637,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     adminId?: StringFieldUpdateOperationsInput | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     stages?: StageUncheckedUpdateManyWithoutTournamentNestedInput
     teams?: TeamUncheckedUpdateManyWithoutTournamentNestedInput
     fields?: FieldUncheckedUpdateManyWithoutTournamentNestedInput
@@ -33774,6 +35696,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     admin: UserCreateNestedOneWithoutTournamentsInput
     stages?: StageCreateNestedManyWithoutTournamentInput
     teams?: TeamCreateNestedManyWithoutTournamentInput
@@ -33791,6 +35716,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     adminId: string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     stages?: StageUncheckedCreateNestedManyWithoutTournamentInput
     teams?: TeamUncheckedCreateNestedManyWithoutTournamentInput
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTournamentInput
@@ -33931,6 +35859,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     admin?: UserUpdateOneRequiredWithoutTournamentsNestedInput
     stages?: StageUpdateManyWithoutTournamentNestedInput
     teams?: TeamUpdateManyWithoutTournamentNestedInput
@@ -33948,6 +35879,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     adminId?: StringFieldUpdateOperationsInput | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     stages?: StageUncheckedUpdateManyWithoutTournamentNestedInput
     teams?: TeamUncheckedUpdateManyWithoutTournamentNestedInput
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTournamentNestedInput
@@ -34105,12 +36039,11 @@ export namespace Prisma {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -34122,18 +36055,18 @@ export namespace Prisma {
     scoredMatches?: MatchCreateNestedManyWithoutScoredByInput
     matchReferees?: MatchRefereeCreateNestedManyWithoutUserInput
     fieldReferees?: FieldRefereeCreateNestedManyWithoutUserInput
+    Team?: TeamCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutFieldDisplaysInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -34145,6 +36078,7 @@ export namespace Prisma {
     scoredMatches?: MatchUncheckedCreateNestedManyWithoutScoredByInput
     matchReferees?: MatchRefereeUncheckedCreateNestedManyWithoutUserInput
     fieldReferees?: FieldRefereeUncheckedCreateNestedManyWithoutUserInput
+    Team?: TeamUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutFieldDisplaysInput = {
@@ -34262,11 +36196,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -34278,6 +36211,7 @@ export namespace Prisma {
     scoredMatches?: MatchUpdateManyWithoutScoredByNestedInput
     matchReferees?: MatchRefereeUpdateManyWithoutUserNestedInput
     fieldReferees?: FieldRefereeUpdateManyWithoutUserNestedInput
+    Team?: TeamUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutFieldDisplaysInput = {
@@ -34285,11 +36219,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -34301,6 +36234,7 @@ export namespace Prisma {
     scoredMatches?: MatchUncheckedUpdateManyWithoutScoredByNestedInput
     matchReferees?: MatchRefereeUncheckedUpdateManyWithoutUserNestedInput
     fieldReferees?: FieldRefereeUncheckedUpdateManyWithoutUserNestedInput
+    Team?: TeamUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type FieldCreateWithoutFieldRefereesInput = {
@@ -34338,12 +36272,11 @@ export namespace Prisma {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -34355,18 +36288,18 @@ export namespace Prisma {
     scoredMatches?: MatchCreateNestedManyWithoutScoredByInput
     matchReferees?: MatchRefereeCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayCreateNestedManyWithoutLastUpdatedUserInput
+    Team?: TeamCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutFieldRefereesInput = {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -34378,6 +36311,7 @@ export namespace Prisma {
     scoredMatches?: MatchUncheckedCreateNestedManyWithoutScoredByInput
     matchReferees?: MatchRefereeUncheckedCreateNestedManyWithoutUserInput
     fieldDisplays?: FieldDisplayUncheckedCreateNestedManyWithoutLastUpdatedUserInput
+    Team?: TeamUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutFieldRefereesInput = {
@@ -34438,11 +36372,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -34454,6 +36387,7 @@ export namespace Prisma {
     scoredMatches?: MatchUpdateManyWithoutScoredByNestedInput
     matchReferees?: MatchRefereeUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUpdateManyWithoutLastUpdatedUserNestedInput
+    Team?: TeamUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutFieldRefereesInput = {
@@ -34461,11 +36395,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -34477,6 +36410,7 @@ export namespace Prisma {
     scoredMatches?: MatchUncheckedUpdateManyWithoutScoredByNestedInput
     matchReferees?: MatchRefereeUncheckedUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUncheckedUpdateManyWithoutLastUpdatedUserNestedInput
+    Team?: TeamUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type TournamentCreateWithoutScoreConfigsInput = {
@@ -34488,6 +36422,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     admin: UserCreateNestedOneWithoutTournamentsInput
     stages?: StageCreateNestedManyWithoutTournamentInput
     teams?: TeamCreateNestedManyWithoutTournamentInput
@@ -34505,6 +36442,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     adminId: string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
     stages?: StageUncheckedCreateNestedManyWithoutTournamentInput
     teams?: TeamUncheckedCreateNestedManyWithoutTournamentInput
     teamStats?: TeamStatsUncheckedCreateNestedManyWithoutTournamentInput
@@ -34634,6 +36574,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     admin?: UserUpdateOneRequiredWithoutTournamentsNestedInput
     stages?: StageUpdateManyWithoutTournamentNestedInput
     teams?: TeamUpdateManyWithoutTournamentNestedInput
@@ -34651,6 +36594,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     adminId?: StringFieldUpdateOperationsInput | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     stages?: StageUncheckedUpdateManyWithoutTournamentNestedInput
     teams?: TeamUncheckedUpdateManyWithoutTournamentNestedInput
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTournamentNestedInput
@@ -35224,12 +37170,11 @@ export namespace Prisma {
     id?: string
     username: string
     password: string
-    role: $Enums.UserRole
-    email?: string | null
-    gender?: boolean | null
-    DateOfBirth?: Date | string | null
-    phoneNumber?: string | null
-    avatar?: string | null
+    role?: $Enums.UserRole
+    name: string
+    email: string
+    phone: string
+    gender?: $Enums.Gender | null
     isActive?: boolean
     lastLoginAt?: Date | string | null
     emailVerified?: boolean
@@ -35246,6 +37191,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     numberOfFields?: number
+    maxTeams?: number | null
+    maxTeamMembers?: number | null
+    minTeamMembers?: number | null
   }
 
   export type MatchCreateManyScoredByInput = {
@@ -35295,16 +37243,26 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type TeamCreateManyUserInput = {
+    id?: string
+    teamNumber: string
+    name: string
+    tournamentId: string
+    currentStageId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    referralSource: string
+  }
+
   export type UserUpdateWithoutCreatedByInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -35316,6 +37274,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUpdateManyWithoutUserNestedInput
+    Team?: TeamUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCreatedByInput = {
@@ -35323,11 +37282,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -35339,6 +37297,7 @@ export namespace Prisma {
     matchReferees?: MatchRefereeUncheckedUpdateManyWithoutUserNestedInput
     fieldDisplays?: FieldDisplayUncheckedUpdateManyWithoutLastUpdatedUserNestedInput
     fieldReferees?: FieldRefereeUncheckedUpdateManyWithoutUserNestedInput
+    Team?: TeamUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutCreatedByInput = {
@@ -35346,11 +37305,10 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: BoolFieldUpdateOperationsInput | boolean
@@ -35367,6 +37325,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     stages?: StageUpdateManyWithoutTournamentNestedInput
     teams?: TeamUpdateManyWithoutTournamentNestedInput
     teamStats?: TeamStatsUpdateManyWithoutTournamentNestedInput
@@ -35383,6 +37344,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
     stages?: StageUncheckedUpdateManyWithoutTournamentNestedInput
     teams?: TeamUncheckedUpdateManyWithoutTournamentNestedInput
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTournamentNestedInput
@@ -35399,6 +37363,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numberOfFields?: IntFieldUpdateOperationsInput | number
+    maxTeams?: NullableIntFieldUpdateOperationsInput | number | null
+    maxTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
+    minTeamMembers?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type MatchUpdateWithoutScoredByInput = {
@@ -35550,6 +37517,45 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TeamUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    teamNumber?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    referralSource?: StringFieldUpdateOperationsInput | string
+    tournament?: TournamentUpdateOneRequiredWithoutTeamsNestedInput
+    currentStage?: StageUpdateOneWithoutTeamsNestedInput
+    teamAlliances?: TeamAllianceUpdateManyWithoutTeamNestedInput
+    teamStats?: TeamStatsUpdateManyWithoutTeamNestedInput
+    teamMembers?: TeamMemberUpdateManyWithoutTeamNestedInput
+  }
+
+  export type TeamUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    teamNumber?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    tournamentId?: StringFieldUpdateOperationsInput | string
+    currentStageId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    referralSource?: StringFieldUpdateOperationsInput | string
+    teamAlliances?: TeamAllianceUncheckedUpdateManyWithoutTeamNestedInput
+    teamStats?: TeamStatsUncheckedUpdateManyWithoutTeamNestedInput
+    teamMembers?: TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
+  }
+
+  export type TeamUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    teamNumber?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    tournamentId?: StringFieldUpdateOperationsInput | string
+    currentStageId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    referralSource?: StringFieldUpdateOperationsInput | string
+  }
+
   export type StageCreateManyTournamentInput = {
     id?: string
     name: string
@@ -35566,15 +37572,11 @@ export namespace Prisma {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     currentStageId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    userId: string
+    referralSource: string
   }
 
   export type TeamStatsCreateManyTournamentInput = {
@@ -35661,49 +37663,39 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    referralSource?: StringFieldUpdateOperationsInput | string
     currentStage?: StageUpdateOneWithoutTeamsNestedInput
     teamAlliances?: TeamAllianceUpdateManyWithoutTeamNestedInput
     teamStats?: TeamStatsUpdateManyWithoutTeamNestedInput
+    user?: UserUpdateOneRequiredWithoutTeamNestedInput
+    teamMembers?: TeamMemberUpdateManyWithoutTeamNestedInput
   }
 
   export type TeamUncheckedUpdateWithoutTournamentInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     currentStageId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    referralSource?: StringFieldUpdateOperationsInput | string
     teamAlliances?: TeamAllianceUncheckedUpdateManyWithoutTeamNestedInput
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTeamNestedInput
+    teamMembers?: TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
   }
 
   export type TeamUncheckedUpdateManyWithoutTournamentInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     currentStageId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    referralSource?: StringFieldUpdateOperationsInput | string
   }
 
   export type TeamStatsUpdateWithoutTournamentInput = {
@@ -35875,15 +37867,11 @@ export namespace Prisma {
     id?: string
     teamNumber: string
     name: string
-    organization?: string | null
-    avatar?: string | null
-    description?: string | null
-    teamLead?: string | null
-    teamLeadId?: string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: string | null
+    tournamentId: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    userId: string
+    referralSource: string
   }
 
   export type MatchUpdateWithoutStageInput = {
@@ -36015,49 +38003,39 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    tournament?: TournamentUpdateOneWithoutTeamsNestedInput
+    referralSource?: StringFieldUpdateOperationsInput | string
+    tournament?: TournamentUpdateOneRequiredWithoutTeamsNestedInput
     teamAlliances?: TeamAllianceUpdateManyWithoutTeamNestedInput
     teamStats?: TeamStatsUpdateManyWithoutTeamNestedInput
+    user?: UserUpdateOneRequiredWithoutTeamNestedInput
+    teamMembers?: TeamMemberUpdateManyWithoutTeamNestedInput
   }
 
   export type TeamUncheckedUpdateWithoutCurrentStageInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: NullableStringFieldUpdateOperationsInput | string | null
+    tournamentId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    referralSource?: StringFieldUpdateOperationsInput | string
     teamAlliances?: TeamAllianceUncheckedUpdateManyWithoutTeamNestedInput
     teamStats?: TeamStatsUncheckedUpdateManyWithoutTeamNestedInput
+    teamMembers?: TeamMemberUncheckedUpdateManyWithoutTeamNestedInput
   }
 
   export type TeamUncheckedUpdateManyWithoutCurrentStageInput = {
     id?: StringFieldUpdateOperationsInput | string
     teamNumber?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    avatar?: NullableStringFieldUpdateOperationsInput | string | null
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLead?: NullableStringFieldUpdateOperationsInput | string | null
-    teamLeadId?: NullableStringFieldUpdateOperationsInput | string | null
-    teamMembers?: NullableJsonNullValueInput | InputJsonValue
-    tournamentId?: NullableStringFieldUpdateOperationsInput | string | null
+    tournamentId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    referralSource?: StringFieldUpdateOperationsInput | string
   }
 
   export type AllianceCreateManyMatchInput = {
@@ -36329,6 +38307,20 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type TeamMemberCreateManyTeamInput = {
+    id?: string
+    name: string
+    gender?: $Enums.Gender | null
+    phone?: string | null
+    email?: string | null
+    province: string
+    ward: string
+    organization?: string | null
+    organizationAddress?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type TeamAllianceUpdateWithoutTeamInput = {
     id?: StringFieldUpdateOperationsInput | string
     stationPosition?: IntFieldUpdateOperationsInput | number
@@ -36412,6 +38404,48 @@ export namespace Prisma {
     rank?: NullableIntFieldUpdateOperationsInput | number | null
     tiebreaker1?: FloatFieldUpdateOperationsInput | number
     tiebreaker2?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TeamMemberUpdateWithoutTeamInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    province?: StringFieldUpdateOperationsInput | string
+    ward?: StringFieldUpdateOperationsInput | string
+    organization?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TeamMemberUncheckedUpdateWithoutTeamInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    province?: StringFieldUpdateOperationsInput | string
+    ward?: StringFieldUpdateOperationsInput | string
+    organization?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TeamMemberUncheckedUpdateManyWithoutTeamInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    province?: StringFieldUpdateOperationsInput | string
+    ward?: StringFieldUpdateOperationsInput | string
+    organization?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

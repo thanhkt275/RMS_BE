@@ -1,105 +1,159 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
+import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from '../utils/prisma-types';
 import { AuthSecurityService } from './auth-security.service';
 import { RegisterDto } from './dto/register.dto';
+import { ActivateDto } from './dto/activate.dto';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-    private authSecurityService: AuthSecurityService,
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly authSecurityService: AuthSecurityService,
   ) {}
-  async validateUser(username: string, password: string, clientIp: string): Promise<any> {
-    // Check if account is locked
-    if (await this.authSecurityService.isAccountLocked(username)) {
+
+  async validateUser(
+    username: string,
+    password: string,
+    clientIp: string,
+  ): Promise<any> {
+    try {
+      if (await this.authSecurityService.isAccountLocked(username)) {
+        throw new UnauthorizedException(
+          'Account temporarily locked due to too many failed attempts. Try again later.',
+        );
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { username },
+      });
+      console.log(user);
+
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      if (!user.emailVerified) {
+        throw new ForbiddenException('User must verify email first');
+      }
+
+      // Record successful login
+      await this.authSecurityService.recordSuccessfulLogin(username, clientIp);
+
+      const { password: _, ...result } = user;
+      return result;
+    } catch (err) {
       await this.authSecurityService.recordFailedAttempt(username, clientIp);
-      throw new UnauthorizedException('Account temporarily locked due to too many failed attempts. Try again later.');
+      throw err;
     }
-
-    const user = await this.prisma.user.findUnique({
-      where: { username },
-    });
-
-    if (!user) {
-      await this.authSecurityService.recordFailedAttempt(username, clientIp);
-      // Use generic message to prevent username enumeration
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    
-    if (!isPasswordValid) {
-      await this.authSecurityService.recordFailedAttempt(username, clientIp);
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Record successful login
-    await this.authSecurityService.recordSuccessfulLogin(username, clientIp);
-    
-    const { password: _, ...result } = user;
-    return result;
   }
-  async register(registerDto: RegisterDto): Promise<any> {
+
+  /*async register(registerDto: RegisterDto): Promise<any> {
     try {
       // Check for existing username or email with generic error
       const existingUser = await this.prisma.user.findFirst({
         where: {
           OR: [
             { username: registerDto.username },
-            ...(registerDto.email ? [{ email: registerDto.email }] : []),
+            { email: registerDto.email },
           ],
         },
       });
 
       if (existingUser) {
         // Generic error to prevent enumeration
-        throw new ConflictException('Registration failed. Please try different credentials.');
+        throw new ConflictException(
+          'Registration failed. Please try different credentials.',
+        );
       }
 
       const role = registerDto.role || UserRole.COMMON;
       const hashedPassword = await bcrypt.hash(registerDto.password, 12); // Increased rounds
 
-      const userData: any = {
-        username: registerDto.username,
-        password: hashedPassword,
-        role: role,
-      };
-
-      if (registerDto.email) {
-        userData.email = registerDto.email;
-      }
-
       const newUser = await this.prisma.user.create({
-        data: userData,
+        data: {
+          username: registerDto.username,
+          email: registerDto.email,
+          password: hashedPassword,
+          role: role,
+        },
         select: {
           id: true,
           username: true,
+          email: true,
           role: true,
           createdAt: true,
         },
       });
 
-      this.logger.log(`New user registered: ${newUser.username} with role ${newUser.role}`);
+      const activationToken = await this.jwtService.signAsync(
+        { email: registerDto.email },
+        { expiresIn: '7d' },
+      );
+      await this.emailsService.sendAccountActivationInvite(
+        registerDto.email,
+        `${process.env.FRONTEND_URL}/login?token=${activationToken}`,
+      );
+
+      this.logger.log(
+        `New user registered: ${newUser.username} with role ${newUser.role}`,
+      );
       return newUser;
     } catch (error) {
       if (error instanceof ConflictException) {
         throw error;
       }
-      
+
       this.logger.error('Registration failed', error);
       throw new BadRequestException('Registration failed. Please try again.');
     }
+  }*/
+
+  async verifyEmail(token: string): Promise<void> {
+    const decoded = this.jwtService.verify<{ email: string }>(token);
+
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { email: decoded.email },
+    });
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email has already been verified.');
+    }
+
+    await this.prisma.user.update({
+      where: { email: decoded.email },
+      data: { emailVerified: true },
+    });
   }
 
   async createDefaultAdmin() {
     const adminUsername = process.env.ADMIN_USERNAME || 'admin';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminEmail =
+      process.env.ADMIN_EMAIL || 'thanhtran@steamforvietnam.org';
+    const adminPhone = process.env.ADMIN_PHONE || '1234567890';
+    const adminName = process.env.ADMIN_NAME || 'Admin';
+
     try {
       // Check if admin already exists
       const existingAdmin = await this.prisma.user.findUnique({
@@ -107,26 +161,31 @@ export class AuthService {
         select: {
           id: true,
           username: true,
-          role: true
-        }
+          role: true,
+        },
       });
 
       if (existingAdmin) {
         return { message: 'Admin user already exists' };
-      }      // Create default admin user
-      const hashedPassword = await bcrypt.hash(adminPassword, 12);
-      await this.prisma.user.create({
-        data: {
-          username: adminUsername,
-          password: hashedPassword,
-          role: UserRole.ADMIN,
-        },
+      }
+
+      await this.usersService.create({
+        name: adminName,
+        username: adminUsername,
+        email: adminEmail,
+        password: adminPassword,
+        role: UserRole.ADMIN,
+        phone: adminPhone,
       });
 
-      return { message: `Default admin user created successfully (username: ${adminUsername})` };
+      return {
+        message: `Default admin user created successfully (username: ${adminUsername})`,
+      };
     } catch (error) {
       console.error('Error creating default admin account:', error.message);
-      throw new BadRequestException('Failed to create admin account: ' + error.message);
+      throw new BadRequestException(
+        'Failed to create admin account: ' + error.message,
+      );
     }
   }
 

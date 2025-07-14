@@ -94,16 +94,21 @@ enum ElementType {
   TIMER
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 model User {
   id            String         @id @default(uuid())
   username      String         @unique
   password      String
-  role          UserRole
-  email         String?        @unique
-  gender        Boolean?
-  DateOfBirth   DateTime?
-  phoneNumber   String?
-  avatar        String? // Profile picture URL
+  role          UserRole       @default(COMMON)
+  name          String
+  email         String         @unique
+  phone         String
+  gender        Gender?
   isActive      Boolean        @default(true) // Account status
   lastLoginAt   DateTime? // Track last login
   emailVerified Boolean        @default(false) // Email verification
@@ -117,6 +122,7 @@ model User {
   matchReferees MatchReferee[] // New relation for match referees
   fieldDisplays FieldDisplay[] // Relation to field displays updated by this user
   fieldReferees FieldReferee[] // Relation to field referee assignments
+  Team          Team[]
 
   @@index([createdById])
 }
@@ -137,6 +143,9 @@ model Tournament {
   fields         Field[] // New relation: Tournament has many Fields
   numberOfFields Int           @default(1)
   scoreConfigs   ScoreConfig[] // New relation: Tournament has many ScoreConfigs
+  maxTeams       Int?
+  maxTeamMembers Int?
+  minTeamMembers Int?
 
   @@index([adminId])
 }
@@ -231,17 +240,11 @@ model Alliance {
 }
 
 model Team {
-  id           String      @id @default(uuid())
-  teamNumber   String      @unique
+  id           String     @id @default(uuid())
+  teamNumber   String     @unique
   name         String
-  organization String?
-  avatar       String? // URL to team avatar image
-  description  String? // Team description
-  teamLead     String? // Team lead name
-  teamLeadId   String? // Optional link to user ID for team lead
-  teamMembers  Json? // Store team members as a JSON array
-  tournamentId String? // Optional link to tournament
-  tournament   Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
 
   // Add stage relationship for team advancement
   currentStageId String? // Which stage this team is currently in
@@ -251,9 +254,32 @@ model Team {
   teamStats     TeamStats[] // New relation to track team statistics
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id])
+  userId        String
+
+  referralSource String
+  teamMembers    TeamMember[]
 
   @@index([tournamentId])
   @@index([currentStageId]) // Add index for stage queries
+}
+
+model TeamMember {
+  id                  String  @id @default(uuid())
+  name                String
+  gender              Gender?
+  phone               String?
+  email               String?
+  province            String
+  ward                String
+  organization        String?
+  organizationAddress String?
+
+  team   Team   @relation(fields: [teamId], references: [id])
+  teamId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TeamAlliance {

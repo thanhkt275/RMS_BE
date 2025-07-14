@@ -1,27 +1,31 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
+import { Gender } from '../../../generated/prisma';
 
-// Define team member schema
-const TeamMemberSchema = z.object({
-  name: z.string(),
-  role: z.string().optional(),
-  email: z.string().email().optional(),
+export const CreateTeamMemberSchema = z.object({
+  name: z.string().min(11),
+  gender: z
+    .nativeEnum(Gender, {
+      errorMap: () => ({ message: 'Invalid gender' }),
+    })
+    .nullable()
+    .optional(),
   phone: z.string().optional(),
-}).array().optional();
-
-// Define the Zod schema for team creation
-export const CreateTeamSchema = z.object({
-  teamNumber: z.string().optional(), // Now optional as it will be auto-generated
-  name: z.string().min(1, 'Team name is required'),
+  email: z.string().email().optional(),
+  province: z.string().min(1),
+  ward: z.string().min(1),
   organization: z.string().optional(),
-  avatar: z.string().url('Avatar must be a valid URL').optional(),
-  description: z.string().optional(),
-  teamMembers: z.preprocess(
-    (val) => typeof val === 'string' ? JSON.parse(val) : val,
-    TeamMemberSchema
-  ),
-  tournamentId: z.string().uuid('Tournament ID must be a valid UUID').optional(),
+  organizationAddress: z.string().optional(),
+  teamId: z.string().uuid('Team ID must be a valid UUID').optional(),
 });
 
-// Create a DTO class from the Zod schema
+export const CreateTeamSchema = z.object({
+  name: z.string().min(1, 'Team name is required'),
+  userId: z.string().uuid('User ID must be a valid UUID').optional(),
+  tournamentId: z.string().uuid('Tournament ID must be a valid UUID'),
+  referralSource: z.string(),
+  teamMembers: z.array(CreateTeamMemberSchema),
+});
+
 export class CreateTeamDto extends createZodDto(CreateTeamSchema) {}
+export class CreateTeamMemberDto extends createZodDto(CreateTeamMemberSchema) {}

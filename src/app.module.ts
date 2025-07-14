@@ -15,6 +15,7 @@ import { PrismaService } from './prisma.service';
 import { EventsGateway } from './websockets/events.gateway';
 import { TeamStatsApiModule } from './match-scores/team-stats-api.module';
 import { ScoreConfigModule } from './score-config/score-config.module';
+import { EmailsModule } from './emails/emails.module';
 
 @Module({
   imports: [
@@ -29,12 +30,13 @@ import { ScoreConfigModule } from './score-config/score-config.module';
     FieldRefereesModule,
     TeamStatsApiModule,
     ScoreConfigModule,
+    EmailsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, EventsGateway],
 })
 export class AppModule implements OnModuleInit {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   async onModuleInit() {
     // Create default admin account when application starts

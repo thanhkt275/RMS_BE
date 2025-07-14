@@ -1,40 +1,82 @@
-import { Controller, Request, Post, UseGuards, Body, Get, UnauthorizedException, Res, HttpCode, ValidationPipe, Ip, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Request,
+  Post,
+  UseGuards,
+  Body,
+  Get,
+  UnauthorizedException,
+  Res,
+  HttpCode,
+  ValidationPipe,
+  Ip,
+  Logger,
+  HttpStatus,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
 import { UserRole } from '../utils/prisma-types';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { RegisterDto } from './dto/register.dto';
+import { CreateUserDto } from '../users/dto';
 import { LoginDto } from './dto/login.dto';
+import { ActivateDto } from './dto/activate.dto';
 
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
   @Post('register')
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 attempts per minute
-  async register(@Body(ValidationPipe) registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  @HttpCode(HttpStatus.CREATED)
+  async register(@Body() createUserDto: CreateUserDto) {
+    return await this.usersService.create(createUserDto);
   }
+  /*async register(@Body(ValidationPipe) registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
+  }*/
+
+  @Post('verify')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  async activate(@Body() activateDto: ActivateDto): Promise<void> {
+    await this.authService.verifyEmail(activateDto.token);
+  }
+
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
   async login(
     @Body(ValidationPipe) loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
-    @Ip() clientIp: string
+    @Ip() clientIp: string,
   ) {
-    const user = await this.authService.validateUser(loginDto.username, loginDto.password, clientIp);
+    console.log(
+      `Validating user: ${loginDto.username} ${loginDto.password} from IP: ${clientIp}`,
+    );
+    const user = await this.authService.validateUser(
+      loginDto.username,
+      loginDto.password,
+      clientIp,
+    );
     const { access_token, user: userInfo } = await this.authService.login(user);
 
     // Set JWT as HTTP-only cookie with production-safe settings
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'strict' as const,
+      sameSite:
+        process.env.NODE_ENV === 'production'
+          ? ('none' as const)
+          : ('strict' as const),
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       // Don't set domain for cross-origin requests unless specifically needed
       // ...(process.env.NODE_ENV === 'production' && {
@@ -45,12 +87,12 @@ export class AuthController {
     res.cookie('token', access_token, cookieOptions);
 
     this.logger.log(`User logged in: ${userInfo.username}`);
-    
+
     // Return token in response body for cross-domain scenarios
-    return { 
-      user: userInfo, 
+    return {
+      user: userInfo,
       message: 'Login successful',
-      access_token: access_token // Include token for frontend to store
+      access_token: access_token, // Include token for frontend to store
     };
   }
   @Post('logout')
@@ -58,7 +100,10 @@ export class AuthController {
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'strict' as const,
+      sameSite:
+        process.env.NODE_ENV === 'production'
+          ? ('none' as const)
+          : ('strict' as const),
       // Don't set domain for cross-origin requests unless specifically needed
       // ...(process.env.NODE_ENV === 'production' && {
       //   domain: process.env.COOKIE_DOMAIN || undefined
@@ -85,7 +130,7 @@ export class AuthController {
     return {
       authenticated: true,
       user: req.user,
-      message: 'Your authentication is working correctly'
+      message: 'Your authentication is working correctly',
     };
   }
 
@@ -98,7 +143,7 @@ export class AuthController {
       authenticated: true,
       role: req.user.role,
       hasAdminAccess: true,
-      message: 'Your ADMIN role is working correctly'
+      message: 'Your ADMIN role is working correctly',
     };
   }
 
@@ -116,15 +161,15 @@ export class AuthController {
           username: true,
           role: true,
           password: true, // Include password for debugging
-          createdAt: true
-        }
+          createdAt: true,
+        },
       });
 
       if (!user) {
         return {
           found: false,
           message: 'Admin user not found',
-          expectedUsername: adminUsername
+          expectedUsername: adminUsername,
         };
       }
 
@@ -139,18 +184,18 @@ export class AuthController {
           username: user.username,
           role: user.role,
           createdAt: user.createdAt,
-          passwordHashLength: user.password.length
+          passwordHashLength: user.password.length,
         },
         passwordTest: {
           expectedPassword: adminPassword,
           passwordMatch: passwordMatch,
-          hashStartsWith: user.password.substring(0, 10) + '...'
-        }
+          hashStartsWith: user.password.substring(0, 10) + '...',
+        },
       };
     } catch (error) {
       return {
         error: true,
-        message: error.message
+        message: error.message,
       };
     }
   }
@@ -164,26 +209,14 @@ export class AuthController {
 
       // Delete existing admin user if exists
       await this.authService['prisma'].user.deleteMany({
-        where: { username: adminUsername }
+        where: { username: adminUsername },
       });
 
       // Create new admin user with proper password hash
       const bcrypt = require('bcrypt');
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
-      const newAdmin = await this.authService['prisma'].user.create({
-        data: {
-          username: adminUsername,
-          password: hashedPassword,
-          role: UserRole.ADMIN,
-        },
-        select: {
-          id: true,
-          username: true,
-          role: true,
-          createdAt: true
-        }
-      });
+      const newAdmin = await this.authService.createDefaultAdmin();
 
       // Test the new password immediately
       const passwordTest = await bcrypt.compare(adminPassword, hashedPassword);
@@ -194,13 +227,13 @@ export class AuthController {
         user: newAdmin,
         passwordTest: {
           expectedPassword: adminPassword,
-          passwordMatch: passwordTest
-        }
+          passwordMatch: passwordTest,
+        },
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -214,7 +247,7 @@ export class AuthController {
       cookieDomain: process.env.COOKIE_DOMAIN,
       adminUsername: process.env.ADMIN_USERNAME,
       hasAdminPassword: !!process.env.ADMIN_PASSWORD,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -226,9 +259,9 @@ export class AuthController {
         cookie: req.headers.cookie,
         authorization: req.headers.authorization,
         origin: req.headers.origin,
-        referer: req.headers.referer
+        referer: req.headers.referer,
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -236,32 +269,33 @@ export class AuthController {
   testCookie(@Res({ passthrough: true }) res: Response) {
     // Test cookie with various settings
     const testToken = 'test-token-12345';
-    
+
     // Set multiple test cookies with different configurations
     res.cookie('test-token-strict', testToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
-      maxAge: 60 * 60 * 1000 // 1 hour
+      maxAge: 60 * 60 * 1000, // 1 hour
     });
-    
+
     res.cookie('test-token-none', testToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      maxAge: 60 * 60 * 1000 // 1 hour
+      maxAge: 60 * 60 * 1000, // 1 hour
     });
-    
+
     res.cookie('test-token-lax', testToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 1000 // 1 hour
+      maxAge: 60 * 60 * 1000, // 1 hour
     });
 
     return {
       message: 'Test cookies set',
-      instructions: 'Check your browser dev tools -> Application -> Cookies to see which cookies are set'
+      instructions:
+        'Check your browser dev tools -> Application -> Cookies to see which cookies are set',
     };
   }
 
@@ -273,13 +307,13 @@ export class AuthController {
       testCookies: {
         strict: req.cookies['test-token-strict'],
         none: req.cookies['test-token-none'],
-        lax: req.cookies['test-token-lax']
+        lax: req.cookies['test-token-lax'],
       },
       headers: {
         cookie: req.headers.cookie,
         origin: req.headers.origin,
-        host: req.headers.host
-      }
+        host: req.headers.host,
+      },
     };
   }
 
@@ -289,11 +323,16 @@ export class AuthController {
     @Body(ValidationPipe) loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
     @Ip() clientIp: string,
-    @Request() req
+    @Request() req,
   ) {
     try {
-      const user = await this.authService.validateUser(loginDto.username, loginDto.password, clientIp);
-      const { access_token, user: userInfo } = await this.authService.login(user);
+      const user = await this.authService.validateUser(
+        loginDto.username,
+        loginDto.password,
+        clientIp,
+      );
+      const { access_token, user: userInfo } =
+        await this.authService.login(user);
 
       // Log the request details
       const requestInfo = {
@@ -302,25 +341,32 @@ export class AuthController {
         userAgent: req.headers['user-agent'],
         referer: req.headers.referer,
         forwardedFor: req.headers['x-forwarded-for'],
-        clientIp: clientIp
+        clientIp: clientIp,
       };
 
       // Set JWT as HTTP-only cookie with detailed logging
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'strict' as const,
+        sameSite:
+          process.env.NODE_ENV === 'production'
+            ? ('none' as const)
+            : ('strict' as const),
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         ...(process.env.NODE_ENV === 'production' && {
-          domain: process.env.COOKIE_DOMAIN || undefined
-        })
+          domain: process.env.COOKIE_DOMAIN || undefined,
+        }),
       };
 
       res.cookie('token', access_token, cookieOptions);
 
       this.logger.log(`[LOGIN DEBUG] User logged in: ${userInfo.username}`);
-      this.logger.log(`[LOGIN DEBUG] Cookie options: ${JSON.stringify(cookieOptions)}`);
-      this.logger.log(`[LOGIN DEBUG] Request info: ${JSON.stringify(requestInfo)}`);
+      this.logger.log(
+        `[LOGIN DEBUG] Cookie options: ${JSON.stringify(cookieOptions)}`,
+      );
+      this.logger.log(
+        `[LOGIN DEBUG] Request info: ${JSON.stringify(requestInfo)}`,
+      );
 
       return {
         user: userInfo,
@@ -329,8 +375,8 @@ export class AuthController {
           environment: process.env.NODE_ENV,
           cookieOptions,
           requestInfo,
-          tokenPreview: access_token.substring(0, 20) + '...'
-        }
+          tokenPreview: access_token.substring(0, 20) + '...',
+        },
       };
     } catch (error) {
       this.logger.error(`[LOGIN DEBUG] Login failed: ${error.message}`);
@@ -348,9 +394,9 @@ export class AuthController {
         cookie: req.headers.cookie,
         origin: req.headers.origin,
         referer: req.headers.referer,
-        'user-agent': req.headers['user-agent']
+        'user-agent': req.headers['user-agent'],
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 }

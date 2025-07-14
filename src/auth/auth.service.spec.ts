@@ -3,7 +3,11 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthSecurityService } from './auth-security.service';
-import { UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UserRole } from '../utils/prisma-types';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import * as bcrypt from 'bcrypt';
@@ -45,7 +49,7 @@ describe('AuthService', () => {
       updatedAt: new Date(),
       email: 'test@example.com',
       gender: null,
-      DateOfBirth: null,
+      dateOfBirth: null,
       phoneNumber: null,
       createdById: null,
       avatar: null,
@@ -59,13 +63,21 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
 
-      const result = await service.validateUser('testuser', 'password', '127.0.0.1');
+      const result = await service.validateUser(
+        'testuser',
+        'password',
+        '127.0.0.1',
+      );
 
-      expect(mockAuthSecurityService.isAccountLocked).toHaveBeenCalledWith('testuser');
+      expect(mockAuthSecurityService.isAccountLocked).toHaveBeenCalledWith(
+        'testuser',
+      );
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { username: 'testuser' },
       });
-      expect(mockAuthSecurityService.recordSuccessfulLogin).toHaveBeenCalledWith('testuser', '127.0.0.1');
+      expect(
+        mockAuthSecurityService.recordSuccessfulLogin,
+      ).toHaveBeenCalledWith('testuser', '127.0.0.1');
       expect(result).toEqual({
         id: '1',
         username: 'testuser',
@@ -74,7 +86,7 @@ describe('AuthService', () => {
         updatedAt: mockUser.updatedAt,
         email: 'test@example.com',
         gender: null,
-        DateOfBirth: null,
+        dateOfBirth: null,
         phoneNumber: null,
         createdById: null,
         avatar: null,
@@ -88,10 +100,13 @@ describe('AuthService', () => {
       mockAuthSecurityService.isAccountLocked.mockResolvedValue(true);
 
       await expect(
-        service.validateUser('testuser', 'password', '127.0.0.1')
+        service.validateUser('testuser', 'password', '127.0.0.1'),
       ).rejects.toThrow(UnauthorizedException);
-      
-      expect(mockAuthSecurityService.recordFailedAttempt).toHaveBeenCalledWith('testuser', '127.0.0.1');
+
+      expect(mockAuthSecurityService.recordFailedAttempt).toHaveBeenCalledWith(
+        'testuser',
+        '127.0.0.1',
+      );
     });
 
     it('should throw generic error for non-existent user', async () => {
@@ -99,10 +114,13 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.validateUser('nonexistent', 'password', '127.0.0.1')
+        service.validateUser('nonexistent', 'password', '127.0.0.1'),
       ).rejects.toThrow(new UnauthorizedException('Invalid credentials'));
-      
-      expect(mockAuthSecurityService.recordFailedAttempt).toHaveBeenCalledWith('nonexistent', '127.0.0.1');
+
+      expect(mockAuthSecurityService.recordFailedAttempt).toHaveBeenCalledWith(
+        'nonexistent',
+        '127.0.0.1',
+      );
     });
 
     it('should throw generic error for invalid password', async () => {
@@ -111,10 +129,13 @@ describe('AuthService', () => {
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
 
       await expect(
-        service.validateUser('testuser', 'wrongpassword', '127.0.0.1')
+        service.validateUser('testuser', 'wrongpassword', '127.0.0.1'),
       ).rejects.toThrow(new UnauthorizedException('Invalid credentials'));
-      
-      expect(mockAuthSecurityService.recordFailedAttempt).toHaveBeenCalledWith('testuser', '127.0.0.1');
+
+      expect(mockAuthSecurityService.recordFailedAttempt).toHaveBeenCalledWith(
+        'testuser',
+        '127.0.0.1',
+      );
     });
   });
 
@@ -130,7 +151,7 @@ describe('AuthService', () => {
       mockPrisma.user.findFirst.mockResolvedValue(null);
       const hashedPassword = '$2b$12$hashedPassword';
       jest.spyOn(bcrypt, 'hash').mockResolvedValue(hashedPassword as never);
-      
+
       const newUser = {
         id: '1',
         username: 'newuser',
@@ -143,10 +164,7 @@ describe('AuthService', () => {
 
       expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
         where: {
-          OR: [
-            { username: 'newuser' },
-            { email: 'test@example.com' },
-          ],
+          OR: [{ username: 'newuser' }, { email: 'test@example.com' }],
         },
       });
       expect(bcrypt.hash).toHaveBeenCalledWith('Test123!@#', 12);
@@ -171,7 +189,9 @@ describe('AuthService', () => {
       mockPrisma.user.findFirst.mockResolvedValue({ id: '1' } as any);
 
       await expect(service.register(registerDto)).rejects.toThrow(
-        new ConflictException('Registration failed. Please try different credentials.')
+        new ConflictException(
+          'Registration failed. Please try different credentials.',
+        ),
       );
     });
 
@@ -180,9 +200,11 @@ describe('AuthService', () => {
         username: 'newuser',
         password: 'Test123!@#',
       };
-      
+
       mockPrisma.user.findFirst.mockResolvedValue(null);
-      jest.spyOn(bcrypt, 'hash').mockResolvedValue('$2b$12$hashedPassword' as never);
+      jest
+        .spyOn(bcrypt, 'hash')
+        .mockResolvedValue('$2b$12$hashedPassword' as never);
       mockPrisma.user.create.mockResolvedValue({
         id: '1',
         username: 'newuser',
@@ -197,14 +219,16 @@ describe('AuthService', () => {
           data: expect.objectContaining({
             role: UserRole.COMMON,
           }),
-        })
+        }),
       );
     });
 
     it('should handle registration errors gracefully', async () => {
       mockPrisma.user.findFirst.mockRejectedValue(new Error('Database error'));
 
-      await expect(service.register(registerDto)).rejects.toThrow(BadRequestException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -215,7 +239,7 @@ describe('AuthService', () => {
         username: 'testuser',
         role: UserRole.COMMON,
       };
-      
+
       const token = 'jwt-token';
       mockJwtService.sign.mockReturnValue(token);
 
@@ -245,7 +269,9 @@ describe('AuthService', () => {
 
     it('should create default admin if none exists', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
-      jest.spyOn(bcrypt, 'hash').mockResolvedValue('$2b$12$hashedPassword' as never);
+      jest
+        .spyOn(bcrypt, 'hash')
+        .mockResolvedValue('$2b$12$hashedPassword' as never);
       mockPrisma.user.create.mockResolvedValue({} as any);
 
       const result = await service.createDefaultAdmin();
@@ -262,7 +288,9 @@ describe('AuthService', () => {
           role: UserRole.ADMIN,
         },
       });
-      expect(result.message).toContain('Default admin user created successfully');
+      expect(result.message).toContain(
+        'Default admin user created successfully',
+      );
     });
 
     it('should return message if admin already exists', async () => {
@@ -280,9 +308,11 @@ describe('AuthService', () => {
     it('should use default credentials if env vars not set', async () => {
       delete process.env.ADMIN_USERNAME;
       delete process.env.ADMIN_PASSWORD;
-      
+
       mockPrisma.user.findUnique.mockResolvedValue(null);
-      jest.spyOn(bcrypt, 'hash').mockResolvedValue('$2b$12$hashedPassword' as never);
+      jest
+        .spyOn(bcrypt, 'hash')
+        .mockResolvedValue('$2b$12$hashedPassword' as never);
       mockPrisma.user.create.mockResolvedValue({} as any);
 
       await service.createDefaultAdmin();
