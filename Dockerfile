@@ -2,9 +2,6 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Add build arguments for environment variables
-ARG NODE_ENV=production
-
 # Install ALL dependencies (including dev dependencies) for building
 COPY package.json pnpm-lock.yaml* package-lock.json* ./
 RUN npm ci --include=dev
@@ -16,8 +13,8 @@ COPY tsconfig*.json ./
 COPY nest-cli.json ./
 COPY webpack-hmr.config.js ./
 
-# Copy .env file if it exists
-COPY .env* ./
+# Copy .env file created by GitHub Actions (this will override any local .env)
+COPY .env ./
 
 # Generate Prisma client (for Alpine)
 RUN npx prisma generate --schema=./prisma/schema.prisma
@@ -28,9 +25,6 @@ RUN npm run build
 # ---- Production Stage ----
 FROM node:18-alpine AS production
 WORKDIR /app
-
-# Add build arguments for environment variables
-ARG NODE_ENV=production
 
 # Install curl for health checks
 RUN apk add --no-cache curl
@@ -46,7 +40,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Copy .env file from builder stage
-COPY --from=builder /app/.env* ./
+COPY --from=builder /app/.env ./
 
 # Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
