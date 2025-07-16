@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -13,6 +7,346 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id                                      String         @id @default(uuid())
+  username                                String         @unique
+  password                                String
+  role                                    UserRole
+  email                                   String?        @unique
+  gender                                  Boolean?
+  DateOfBirth                             DateTime?
+  phoneNumber                             String?
+  createdAt                               DateTime       @default(now())
+  updatedAt                               DateTime       @updatedAt
+  createdById                             String?
+  avatar                                  String?
+  emailVerified                           Boolean        @default(false)
+  isActive                                Boolean        @default(true)
+  lastLoginAt                             DateTime?
+  fieldDisplays                           FieldDisplay[]
+  scoredMatches                           Match[]        @relation("ScoredBy")
+  matchReferees                           MatchReferee[]
+  tournaments                             Tournament[]
+  createdBy                               User?          @relation("CreatedUsers", fields: [createdById], references: [id])
+  createdUsers                            User[]         @relation("CreatedUsers")
+  fieldReferees                           FieldReferee[]
+
+  @@index([createdById])
+}
+
+model Tournament {
+  id             String        @id @default(uuid())
+  name           String
+  description    String?
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  adminId        String
+  numberOfFields Int           @default(1)
+  fields         Field[]
+  scoreConfigs   ScoreConfig[]
+  stages         Stage[]
+  teams          Team[]
+  teamStats      TeamStats[]
+  admin          User          @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+}
+
+model Stage {
+  id               String      @id @default(uuid())
+  name             String
+  type             StageType
+  startDate        DateTime
+  endDate          DateTime
+  tournamentId     String
+  teamsPerAlliance Int         @default(2)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  status           StageStatus @default(ACTIVE)
+  matches          Match[]
+  tournament       Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  teams            Team[]      @relation("StageTeams")
+  teamStats        TeamStats[]
+
+  @@index([tournamentId])
+}
+
+model Match {
+  id              String          @id @default(uuid())
+  matchNumber     Int
+  roundNumber     Int?
+  status          MatchState      @default(PENDING)
+  startTime       DateTime?
+  scheduledTime   DateTime?
+  endTime         DateTime?
+  duration        Int?
+  winningAlliance AllianceColor?
+  stageId         String
+  scoredById      String?
+  roundType       MatchRoundType?
+  scheduleId      String?
+  fieldId         String?
+  matchType       MatchType       @default(FULL)
+  matchDuration   Int?
+  updatedAt       DateTime        @updatedAt
+  alliances       Alliance[]
+  fieldDisplays   FieldDisplay[]  @relation("FieldDisplayCurrentMatch")
+  field           Field?          @relation(fields: [fieldId], references: [id])
+  scoredBy        User?           @relation("ScoredBy", fields: [scoredById], references: [id])
+  stage           Stage           @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  referees        MatchReferee[]
+  matchScores     MatchScore[]
+
+
+  @@index([stageId])
+  @@index([scoredById])
+  @@index([scheduleId])
+  @@index([fieldId])
+  @@index([stageId, matchNumber])
+  @@index([status, startTime])
+}
+
+model MatchReferee {
+  id        String   @id @default(uuid())
+  matchId   String
+  userId    String
+  role      UserRole
+  position  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId])
+  @@index([matchId])
+  @@index([userId])
+}
+
+model Alliance {
+  id            String         @id @default(uuid())
+  color         AllianceColor
+  score         Int            @default(0)
+  matchId       String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  autoScore     Int            @default(0)
+  driveScore    Int            @default(0)
+  match         Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchScores   MatchScore[]
+  teamAlliances TeamAlliance[]
+
+  @@index([matchId])
+}
+
+model Team {
+  id             String         @id @default(uuid())
+  teamNumber     String         @unique
+  name           String
+  organization   String?
+  avatar         String?
+  description    String?
+  teamLead       String?
+  teamLeadId     String?
+  teamMembers    Json?
+  tournamentId   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  currentStageId String?
+  currentStage   Stage?         @relation("StageTeams", fields: [currentStageId], references: [id])
+  tournament     Tournament?    @relation(fields: [tournamentId], references: [id])
+  teamAlliances  TeamAlliance[]
+  teamStats      TeamStats[]
+
+  @@index([tournamentId])
+  @@index([currentStageId])
+}
+
+model TeamAlliance {
+  id              String   @id @default(uuid())
+  teamId          String
+  allianceId      String
+  stationPosition Int      @default(1)
+  isSurrogate     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  alliance        Alliance @relation(fields: [allianceId], references: [id], onDelete: Cascade)
+  team            Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, allianceId])
+  @@index([teamId])
+  @@index([allianceId])
+}
+
+model TeamStats {
+  id                    String     @id @default(uuid())
+  teamId                String
+  tournamentId          String
+  stageId               String?
+  wins                  Int        @default(0)
+  losses                Int        @default(0)
+  ties                  Int        @default(0)
+  pointsScored          Int        @default(0)
+  pointsConceded        Int        @default(0)
+  matchesPlayed         Int        @default(0)
+  rankingPoints         Int        @default(0)
+  opponentWinPercentage Float      @default(0)
+  pointDifferential     Int        @default(0)
+  rank                  Int?
+  tiebreaker1           Float      @default(0)
+  tiebreaker2           Float      @default(0)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  stage                 Stage?     @relation(fields: [stageId], references: [id])
+  team                  Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  tournament            Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, tournamentId])
+  @@index([teamId])
+  @@index([tournamentId])
+  @@index([stageId])
+  @@index([tournamentId, stageId])
+}
+
+model Field {
+  id            String         @id @default(uuid())
+  name          String
+  number        Int            @db.SmallInt
+  location      String?
+  description   String?
+  tournamentId  String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  tournament    Tournament     @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  fieldDisplay  FieldDisplay?
+  matches       Match[]
+  fieldReferees FieldReferee[]
+
+  @@unique([tournamentId, number])
+  @@index([tournamentId])
+}
+
+model FieldDisplay {
+  id              String       @id @default(uuid())
+  fieldId         String       @unique
+  displayState    DisplayState @default(TEAM_LIST)
+  currentMatchId  String?
+  customMessage   String?
+  lastUpdatedBy   String?
+  autoAdvance     Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  currentMatch    Match?       @relation("FieldDisplayCurrentMatch", fields: [currentMatchId], references: [id])
+  field           Field        @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  lastUpdatedUser User?        @relation(fields: [lastUpdatedBy], references: [id])
+
+  @@index([fieldId])
+  @@index([displayState])
+  @@index([lastUpdatedBy])
+}
+
+model FieldReferee {
+  id        String   @id @default(uuid())
+  fieldId   String
+  userId    String
+  isHeadRef Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  field     Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([fieldId, userId])
+  @@index([fieldId])
+  @@index([userId])
+  @@index([fieldId, isHeadRef])
+  @@map("field_referees")
+}
+
+model ScoreConfig {
+  id                String             @id @default(uuid())
+  tournamentId      String?
+  name              String
+  description       String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  bonusConditions   BonusCondition[]
+  penaltyConditions PenaltyCondition[]
+  tournament        Tournament?         @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  scoreElements     ScoreElement[]
+
+  @@index([tournamentId])
+}
+
+model ScoreElement {
+  id            String       @id @default(uuid())
+  scoreConfigId String
+  name          String
+  code          String
+  description   String?
+  pointsPerUnit Int
+  category      String?
+  elementType   ElementType
+  displayOrder  Int
+  icon          String?
+  color         String?
+  matchScores   MatchScore[]
+  scoreConfig   ScoreConfig  @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([scoreConfigId, code])
+  @@index([scoreConfigId])
+}
+
+model BonusCondition {
+  id            String      @id @default(uuid())
+  scoreConfigId String
+  name          String
+  code          String
+  description   String?
+  bonusPoints   Int
+  condition     Json
+  displayOrder  Int
+  scoreConfig   ScoreConfig @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([scoreConfigId, code])
+  @@index([scoreConfigId])
+}
+
+model PenaltyCondition {
+  id            String      @id @default(uuid())
+  scoreConfigId String
+  name          String
+  code          String
+  description   String?
+  penaltyPoints Int
+  condition     Json
+  displayOrder  Int
+  scoreConfig   ScoreConfig @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([scoreConfigId, code])
+  @@index([scoreConfigId])
+}
+
+model MatchScore {
+  id             String       @id @default(uuid())
+  matchId        String
+  allianceId     String
+  scoreElementId String
+  units          Int
+  totalPoints    Int
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  alliance       Alliance     @relation(fields: [allianceId], references: [id], onDelete: Cascade)
+  match          Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  scoreElement   ScoreElement @relation(fields: [scoreElementId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, allianceId, scoreElementId])
+  @@index([matchId])
+  @@index([allianceId])
+  @@index([scoreElementId])
+}
+
 
 enum UserRole {
   ADMIN
@@ -40,8 +374,6 @@ enum CardType {
   RED
 }
 
-
-
 enum MatchState {
   PENDING
   IN_PROGRESS
@@ -49,9 +381,6 @@ enum MatchState {
   CANCELLED
   ERROR
 }
-
-
-
 
 enum DisplayState {
   TEAM_LIST
@@ -64,8 +393,8 @@ enum DisplayState {
 }
 
 enum MatchType {
-  FULL         // auto + teleop + endgame (150s)
-  TELEOP_ENDGAME // teleop + endgame (120s)
+  FULL
+  TELEOP_ENDGAME
 }
 
 enum AllianceColor {
@@ -98,353 +427,3 @@ enum ElementType {
   BOOLEAN
   TIMER
 }
-
-model User {
-  id              String           @id @default(uuid())
-  username        String           @unique
-  password        String
-  role            UserRole
-  email           String?          @unique
-  gender          Boolean?
-  DateOfBirth     DateTime?
-  phoneNumber     String?
-  avatar          String?          // Profile picture URL
-  isActive        Boolean          @default(true) // Account status
-  lastLoginAt     DateTime?        // Track last login
-  emailVerified   Boolean          @default(false) // Email verification
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  createdBy       User?            @relation("CreatedUsers", fields: [createdById], references: [id])
-  createdById     String?
-  createdUsers    User[]           @relation("CreatedUsers")
-  tournaments     Tournament[]
-  scoredMatches   Match[]          @relation("ScoredBy")
-  matchReferees   MatchReferee[]   // New relation for match referees
-  fieldDisplays   FieldDisplay[]   // Relation to field displays updated by this user
-  fieldReferees   FieldReferee[]   // Relation to field referee assignments
-
-  @@index([createdById])
-}
-
-model Tournament {
-  id              String        @id @default(uuid())
-  name            String
-  description     String?
-  startDate       DateTime
-  endDate         DateTime
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  adminId         String
-  admin           User          @relation(fields: [adminId], references: [id])
-  stages          Stage[]
-  teams           Team[]        // Added teams relationship
-  teamStats       TeamStats[]   // New relation to track team statistics
-  fields          Field[]       // New relation: Tournament has many Fields
-  numberOfFields  Int           @default(1)
-  scoreConfigs    ScoreConfig[] // New relation: Tournament has many ScoreConfigs
-
-  @@index([adminId])
-}
-
-model Stage {
-  id           String      @id @default(uuid())
-  name         String
-  type         StageType
-  status       StageStatus @default(ACTIVE) // Use proper enum instead of string
-  startDate    DateTime
-  endDate      DateTime
-  tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  matches      Match[]
-  teamStats    TeamStats[] // Added relation field for TeamStats
-  teamsPerAlliance Int @default(2) // Number of teams per alliance (2v2, 3v3, etc.)
-  
-  // Add relationship to teams in this stage
-  teams        Team[]     @relation("StageTeams")
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  @@index([tournamentId])
-}
-
-model Match {
-  id                String         @id @default(uuid())
-  matchNumber       Int
-  roundNumber       Int? // The round number this match belongs to
-  status            MatchState     @default(PENDING)
-  startTime         DateTime? // Full timestamp with hour-minute precision
-  scheduledTime     DateTime? // New field for the scheduled time with hour-minute precision
-  endTime           DateTime? // Full timestamp with hour-minute precision
-  duration          Int? // Duration in minutes
-  winningAlliance   AllianceColor? // "RED" or "BLUE" - indicates which alliance won
-  stageId           String
-  stage             Stage          @relation(fields: [stageId], references: [id], onDelete: Cascade)
-  alliances         Alliance[]
-  scoredById        String?
-  scoredBy          User?          @relation("ScoredBy", fields: [scoredById], references: [id], onDelete: SetNull)
-  referees          MatchReferee[]
-  roundType         MatchRoundType? // e.g., "QUALIFICATION", "SWISS", "PLAYOFF", "FINAL"
-  scheduleId        String?
-  // schedule          Schedule?      @relation(fields: [scheduleId], references: [id], onDelete: SetNull) // The Schedule model is not defined in the schema
-  fieldId           String?
-  field             Field?         @relation(fields: [fieldId], references: [id], onDelete: SetNull)
-  matchType         MatchType      @default(FULL) // Type of match: FULL, TELEOP_ENDGAME
-  matchDuration     Int? // Duration of the match in seconds (overrides default if set)  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  matchScores       MatchScore[] // New relation to flexible match scores
-  fieldDisplays     FieldDisplay[] @relation("FieldDisplayCurrentMatch") // Relation to field displays showing this match
-
-  @@index([stageId])
-  @@index([scoredById])
-  @@index([scheduleId])
-  @@index([fieldId])
-  @@index([stageId, matchNumber]) // Composite index for stage-specific match queries
-  @@index([status, startTime]) // Index for filtering by status and ordering by time
-}
-
-model MatchReferee {
-  id        String      @id @default(uuid())
-  matchId   String
-  match     Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      UserRole // HEAD_REFEREE or ALLIANCE_REFEREE
-  position  String?     // Optional position identifier (e.g. "RED1", "BLUE2")
-  createdAt DateTime    @default(now()) 
-  updatedAt DateTime    @updatedAt
-
-  @@unique([matchId, userId])
-  @@index([matchId])
-  @@index([userId])
-}
-
-model Alliance {
-  id            String    @id @default(uuid())
-  color         AllianceColor    // e.g., "RED", "BLUE"
-  score         Int       @default(0)      // Total score (auto + drive)
-  autoScore     Int       @default(0)      // Autonomous period score
-  driveScore    Int       @default(0)      // Driver-controlled period score
-  matchId       String
-  match         Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  teamAlliances TeamAlliance[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  matchScores   MatchScore[] // New relation to flexible match scores
-
-  @@index([matchId])
-}
-
-model Team {
-  id            String         @id @default(uuid())
-  teamNumber    String         @unique
-  name          String
-  organization  String?
-  avatar        String?        // URL to team avatar image
-  description   String?        // Team description
-  teamLead      String?        // Team lead name
-  teamLeadId    String?        // Optional link to user ID for team lead
-  teamMembers   Json?          // Store team members as a JSON array
-  tournamentId  String?        // Optional link to tournament
-  tournament    Tournament?    @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
-  
-  // Add stage relationship for team advancement
-  currentStageId String?       // Which stage this team is currently in
-  currentStage   Stage?        @relation("StageTeams", fields: [currentStageId], references: [id], onDelete: SetNull)
-  
-  teamAlliances TeamAlliance[]
-  teamStats     TeamStats[]    // New relation to track team statistics
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  @@index([tournamentId])
-  @@index([currentStageId])   // Add index for stage queries
-}
-
-model TeamAlliance {
-  id          String   @id @default(uuid())
-  teamId      String
-  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  allianceId  String
-  alliance    Alliance @relation(fields: [allianceId], references: [id], onDelete: Cascade)
-  stationPosition Int   @default(1)  // Station position: 1, 2, or 3 within an alliance
-  isSurrogate Boolean  @default(false) // Indicates if this is a surrogate appearance
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([teamId, allianceId])
-  @@index([teamId])
-  @@index([allianceId])
-}
-
-model TeamStats {
-  id                  String   @id @default(uuid())
-  teamId              String
-  team                Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  tournamentId        String
-  tournament          Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  stageId             String?    // Adding optional stageId field for stage-specific stats
-  stage               Stage?     @relation(fields: [stageId], references: [id], onDelete: SetNull)
-  wins                Int       @default(0)
-  losses              Int       @default(0)
-  ties                Int       @default(0)
-  pointsScored        Int       @default(0)
-  pointsConceded      Int       @default(0)
-  matchesPlayed       Int       @default(0)
-  rankingPoints       Int       @default(0)
-  opponentWinPercentage Float   @default(0)
-  pointDifferential   Int       @default(0)
-  rank                Int?      // For playoff rankings
-  tiebreaker1         Float     @default(0) // First tiebreaker metric (e.g., average score)
-  tiebreaker2         Float     @default(0) // Second tiebreaker metric (e.g., strength of schedule)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  @@unique([teamId, tournamentId])
-  @@index([teamId])
-  @@index([tournamentId])
-  @@index([stageId])
-  @@index([tournamentId, stageId]) // Composite index for tournament-stage queries
-}
-
-model Field {
-  id           String      @id @default(uuid())
-  name         String
-  number       Int         @db.SmallInt // Constraint: small integer for field numbers
-  location     String?
-  description  String?
-  tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  matches      Match[]
-  fieldDisplay FieldDisplay? // Relation to field display state
-  fieldReferees FieldReferee[] // Relation to field referees
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  @@unique([tournamentId, number])
-  @@index([tournamentId])
-}
-
-model FieldDisplay {
-  id              String       @id @default(uuid())
-  fieldId         String       @unique
-  field           Field        @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  displayState    DisplayState @default(TEAM_LIST)
-  currentMatchId  String?      // Optional reference to the match currently being displayed
-  currentMatch    Match?       @relation("FieldDisplayCurrentMatch", fields: [currentMatchId], references: [id], onDelete: SetNull)
-  customMessage   String?      // Custom message when displayState is CUSTOM_MESSAGE
-  lastUpdatedBy   String?      // User ID who last updated the display
-  lastUpdatedUser User?        @relation(fields: [lastUpdatedBy], references: [id], onDelete: SetNull)
-  autoAdvance     Boolean      @default(true) // Whether to automatically advance display states
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-
-  @@index([fieldId])
-  @@index([displayState])
-  @@index([lastUpdatedBy])
-}
-
-model FieldReferee {
-  id        String   @id @default(uuid())
-  fieldId   String
-  userId    String
-  isHeadRef Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  field Field @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([fieldId, userId])
-  @@index([fieldId])
-  @@index([userId])
-  @@index([fieldId, isHeadRef]) // Optimized for finding head referee
-  @@map("field_referees")
-}
-
-// New models for flexible scoring system
-
-model ScoreConfig {
-  id                String           @id @default(uuid())
-  tournamentId      String
-  tournament        Tournament       @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  name              String           // e.g., "Fire Fighting Competition 2025"
-  description       String?
-  scoreElements     ScoreElement[]
-  bonusConditions   BonusCondition[]
-  penaltyConditions PenaltyCondition[]
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-
-  @@index([tournamentId])
-}
-
-model ScoreElement {
-  id            String      @id @default(uuid())
-  scoreConfigId String
-  scoreConfig   ScoreConfig @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
-  name          String      // e.g., "Dry Powder in Own Area"
-  code          String      // Unique identifier for this element, e.g., "dry_powder_own"
-  description   String?
-  pointsPerUnit Int         // e.g., 5 (can be negative for penalties)  maxUnits      Int?        // Optional limit (e.g., max 10 balls)
-  category      String?     // For grouping related elements
-  elementType   ElementType // "COUNTER" (numeric), "BOOLEAN" (yes/no), or "TIMER"
-  displayOrder  Int         // For UI ordering
-  icon          String?     // Optional icon reference
-  color         String?     // Optional color for UI
-  matchScores   MatchScore[]
-  
-  @@unique([scoreConfigId, code])
-  @@index([scoreConfigId])
-}
-
-model BonusCondition {
-  id            String      @id @default(uuid())
-  scoreConfigId String
-  scoreConfig   ScoreConfig @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
-  name          String      // e.g., "5 Dry Powder Balls Bonus"
-  code          String      // Unique identifier, e.g., "five_balls_bonus"
-  description   String?
-  bonusPoints   Int         // e.g., 10
-  condition     Json        // JSON for storing condition logic
-  displayOrder  Int         // For UI ordering
-  
-  @@unique([scoreConfigId, code])
-  @@index([scoreConfigId])
-}
-
-model PenaltyCondition {
-  id            String      @id @default(uuid())
-  scoreConfigId String
-  scoreConfig   ScoreConfig @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
-  name          String      // e.g., "Red Area Violation"
-  code          String      // Unique identifier, e.g., "red_area_violation"
-  description   String?
-  penaltyPoints Int         // e.g., -10
-  condition     Json        // JSON for storing condition logic
-  displayOrder  Int         // For UI ordering
-  
-  @@unique([scoreConfigId, code])
-  @@index([scoreConfigId])
-}
-
-model MatchScore {
-  id             String       @id @default(uuid())
-  matchId        String
-  match          Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  allianceId     String
-  alliance       Alliance     @relation(fields: [allianceId], references: [id], onDelete: Cascade)
-  scoreElementId String
-  scoreElement   ScoreElement @relation(fields: [scoreElementId], references: [id], onDelete: Cascade)
-  units          Int          // How many times the element was scored (e.g., 5 balls)
-  totalPoints    Int          // Calculated points for this element (units * pointsPerUnit)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  @@unique([matchId, allianceId, scoreElementId])
-  @@index([matchId])
-  @@index([allianceId])
-  @@index([scoreElementId])
-}
-
-
-

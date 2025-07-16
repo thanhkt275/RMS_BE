@@ -126,13 +126,13 @@ exports.Prisma.UserScalarFieldEnum = {
   gender: 'gender',
   DateOfBirth: 'DateOfBirth',
   phoneNumber: 'phoneNumber',
-  avatar: 'avatar',
-  isActive: 'isActive',
-  lastLoginAt: 'lastLoginAt',
-  emailVerified: 'emailVerified',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  createdById: 'createdById'
+  createdById: 'createdById',
+  avatar: 'avatar',
+  emailVerified: 'emailVerified',
+  isActive: 'isActive',
+  lastLoginAt: 'lastLoginAt'
 };
 
 exports.Prisma.TournamentScalarFieldEnum = {
@@ -151,13 +151,13 @@ exports.Prisma.StageScalarFieldEnum = {
   id: 'id',
   name: 'name',
   type: 'type',
-  status: 'status',
   startDate: 'startDate',
   endDate: 'endDate',
   tournamentId: 'tournamentId',
   teamsPerAlliance: 'teamsPerAlliance',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  status: 'status'
 };
 
 exports.Prisma.MatchScalarFieldEnum = {
@@ -194,11 +194,11 @@ exports.Prisma.AllianceScalarFieldEnum = {
   id: 'id',
   color: 'color',
   score: 'score',
-  autoScore: 'autoScore',
-  driveScore: 'driveScore',
   matchId: 'matchId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  autoScore: 'autoScore',
+  driveScore: 'driveScore'
 };
 
 exports.Prisma.TeamScalarFieldEnum = {
@@ -212,9 +212,9 @@ exports.Prisma.TeamScalarFieldEnum = {
   teamLeadId: 'teamLeadId',
   teamMembers: 'teamMembers',
   tournamentId: 'tournamentId',
-  currentStageId: 'currentStageId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  currentStageId: 'currentStageId'
 };
 
 exports.Prisma.TeamAllianceScalarFieldEnum = {

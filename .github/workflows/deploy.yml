@@ -33,55 +33,66 @@ jobs:
     - name: Run e2e tests (if available)
       run: npm run test:e2e || echo "No e2e tests found"
 
-  build-and-push:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+  # build-and-push:
+  #   needs: test
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
+  #   outputs:
+  #     image-tag: ${{ steps.meta.outputs.tags }}
+  #     image-digest: ${{ steps.build.outputs.digest }}
     
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
     
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+  #   - name: Set up Docker Buildx
+  #     uses: docker/setup-buildx-action@v3
     
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ env.DOCKER_HUB_USERNAME }}
-        password: ${{ env.DOCKER_HUB_TOKEN }}
+  #   - name: Login to Docker Hub
+  #     uses: docker/login-action@v3
+  #     with:
+  #       username: ${{ env.DOCKER_HUB_USERNAME }}
+  #       password: ${{ env.DOCKER_HUB_TOKEN }}
     
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.DOCKER_HUB_USERNAME }}/rms-be
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
-    
-    - name: Build and push Docker image
-      id: build
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./Dockerfile
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        platforms: linux/amd64,linux/arm64
-        build-args: |
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-          PORT=${{ secrets.PORT }}
-          NODE_ENV=${{ secrets.NODE_ENV }}
+  #   - name: Create .env file from secrets
+  #     run: |
+  #       cat > .env << EOF
 
+  #       NODE_ENV=${{ secrets.NODE_ENV }}
+  #       # Database Configuration
+  #       DATABASE_URL=${{ secrets.DATABASE_URL }}
+        
+  #       # JWT Configuration
+  #       JWT_SECRET=${{ secrets.JWT_SECRET }}
+        
+  #       # Server Configuration
+  #       PORT=${{ secrets.PORT }}
+  #       # CORS Configuration
+  #       FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+
+  #       EOF
+    
+  #   - name: Extract metadata
+  #     id: meta
+  #     uses: docker/metadata-action@v5
+  #     with:
+  #       images: ${{ env.DOCKER_HUB_USERNAME }}/rms-be
+  #       tags: |
+  #         type=ref,event=branch
+  #         type=ref,event=pr
+  #         type=sha,prefix={{branch}}-
+  #         type=raw,value=latest,enable={{is_default_branch}}
+    
+  #   - name: Build and push Docker image
+  #     id: build
+  #     uses: docker/build-push-action@v5
+  #     with:
+  #       context: .
+  #       file: ./Dockerfile
+  #       push: true
+  #       tags: ${{ steps.meta.outputs.tags }}
+  #       labels: ${{ steps.meta.outputs.labels }}
+  #       cache-from: type=gha
+  #       cache-to: type=gha,mode=max
+  #       platforms: linux/amd64,linux/arm64
