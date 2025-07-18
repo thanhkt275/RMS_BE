@@ -380,8 +380,8 @@ export class UsersService {
     }
 
     // Check email uniqueness if changing
-    if (updateUserDto.email && updateUserDto.email !== existingUser.email) {
-      if (await this.isEmailExists(updateUserDto.email)) {
+    if (updateUserDto.email !== undefined && updateUserDto.email !== existingUser.email) {
+      if (updateUserDto.email && await this.isEmailExists(updateUserDto.email)) {
         throw new ConflictException('Email already exists');
       }
     }
@@ -396,6 +396,7 @@ export class UsersService {
     if (updateUserDto.gender !== undefined) data.gender = updateUserDto.gender;
     if (updateUserDto.DateOfBirth !== undefined) data.DateOfBirth = updateUserDto.DateOfBirth;
     if (updateUserDto.role) data.role = updateUserDto.role;
+    if (updateUserDto.isActive !== undefined) data.isActive = updateUserDto.isActive;
 
     if (updateUserDto.password) {
       data.password = await this.hashPassword(updateUserDto.password);

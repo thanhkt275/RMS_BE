@@ -23,10 +23,6 @@ const usernameValidation = z
 
 const phoneNumberValidation = z
   .string()
-  .regex(
-    /^[\+]?[1-9][\d]{0,15}$/,
-    'Phone number must be a valid international format'
-  )
   .optional();
 
 const emailValidation = z
@@ -56,4 +52,4 @@ export const CreateUserSchema = z.object({
 }).strict(); // Prevent additional properties
 
 // Create a DTO class from the Zod schema
-export class CreateUserDto extends createZodDto(CreateUserSchema) {}
+export class CreateUserDto extends createZodDto(CreateUserSchema) { }

@@ -5,8 +5,10 @@ import { UserRole } from '../../utils/prisma-types';
 import { z } from 'zod';
 
 // Define the Zod schema for user updates - making all fields optional
-export const UpdateUserSchema = CreateUserSchema.partial().omit({ 
+export const UpdateUserSchema = CreateUserSchema.partial().omit({
   createdById: true // Don't allow changing creator in updates
+}).extend({
+  isActive: z.boolean().optional() // Add isActive field for user status updates
 });
 
 // Define the Zod schema for role changes with enhanced validation
@@ -91,10 +93,6 @@ export const ProfileUpdateSchema = z.object({
     .max(255, 'Email must not exceed 255 characters')
     .optional(),
   phoneNumber: z.string()
-    .regex(
-      /^[\+]?[1-9][\d]{0,15}$/,
-      'Phone number must be a valid international format'
-    )
     .optional(),
   gender: z.boolean().optional(),
   DateOfBirth: z.date()
@@ -111,9 +109,9 @@ export const ProfileUpdateSchema = z.object({
 }).strict();
 
 // Create DTO classes from the Zod schemas
-export class UpdateUserDto extends createZodDto(UpdateUserSchema) {}
-export class ChangeRoleDto extends createZodDto(ChangeRoleSchema) {}
-export class BulkOperationDto extends createZodDto(BulkOperationSchema) {}
-export class PasswordResetDto extends createZodDto(PasswordResetSchema) {}
-export class UserStatusDto extends createZodDto(UserStatusSchema) {}
-export class ProfileUpdateDto extends createZodDto(ProfileUpdateSchema) {}
+export class UpdateUserDto extends createZodDto(UpdateUserSchema) { }
+export class ChangeRoleDto extends createZodDto(ChangeRoleSchema) { }
+export class BulkOperationDto extends createZodDto(BulkOperationSchema) { }
+export class PasswordResetDto extends createZodDto(PasswordResetSchema) { }
+export class UserStatusDto extends createZodDto(UserStatusSchema) { }
+export class ProfileUpdateDto extends createZodDto(ProfileUpdateSchema) { }
