@@ -6,7 +6,7 @@ yarn-error.log*
 
 # Environment files (exclude local .env files)
 .env
-.env.*
+.env.example
 
 # Build outputs
 dist
@@ -43,6 +43,9 @@ jspm_packages/
 
 # Yarn Integrity file
 .yarn-integrity
+
+# dotenv environment variables file
+.env
 
 # IDE files
 .vscode/

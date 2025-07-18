@@ -1,8 +1,8 @@
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import { PrismaClient } from '@prisma/client';
 import { CreateUserSchema } from './create-user.dto';
-import { 
-  UpdateUserSchema, 
+import {
+  UpdateUserSchema,
   ChangeRoleSchema,
   BulkOperationSchema,
   PasswordResetSchema,
@@ -15,7 +15,7 @@ import {
   UserExportSchema,
   UserImportSchema
 } from './user-query.dto';
-import { UserRole } from '../../utils/prisma-types';
+import { UserRole, Gender } from '../../utils/prisma-types';
 
 // Mock Prisma client to avoid database interactions
 const mockPrisma = mockDeep<PrismaClient>();
@@ -30,12 +30,13 @@ describe('User DTOs Validation', () => {
   describe('CreateUserSchema', () => {
     it('should validate a valid user creation', () => {
       const validUser = {
+        name: 'Valid User', // Add the required name field
         username: 'validuser123',
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,
         email: 'user@example.com',
-        phoneNumber: '+1234567890',
-        gender: true,
+        phoneNumber: '0345678932',
+        gender: Gender.MALE,
         DateOfBirth: new Date('1990-01-01'),
       };
 
@@ -45,6 +46,7 @@ describe('User DTOs Validation', () => {
 
     it('should reject invalid username', () => {
       const invalidUser = {
+        name: 'Test User',
         username: 'ab', // Too short
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,
@@ -66,6 +68,7 @@ describe('User DTOs Validation', () => {
 
     it('should reject weak password', () => {
       const invalidUser = {
+        name: 'Test User',
         username: 'validuser',
         password: 'weak', // Too weak
         role: UserRole.TEAM_LEADER,
@@ -87,6 +90,7 @@ describe('User DTOs Validation', () => {
 
     it('should reject invalid email', () => {
       const invalidUser = {
+        name: 'Test User',
         username: 'validuser',
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,
@@ -112,6 +116,7 @@ describe('User DTOs Validation', () => {
       futureDate.setFullYear(futureDate.getFullYear() + 1);
 
       const invalidUser = {
+        name: 'Test User',
         username: 'validuser',
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,
@@ -135,18 +140,47 @@ describe('User DTOs Validation', () => {
 
   describe('UpdateUserSchema', () => {
     it('should validate partial user updates', () => {
+      // Test with just email to verify partial updates work
       const validUpdate = {
-        email: 'newemail@example.com',
-        phoneNumber: '+9876543210',
+        email: 'newemail@example.com', // Valid email format
       };
 
       const result = UpdateUserSchema.safeParse(validUpdate);
       expect(result.success).toBe(true);
     });
 
-    it('should reject invalid partial updates', () => {
+    it('should validate phone number in partial updates', () => {
+      // Test with just phone number to verify partial updates work
+      const validPhoneUpdate = {
+        phoneNumber: '0123456789', // Format: starts with 0 and is 10 digits long
+      };
+
+      const result = UpdateUserSchema.safeParse(validPhoneUpdate);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject invalid phone number format', () => {
+      const invalidPhoneUpdate = {
+        phoneNumber: '+9876543210', // Invalid format: should start with 0 and be 10 digits
+      };
+
+      const result = UpdateUserSchema.safeParse(invalidPhoneUpdate);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              path: ['phoneNumber'],
+              message: expect.stringContaining('Phone number must start with 0'),
+            }),
+          ])
+        );
+      }
+    });
+
+    it('should reject invalid email format', () => {
       const invalidUpdate = {
-        email: 'invalid-email-format',
+        email: 'invalid-email-format', // Invalid email format
       };
 
       const result = UpdateUserSchema.safeParse(invalidUpdate);
@@ -279,7 +313,7 @@ describe('User DTOs Validation', () => {
     });
 
     it('should reject too many user IDs', () => {
-      const tooManyIds = Array.from({ length: 51 }, (_, i) => 
+      const tooManyIds = Array.from({ length: 51 }, (_, i) =>
         `550e8400-e29b-41d4-a716-44665544${i.toString().padStart(4, '0')}`
       );
 
@@ -762,6 +796,7 @@ describe('User DTOs Validation', () => {
 
       // Test data that would typically be validated in a service
       const userData = {
+        name: 'New Test User', // Add the required name field
         username: 'newuser123',
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,

@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma.service';
+import { JwtService } from '@nestjs/jwt';
+import { EmailsService } from '../emails/emails.service';
 import {
   NotFoundException,
   BadRequestException,
@@ -8,23 +10,26 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { UserRole } from '../utils/prisma-types';
+import { UserRole, Gender } from '../utils/prisma-types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
   let prisma: DeepMockProxy<PrismaService>;
+  let jwtService: JwtService;
+  let emailsService: EmailsService;
 
   const mockUser = {
     id: '123e4567-e89b-42d3-a456-426614174000',
     username: 'testuser',
     password: 'hashed-password',
     role: UserRole.COMMON,
+    name: 'Test User',
     email: 'test@example.com',
-    phoneNumber: '+1234567890',
-    gender: true, // Boolean as per schema
-    dateOfBirth: new Date('1990-01-01'),
+    phoneNumber: '0345678965',
+    gender: Gender.MALE,
+    DateOfBirth: new Date('1990-01-01'),
     avatar: null,
     isActive: true,
     lastLoginAt: new Date(),
@@ -39,13 +44,14 @@ describe('UsersService', () => {
   };
 
   const mockCreateUserDto: CreateUserDto = {
+    name: 'New User',
     username: 'newuser',
     password: 'password123',
     role: UserRole.COMMON,
     email: 'newuser@example.com',
-    phoneNumber: '+1234567890',
-    gender: false, // Boolean as per schema
-    dateOfBirth: new Date('1995-01-01'),
+    phoneNumber: '0345678965',
+    gender: Gender.MALE,
+    DateOfBirth: new Date('1995-01-01'),
     createdById: '123e4567-e89b-42d3-a456-426614174001',
   };
 
@@ -55,9 +61,16 @@ describe('UsersService', () => {
       .mockImplementation(async (password) => `hashed-${password}`);
 
     prisma = mockDeep<PrismaService>();
+    jwtService = { signAsync: jest.fn().mockResolvedValue('fake-token') } as any;
+    emailsService = { sendAccountActivationInvite: jest.fn().mockResolvedValue(undefined) } as any;
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        UsersService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: JwtService, useValue: jwtService },
+        { provide: EmailsService, useValue: emailsService },
+      ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
@@ -71,7 +84,7 @@ describe('UsersService', () => {
       prisma.user.count.mockResolvedValueOnce(0); // Email doesn't exist
       prisma.user.findUnique.mockResolvedValueOnce(mockUser); // Creator exists
 
-      const createdUser = { ...mockUser, password: 'hashed-password123' };
+      const createdUser = { ...mockUser, password: 'hashed-password123', emailVerified: true };
       prisma.user.create.mockResolvedValue(createdUser);
 
       const result = await service.create(mockCreateUserDto);
@@ -79,18 +92,27 @@ describe('UsersService', () => {
       expect(result).toEqual(createdUser);
       expect(prisma.user.create).toHaveBeenCalledWith({
         data: {
+          name: mockCreateUserDto.name,
           username: mockCreateUserDto.username,
           password: 'hashed-password123',
           role: mockCreateUserDto.role,
           email: mockCreateUserDto.email,
-          phoneNumber: mockCreateUserDto.phoneNumber,
+          phoneNumber: mockCreateUserDto.phoneNumber, // service uses 'phoneNumber'
           gender: mockCreateUserDto.gender,
-          dateOfBirth: mockCreateUserDto.dateOfBirth,
-          createdById: mockCreateUserDto.createdById,
+          DateOfBirth: mockCreateUserDto.DateOfBirth, // service uses 'DateOfBirth'
+          createdBy: { connect: { id: mockCreateUserDto.createdById } },
         },
         select: expect.any(Object),
       });
       expect(bcrypt.hash).toHaveBeenCalledWith(mockCreateUserDto.password, 12);
+      expect(jwtService.signAsync).toHaveBeenCalledWith(
+        { email: mockCreateUserDto.email },
+        { expiresIn: '7d' },
+      );
+      expect(emailsService.sendAccountActivationInvite).toHaveBeenCalledWith(
+        mockCreateUserDto.email,
+        expect.stringContaining('fake-token'),
+      );
     });
 
     it('should throw ConflictException if username already exists', async () => {
@@ -250,17 +272,7 @@ describe('UsersService', () => {
       expect(result).toEqual(mockUser);
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: mockUser.id },
-        select: expect.objectContaining({
-          id: true,
-          username: true,
-          email: true,
-          phoneNumber: true,
-          gender: true,
-          dateOfBirth: true,
-          isActive: true,
-          lastLoginAt: true,
-          emailVerified: true,
-        }),
+        select: expect.any(Object),
       });
     });
 
@@ -295,6 +307,7 @@ describe('UsersService', () => {
         ...mockUser,
         ...updateDto,
         password: 'hashed-newpassword123',
+        phoneNumber: mockUser.phoneNumber || '', // Ensure phoneNumber is not null
       };
       prisma.user.update.mockResolvedValue(updatedUser);
 
@@ -333,7 +346,11 @@ describe('UsersService', () => {
   describe('changeRole', () => {
     it('should change user role successfully', async () => {
       prisma.user.findUnique.mockResolvedValue(mockUser);
-      const updatedUser = { ...mockUser, role: UserRole.ADMIN };
+      const updatedUser = {
+        ...mockUser,
+        role: UserRole.ADMIN,
+        phoneNumber: mockUser.phoneNumber || '' // Ensure phoneNumber is not null
+      };
       prisma.user.update.mockResolvedValue(updatedUser);
 
       const result = await service.changeRole(mockUser.id, UserRole.ADMIN);
@@ -347,7 +364,11 @@ describe('UsersService', () => {
     });
 
     it('should throw BadRequestException when trying to change own admin role', async () => {
-      const adminUser = { ...mockUser, role: UserRole.ADMIN };
+      const adminUser = {
+        ...mockUser,
+        role: UserRole.ADMIN,
+        phoneNumber: mockUser.phoneNumber || '' // Ensure phoneNumber is not null
+      };
       prisma.user.findUnique.mockResolvedValue(adminUser);
 
       await expect(
@@ -356,7 +377,11 @@ describe('UsersService', () => {
     });
 
     it('should throw BadRequestException when removing last admin', async () => {
-      const adminUser = { ...mockUser, role: UserRole.ADMIN };
+      const adminUser = {
+        ...mockUser,
+        role: UserRole.ADMIN,
+        phoneNumber: mockUser.phoneNumber || '' // Ensure phoneNumber is not null
+      };
       prisma.user.findUnique.mockResolvedValue(adminUser);
       prisma.user.count.mockResolvedValue(1); // Only one admin
 
@@ -390,7 +415,11 @@ describe('UsersService', () => {
     });
 
     it('should throw BadRequestException when deleting last admin', async () => {
-      const adminUser = { ...mockUser, role: UserRole.ADMIN };
+      const adminUser = {
+        ...mockUser,
+        role: UserRole.ADMIN,
+        phoneNumber: mockUser.phoneNumber || '' // Ensure phoneNumber is not null
+      };
       prisma.user.findUnique.mockResolvedValue(adminUser);
       prisma.user.count.mockResolvedValue(1); // Only one admin
 

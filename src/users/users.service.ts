@@ -23,7 +23,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailsService: EmailsService,
-  ) {}
+  ) { }
 
   /**
    * Create a new user with hashed password
@@ -40,8 +40,9 @@ export class UsersService {
         password: hashedPassword,
         role: createUserDto.role || UserRole.COMMON,
         email: createUserDto.email,
-        phone: createUserDto.phone,
-        gender: createUserDto.gender || null,
+        phoneNumber: createUserDto.phoneNumber ?? '',
+        gender: createUserDto.gender,
+        DateOfBirth: createUserDto.DateOfBirth,
       };
 
       if (createUserDto.createdById) {
@@ -116,7 +117,7 @@ export class UsersService {
       select: {
         ...this.getUserSelectFields(),
         email: true,
-        phone: true,
+        phoneNumber: true,
         gender: true,
         isActive: true,
         lastLoginAt: true,
@@ -255,7 +256,7 @@ export class UsersService {
             OR: [
               { username: { contains: searchTerm, mode: 'insensitive' } },
               { email: { contains: searchTerm, mode: 'insensitive' } },
-              { phone: { contains: searchTerm, mode: 'insensitive' } },
+              { phoneNumber: { contains: searchTerm, mode: 'insensitive' } },
             ],
           },
         ],
@@ -397,19 +398,16 @@ export class UsersService {
     if (await this.isUsernameExists(createUserDto.username)) {
       throw new ConflictException('Username already exists');
     }
-
-    // Check email uniqueness if provided
+    // Ensure no further code executes after throwing
     if (await this.isEmailExists(createUserDto.email)) {
       throw new ConflictException('Email already exists');
     }
-
-    // Validate creator exists if provided
+    // Ensure no further code executes after throwing
     if (createUserDto.createdById) {
       const creator = await this.prisma.user.findUnique({
         where: { id: createUserDto.createdById },
         select: { id: true },
       });
-
       if (!creator) {
         throw new BadRequestException('Creator user not found');
       }
@@ -443,8 +441,8 @@ export class UsersService {
 
     if (updateUserDto.username) data.username = updateUserDto.username;
     if (updateUserDto.email !== undefined) data.email = updateUserDto.email;
-    if (updateUserDto.phone !== undefined)
-      data.phoneNumber = updateUserDto.phone;
+    if (updateUserDto.phoneNumber !== undefined)
+      data.phoneNumber = updateUserDto.phoneNumber;
     if (updateUserDto.gender !== undefined) data.gender = updateUserDto.gender;
     if (updateUserDto.role) data.role = updateUserDto.role;
 
@@ -499,7 +497,7 @@ export class UsersService {
       username: true,
       role: true,
       email: true,
-      phone: true,
+      phoneNumber: true, // Changed from phone to phoneNumber to match the schema
       gender: true,
       isActive: true,
       lastLoginAt: true,
@@ -565,13 +563,36 @@ export class UsersService {
   }
 
   private handlePrismaError(error: any): never {
-    if (error.code === 'P2002') {
-      const field = error.meta?.target?.[0] || 'field';
-      throw new ConflictException(`${field} already exists`);
+    // Check if this is a Prisma error with a code
+    if (error.code) {
+      // Handle unique constraint violations
+      if (error.code === 'P2002') {
+        const field = error.meta?.target?.[0] || 'field';
+        throw new ConflictException(`${field} already exists`);
+      }
+
+      // Handle record not found errors
+      if (error.code === 'P2025') {
+        throw new NotFoundException('Record not found');
+      }
     }
 
-    if (error.code === 'P2025') {
-      throw new NotFoundException('Record not found');
+    // Handle Zod validation errors
+    if (error.name === 'ZodError') {
+      const messages = error.errors.map((err: any) => {
+        if (err.path.includes('gender')) {
+          return `Gender must be one of: MALE, FEMALE, or OTHER`;
+        }
+        return `${err.path.join('.')}: ${err.message}`;
+      });
+      throw new BadRequestException(`Validation failed: ${messages.join(', ')}`);
+    }
+
+    // If the error is already a NestJS exception, rethrow it
+    if (error instanceof ConflictException ||
+      error instanceof NotFoundException ||
+      error instanceof BadRequestException) {
+      throw error;
     }
 
     // Log unexpected errors

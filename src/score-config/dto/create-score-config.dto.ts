@@ -18,8 +18,8 @@ export class CreateScoreConfigDto {
 
   @ApiProperty({ description: 'Tournament ID this config belongs to' })
   @IsString()
-  @IsNotEmpty()
-  tournamentId: string;
+  @IsOptional()
+  tournamentId?: string;
 
   @ApiProperty({ description: 'Score elements', required: false, type: [CreateScoreElementDto] })
   @IsArray()

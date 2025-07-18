@@ -38,7 +38,7 @@ export class AuthController {
   @Post('register')
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 attempts per minute
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() createUserDto: CreateUserDto) {
+  async register(@Body(ValidationPipe) createUserDto: CreateUserDto) {
     return await this.usersService.create(createUserDto);
   }
   /*async register(@Body(ValidationPipe) registerDto: RegisterDto) {

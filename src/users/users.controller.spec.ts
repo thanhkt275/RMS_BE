@@ -18,22 +18,28 @@ describe('UsersController', () => {
   } as unknown as Request;
 
   // Helper function to create mock user data matching service return type
-  const createMockUser = (overrides: Partial<any> = {}) => ({
-    id: '550e8400-e29b-41d4-a716-446655440000',
-    username: 'testuser',
-    role: UserRole.TEAM_LEADER,
-    email: 'test@example.com',
-    phoneNumber: null,
-    gender: null,
-    dateOfBirth: null,
-    isActive: true,
-    lastLoginAt: null,
-    emailVerified: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: null,
-    ...overrides,
-  });
+  const createMockUser = (overrides: Partial<any> = {}) => {
+    // Create the base mock object
+    const mockUser = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      name: 'Test User',
+      username: 'testuser',
+      role: UserRole.TEAM_LEADER,
+      email: 'test@example.com',
+      phoneNumber: '', // Changed from null to empty string to match expected type
+      gender: null,
+      dateOfBirth: null,
+      isActive: true,
+      lastLoginAt: null,
+      emailVerified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: null,
+    };
+
+    // Apply overrides
+    return { ...mockUser, ...overrides };
+  };
 
   // Helper for complete user stats
   const createMockStats = () => ({
@@ -75,6 +81,7 @@ describe('UsersController', () => {
   describe('create', () => {
     it('should create a user with creator ID', async () => {
       const createUserDto = {
+        name: 'Test User', // Add the required name property
         username: 'testuser',
         password: 'password123',
         role: UserRole.TEAM_LEADER,
@@ -252,6 +259,7 @@ describe('UsersController', () => {
       const bulkOperationDto = {
         userIds: ['user1', 'user2'],
         action: 'delete' as const,
+        reason: 'Valid reason for deletion', // Add required reason field
       };
       mockUsersService.bulkDelete.mockResolvedValue({ deleted: 2 });
 
@@ -268,6 +276,7 @@ describe('UsersController', () => {
       const invalidDto = {
         userIds: [],
         action: 'delete' as const,
+        reason: 'Valid reason for deletion', // Add required reason field
       };
 
       await expect(
@@ -282,6 +291,7 @@ describe('UsersController', () => {
         userIds: ['user1', 'user2'],
         action: 'changeRole' as const,
         role: UserRole.TEAM_MEMBER,
+        reason: 'Valid reason for role change', // Add required reason field
       };
       mockUsersService.bulkChangeRole.mockResolvedValue({ updated: 2 });
 
@@ -302,6 +312,7 @@ describe('UsersController', () => {
       const invalidDto = {
         userIds: ['user1'],
         action: 'changeRole' as const,
+        reason: 'Valid reason for role change', // Add required reason field
       };
 
       await expect(

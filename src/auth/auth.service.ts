@@ -68,14 +68,16 @@ export class AuthService {
     }
   }
 
-  /*async register(registerDto: RegisterDto): Promise<any> {
+  async register(registerDto: RegisterDto): Promise<any> {
     try {
-      // Check for existing username or email with generic error
+      // Check for existing username, email, name, or phoneNumber with generic error
       const existingUser = await this.prisma.user.findFirst({
         where: {
           OR: [
             { username: registerDto.username },
             { email: registerDto.email },
+            { name: registerDto.name },
+            { phoneNumber: registerDto.phoneNumber },
           ],
         },
       });
@@ -87,38 +89,27 @@ export class AuthService {
         );
       }
 
-      const role = registerDto.role || UserRole.COMMON;
-      const hashedPassword = await bcrypt.hash(registerDto.password, 12); // Increased rounds
-
-      const newUser = await this.prisma.user.create({
-        data: {
-          username: registerDto.username,
-          email: registerDto.email,
-          password: hashedPassword,
-          role: role,
-        },
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          role: true,
-          createdAt: true,
-        },
+      // Delegate to UsersService for complete user creation
+      const newUser = await this.usersService.create({
+        name: registerDto.name,
+        username: registerDto.username,
+        email: registerDto.email,
+        password: registerDto.password,
+        phoneNumber: registerDto.phoneNumber,
+        role: registerDto.role || UserRole.COMMON,
+        gender: registerDto.gender,
       });
-
-      const activationToken = await this.jwtService.signAsync(
-        { email: registerDto.email },
-        { expiresIn: '7d' },
-      );
-      await this.emailsService.sendAccountActivationInvite(
-        registerDto.email,
-        `${process.env.FRONTEND_URL}/login?token=${activationToken}`,
-      );
 
       this.logger.log(
         `New user registered: ${newUser.username} with role ${newUser.role}`,
       );
-      return newUser;
+      
+      return {
+        id: newUser.id,
+        username: newUser.username,
+        role: newUser.role,
+        createdAt: newUser.createdAt,
+      };
     } catch (error) {
       if (error instanceof ConflictException) {
         throw error;
@@ -127,7 +118,7 @@ export class AuthService {
       this.logger.error('Registration failed', error);
       throw new BadRequestException('Registration failed. Please try again.');
     }
-  }*/
+  }
 
   async verifyEmail(token: string): Promise<void> {
     const decoded = this.jwtService.verify<{ email: string }>(token);
@@ -175,7 +166,7 @@ export class AuthService {
         email: adminEmail,
         password: adminPassword,
         role: UserRole.ADMIN,
-        phone: adminPhone,
+        phoneNumber: adminPhone,
       });
 
       return {

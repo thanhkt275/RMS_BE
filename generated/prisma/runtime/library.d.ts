@@ -47,7 +47,7 @@ export declare type AllModelsToStringIndex<TypeMap extends TypeMapDef, Args exte
 } : {};
 
 declare class AnyNull extends NullTypesEnumValue {
-    #private;
+    private readonly _brand_AnyNull;
 }
 
 export declare type ApplyOmit<T, OmitConfig> = Compute<{
@@ -73,7 +73,7 @@ export declare type Args_3<T, F extends Operation> = Args<T, F>;
  * Query arguments marked with this type are sanitized before being sent to the database.
  * Notice while a query argument may be `null`, `ArgType` is guaranteed to be defined.
  */
-declare type ArgType = 'Int32' | 'Int64' | 'Float' | 'Double' | 'Text' | 'Enum' | 'EnumArray' | 'Bytes' | 'Boolean' | 'Char' | 'Array' | 'Numeric' | 'Json' | 'Xml' | 'Uuid' | 'DateTime' | 'Date' | 'Time' | 'Unknown';
+declare type ArgType = 'Int32' | 'Int64' | 'Float' | 'Double' | 'Text' | 'Enum' | 'EnumArray' | 'Bytes' | 'Boolean' | 'Char' | 'Array' | 'Numeric' | 'Json' | 'Xml' | 'Uuid' | 'DateTime' | 'Date' | 'Time';
 
 /**
  * Attributes is a map from string to attribute values.
@@ -98,7 +98,7 @@ export declare type BaseDMMF = {
 declare type BatchArgs = {
     queries: BatchQuery[];
     transaction?: {
-        isolationLevel?: IsolationLevel_2;
+        isolationLevel?: IsolationLevel;
     };
 };
 
@@ -126,7 +126,7 @@ declare type BatchQueryOptionsCbArgs = {
 declare type BatchResponse = MultiBatchResponse | CompactedBatchResponse;
 
 declare type BatchTransactionOptions = {
-    isolationLevel?: Transaction_2.IsolationLevel;
+    isolationLevel?: IsolationLevel;
 };
 
 declare interface BinaryTargetsEnvValue {
@@ -209,8 +209,8 @@ declare const ColumnTypeEnum: {
 
 declare type CompactedBatchResponse = {
     type: 'compacted';
-    plan: {};
-    arguments: Record<string, {}>[];
+    plan: object;
+    arguments: Map<string, {}>[];
     nestedSelection: string[];
     keys: string[];
     expectNonEmpty: boolean;
@@ -255,7 +255,6 @@ declare type ComputedFieldsMap = {
 declare type ConnectionInfo = {
     schemaName?: string;
     maxBindValues?: number;
-    supportsRelationJoins: boolean;
 };
 
 declare type ConnectorType = 'mysql' | 'mongodb' | 'sqlite' | 'postgresql' | 'postgres' | 'prisma+postgres' | 'sqlserver' | 'cockroachdb';
@@ -385,7 +384,7 @@ declare type Datasources = {
 };
 
 declare class DbNull extends NullTypesEnumValue {
-    #private;
+    private readonly _brand_DbNull;
 }
 
 export declare const Debug: typeof debugCreate & {
@@ -1150,72 +1149,6 @@ declare type Error_2 = {
     kind: 'InvalidIsolationLevel';
     level: string;
 } | {
-    kind: 'LengthMismatch';
-    column?: string;
-} | {
-    kind: 'UniqueConstraintViolation';
-    constraint?: {
-        fields: string[];
-    } | {
-        index: string;
-    } | {
-        foreignKey: {};
-    };
-} | {
-    kind: 'NullConstraintViolation';
-    constraint?: {
-        fields: string[];
-    } | {
-        index: string;
-    } | {
-        foreignKey: {};
-    };
-} | {
-    kind: 'ForeignKeyConstraintViolation';
-    constraint?: {
-        fields: string[];
-    } | {
-        index: string;
-    } | {
-        foreignKey: {};
-    };
-} | {
-    kind: 'DatabaseDoesNotExist';
-    db?: string;
-} | {
-    kind: 'DatabaseAlreadyExists';
-    db?: string;
-} | {
-    kind: 'DatabaseAccessDenied';
-    db?: string;
-} | {
-    kind: 'AuthenticationFailed';
-    user?: string;
-} | {
-    kind: 'TransactionWriteConflict';
-} | {
-    kind: 'TableDoesNotExist';
-    table?: string;
-} | {
-    kind: 'ColumnNotFound';
-    column?: string;
-} | {
-    kind: 'TooManyConnections';
-    cause: string;
-} | {
-    kind: 'ValueOutOfRange';
-    cause: string;
-} | {
-    kind: 'MissingFullTextSearchIndex';
-} | {
-    kind: 'SocketTimeout';
-} | {
-    kind: 'InconsistentColumnData';
-    cause: string;
-} | {
-    kind: 'TransactionAlreadyClosed';
-    cause: string;
-} | {
     kind: 'postgres';
     code: string;
     severity: string;
@@ -1234,10 +1167,6 @@ declare type Error_2 = {
      * Sqlite extended error code: https://www.sqlite.org/rescode.html
      */
     extendedCode: number;
-    message: string;
-} | {
-    kind: 'mssql';
-    code: number;
     message: string;
 };
 
@@ -1503,7 +1432,7 @@ export declare type GetAggregateResult<P extends OperationPayload, A> = {
     };
 };
 
-declare function getBatchRequestPayload(batch: JsonQuery[], transaction?: TransactionOptions_2<unknown>): QueryEngineBatchRequest;
+declare function getBatchRequestPayload(batch: JsonQuery[], transaction?: TransactionOptions_3<unknown>): QueryEngineBatchRequest;
 
 export declare type GetBatchResult = {
     count: number;
@@ -1666,7 +1595,7 @@ export declare function getPrismaClient(config: GetPrismaClientConfig): {
          */
         _transactionWithCallback({ callback, options, }: {
             callback: (client: Client) => Promise<unknown>;
-            options?: Options;
+            options?: TransactionOptions_2;
         }): Promise<unknown>;
         _createItxClient(transaction: PrismaPromiseInteractiveTransaction): Client;
         /**
@@ -1991,8 +1920,6 @@ declare type InternalRequestParams = {
 
 declare type IsolationLevel = 'READ UNCOMMITTED' | 'READ COMMITTED' | 'REPEATABLE READ' | 'SNAPSHOT' | 'SERIALIZABLE';
 
-declare type IsolationLevel_2 = 'ReadUncommitted' | 'ReadCommitted' | 'RepeatableRead' | 'Snapshot' | 'Serializable';
-
 declare function isSkip(value: unknown): value is Skip;
 
 export declare function isTypedSql(value: unknown): value is UnknownTypedSql;
@@ -2037,7 +1964,7 @@ export declare interface JsonArray extends Array<JsonValue> {
 export declare type JsonBatchQuery = {
     batch: JsonQuery[];
     transaction?: {
-        isolationLevel?: IsolationLevel_2;
+        isolationLevel?: IsolationLevel;
     };
 };
 
@@ -2051,7 +1978,7 @@ declare type JsonFieldSelection = {
 };
 
 declare class JsonNull extends NullTypesEnumValue {
-    #private;
+    private readonly _brand_JsonNull;
 }
 
 /**
@@ -2411,7 +2338,7 @@ export declare const objectEnumValues: {
     };
 };
 
-declare const officialPrismaAdapters: readonly ["@prisma/adapter-planetscale", "@prisma/adapter-neon", "@prisma/adapter-libsql", "@prisma/adapter-better-sqlite3", "@prisma/adapter-d1", "@prisma/adapter-pg", "@prisma/adapter-mssql", "@prisma/adapter-mariadb"];
+declare const officialPrismaAdapters: readonly ["@prisma/adapter-planetscale", "@prisma/adapter-neon", "@prisma/adapter-libsql", "@prisma/adapter-d1", "@prisma/adapter-pg", "@prisma/adapter-pg-worker"];
 
 export declare type Omission = Record<string, boolean | Skip>;
 
@@ -2452,15 +2379,6 @@ export declare type OptionalKeys<O> = {
 }[keyof O];
 
 declare type Options = {
-    /** Timeout for starting the transaction */
-    maxWait?: number;
-    /** Timeout for the transaction body */
-    timeout?: number;
-    /** Transaction isolation level */
-    isolationLevel?: IsolationLevel_2;
-};
-
-declare type Options_2 = {
     clientVersion: string;
 };
 
@@ -2609,7 +2527,7 @@ export declare class PrismaClientUnknownRequestError extends Error implements Er
 export declare class PrismaClientValidationError extends Error {
     name: string;
     clientVersion: string;
-    constructor(message: string, { clientVersion }: Options_2);
+    constructor(message: string, { clientVersion }: Options);
     get [Symbol.toStringTag](): string;
 }
 
@@ -2661,7 +2579,7 @@ declare interface PrismaPromise_2<TResult, TSpec extends PrismaOperationSpec<unk
 declare type PrismaPromiseBatchTransaction = {
     kind: 'batch';
     id: number;
-    isolationLevel?: IsolationLevel_2;
+    isolationLevel?: IsolationLevel;
     index: number;
     lock: PromiseLike<void>;
 };
@@ -2689,7 +2607,7 @@ declare type PrismaPromiseTransaction<PayloadType = unknown> = PrismaPromiseBatc
 
 export declare const PrivateResultType: unique symbol;
 
-declare type Provider = 'mysql' | 'postgres' | 'sqlite' | 'sqlserver';
+declare type Provider = 'mysql' | 'postgres' | 'sqlite';
 
 declare namespace Public {
     export {
@@ -2727,9 +2645,8 @@ declare interface Queryable<Query, Result> extends AdapterInfo {
 }
 
 declare type QueryCompiler = {
-    compile(request: string): {};
-    compileBatch(batchRequest: string): BatchResponse;
-    free(): void;
+    compile(request: string): Promise<string>;
+    compileBatch(batchRequest: string): Promise<BatchResponse>;
 };
 
 declare interface QueryCompilerConstructor {
@@ -2745,7 +2662,7 @@ declare type QueryCompilerOptions = {
 declare type QueryEngineBatchGraphQLRequest = {
     batch: QueryEngineRequest[];
     transaction?: boolean;
-    isolationLevel?: IsolationLevel_2;
+    isolationLevel?: IsolationLevel;
 };
 
 declare type QueryEngineBatchRequest = QueryEngineBatchGraphQLRequest | JsonBatchQuery;
@@ -2769,11 +2686,6 @@ declare interface QueryEngineConstructor {
 declare type QueryEngineInstance = {
     connect(headers: string, requestId: string): Promise<void>;
     disconnect(headers: string, requestId: string): Promise<void>;
-    /**
-     * Frees any resources allocated by the engine's WASM instance. This method is automatically created by WASM bindgen.
-     * Noop for other engines.
-     */
-    free?(): void;
     /**
      * @param requestStr JSON.stringified `QueryEngineRequest | QueryEngineBatchRequest`
      * @param headersStr JSON.stringified `QueryEngineRequestHeaders`
@@ -2896,7 +2808,7 @@ export declare type RenameAndNestPayloadKeys<P> = {
 };
 
 declare type RequestBatchOptions<InteractiveTransactionPayload> = {
-    transaction?: TransactionOptions_2<InteractiveTransactionPayload>;
+    transaction?: TransactionOptions_3<InteractiveTransactionPayload>;
     traceparent?: string;
     numTry?: number;
     containsWrite: boolean;
@@ -3540,8 +3452,7 @@ declare interface Transaction extends AdapterInfo, SqlQueryable {
 
 declare namespace Transaction_2 {
     export {
-        Options,
-        IsolationLevel_2 as IsolationLevel,
+        TransactionOptions_2 as Options,
         InteractiveTransactionInfo,
         TransactionHeaders
     }
@@ -3555,7 +3466,13 @@ declare type TransactionOptions = {
     usePhantomQuery: boolean;
 };
 
-declare type TransactionOptions_2<InteractiveTransactionPayload> = {
+declare type TransactionOptions_2 = {
+    maxWait?: number;
+    timeout?: number;
+    isolationLevel?: IsolationLevel;
+};
+
+declare type TransactionOptions_3<InteractiveTransactionPayload> = {
     kind: 'itx';
     options: InteractiveTransactionOptions<InteractiveTransactionPayload>;
 } | {

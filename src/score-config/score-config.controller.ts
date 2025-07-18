@@ -7,7 +7,8 @@ import {
   Param, 
   UseGuards,
   HttpStatus,
-  NotFoundException
+  NotFoundException,
+  Delete
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -16,7 +17,7 @@ import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../utils/prisma-types';
 import { ScoreConfigService } from './score-config.service';
 import { ScoreCalculationService } from './score-calculation.service';
-import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto, SubmitScoreDto } from './dto';
+import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto, SubmitScoreDto, UpdateScoreElementDto, UpdateBonusConditionDto, UpdatePenaltyConditionDto } from './dto';
 
 @ApiTags('score-configs')
 @Controller('score-configs')
@@ -27,6 +28,13 @@ export class ScoreConfigController {
     private scoreConfigService: ScoreConfigService,
     private scoreCalculationService: ScoreCalculationService,
   ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Get all score configurations' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'All score configurations retrieved successfully' })
+  async findAll() {
+    return this.scoreConfigService.findAll();
+  }
 
   @Post()
   @Roles(UserRole.ADMIN)
@@ -129,5 +137,73 @@ export class ScoreConfigController {
       allianceId,      scores: matchScores,
       totalScore,
     };
+  }
+
+  // Update Score Element
+  @Patch('elements/:elementId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a score element' })
+  async updateElement(
+    @Param('elementId') elementId: string,
+    @Body() updateScoreElementDto: UpdateScoreElementDto,
+  ) {
+    return this.scoreConfigService.updateScoreElement(elementId, updateScoreElementDto);
+  }
+
+  // Delete Score Element
+  @Delete('elements/:elementId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete a score element' })
+  async removeElement(@Param('elementId') elementId: string) {
+    return this.scoreConfigService.deleteScoreElement(elementId);
+  }
+
+  // Update Bonus Condition
+  @Patch('bonuses/:bonusId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a bonus condition' })
+  async updateBonus(
+    @Param('bonusId') bonusId: string,
+    @Body() updateBonusConditionDto: UpdateBonusConditionDto,
+  ) {
+    return this.scoreConfigService.updateBonusCondition(bonusId, updateBonusConditionDto);
+  }
+
+  // Delete Bonus Condition
+  @Delete('bonuses/:bonusId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete a bonus condition' })
+  async removeBonus(@Param('bonusId') bonusId: string) {
+    return this.scoreConfigService.deleteBonusCondition(bonusId);
+  }
+
+  // Update Penalty Condition
+  @Patch('penalties/:penaltyId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a penalty condition' })
+  async updatePenalty(
+    @Param('penaltyId') penaltyId: string,
+    @Body() updatePenaltyConditionDto: UpdatePenaltyConditionDto,
+  ) {
+    return this.scoreConfigService.updatePenaltyCondition(penaltyId, updatePenaltyConditionDto);
+  }
+
+  // Delete Penalty Condition
+  @Delete('penalties/:penaltyId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete a penalty condition' })
+  async removePenalty(@Param('penaltyId') penaltyId: string) {
+    return this.scoreConfigService.deletePenaltyCondition(penaltyId);
+  }
+
+  // Assign ScoreConfig to Tournament
+  @Post(':id/assign-tournament/:tournamentId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Assign score config to a tournament' })
+  async assignToTournament(
+    @Param('id') id: string,
+    @Param('tournamentId') tournamentId: string,
+  ) {
+    return this.scoreConfigService.assignToTournament(id, tournamentId);
   }
 }

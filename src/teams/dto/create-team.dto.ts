@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
-import { Gender } from '../../../generated/prisma';
+import { Gender} from '../../../generated/prisma';
 
 export const CreateTeamMemberSchema = z.object({
   name: z.string().min(11),

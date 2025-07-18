@@ -136,7 +136,57 @@ export class ScoreCalculationService {
       bonusesEarned,
       penaltiesIncurred,
       totalScore,
-      calculationLog,
+      calculationLog, // Include the detailed log in the final result
     };
+  }
+
+  // New method to bridge element-based scoring with alliance-based persistence
+  async calculateAndPersistMatchScore(
+    matchId: string,
+    allianceId: string,
+    elementScores: Record<string, number>,
+    scoreConfigId?: string
+  ) {
+    // 1. Calculate score using the existing method
+    const calculationResult = await this.calculateMatchScore(
+      matchId,
+      allianceId,
+      elementScores,
+      scoreConfigId
+    );
+
+    // 2. Extract auto and drive scores from the calculation log based on categories
+    const autoScore = this.extractCategoryScore(calculationResult.calculationLog, 'auto');
+    const driveScore = this.extractCategoryScore(calculationResult.calculationLog, 'teleop');
+
+    // 3. Update alliance scores in the database
+    await this.prisma.alliance.update({
+      where: { id: allianceId },
+      data: {
+        autoScore,
+        driveScore,
+        score: calculationResult.totalScore,
+      },
+    });
+
+    // 4. Return the full calculation result
+    return calculationResult;
+  }
+
+  // Helper to extract scores based on element categories
+  private extractCategoryScore(calculationLog: any, category: 'auto' | 'teleop'): number {
+    let categoryScore = 0;
+
+    if (calculationLog && calculationLog.elements) {
+      for (const element of calculationLog.elements) {
+        // This assumes element names or codes can identify their category
+        // e.g., 'auto_cone', 'teleop_cube'
+        if (element.elementCode.startsWith(category)) {
+          categoryScore += element.totalPoints;
+        }
+      }
+    }
+
+    return categoryScore;
   }
 }

@@ -30,9 +30,21 @@ const usernameValidation = z
 const phoneValidation = z
   .string()
   .regex(
-    /^[\+]?[1-9][\d]{0,15}$/,
-    'Phone number must be a valid international format',
-  );
+    /^0\d{9}$/,
+    'Phone number must start with 0 and be 10 digits long',
+  )
+  .nullable()
+  .optional();
+
+
+const dateOfBirthValidation = z
+  .date()
+  .max(new Date(), 'Date of birth cannot be in the future')
+  .min(new Date('1900-01-01'), 'Date of birth must be after 1900')
+  .optional();
+
+
+
 
 // Define the Zod schema for user creation
 export const CreateUserSchema = z
@@ -49,15 +61,16 @@ export const CreateUserSchema = z
         errorMap: () => ({ message: 'Invalid user role' }),
       })
       .optional(),
-    phone: phoneValidation,
+    phoneNumber: phoneValidation,
     gender: z
       .nativeEnum(Gender, {
         errorMap: () => ({ message: 'Invalid gender' }),
       })
       .optional(),
     createdById: z.string().uuid('Creator ID must be a valid UUID').optional(),
+    DateOfBirth: dateOfBirthValidation,
   })
   .strict(); // Prevent additional properties
 
 // Create a DTO class from the Zod schema
-export class CreateUserDto extends createZodDto(CreateUserSchema) {}
+export class CreateUserDto extends createZodDto(CreateUserSchema) { }
