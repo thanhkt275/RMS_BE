@@ -1,21 +1,21 @@
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../../generated/prisma';
 import { CreateUserSchema } from './create-user.dto';
-import { 
-  UpdateUserSchema, 
+import {
+  UpdateUserSchema,
   ChangeRoleSchema,
   BulkOperationSchema,
   PasswordResetSchema,
   UserStatusSchema,
-  ProfileUpdateSchema
+  ProfileUpdateSchema,
 } from './update-user.dto';
 import {
   UserQuerySchema,
   UserSearchSchema,
   UserExportSchema,
-  UserImportSchema
+  UserImportSchema,
 } from './user-query.dto';
-import { UserRole } from '../../utils/prisma-types';
+import { UserRole, Gender } from '../../utils/prisma-types';
 
 // Mock Prisma client to avoid database interactions
 const mockPrisma = mockDeep<PrismaClient>();
@@ -30,13 +30,14 @@ describe('User DTOs Validation', () => {
   describe('CreateUserSchema', () => {
     it('should validate a valid user creation', () => {
       const validUser = {
+        name: 'Valid User', // Add the required name field
         username: 'validuser123',
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,
         email: 'user@example.com',
-        phoneNumber: '+1234567890',
-        gender: true,
-        DateOfBirth: new Date('1990-01-01'),
+        phoneNumber: '0345678932',
+        gender: Gender.MALE,
+        dateOfBirth: new Date('1990-01-01'),
       };
 
       const result = CreateUserSchema.safeParse(validUser);
@@ -45,6 +46,7 @@ describe('User DTOs Validation', () => {
 
     it('should reject invalid username', () => {
       const invalidUser = {
+        name: 'Test User',
         username: 'ab', // Too short
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,
@@ -59,13 +61,14 @@ describe('User DTOs Validation', () => {
               path: ['username'],
               message: expect.stringContaining('at least 3 characters'),
             }),
-          ])
+          ]),
         );
       }
     });
 
     it('should reject weak password', () => {
       const invalidUser = {
+        name: 'Test User',
         username: 'validuser',
         password: 'weak', // Too weak
         role: UserRole.TEAM_LEADER,
@@ -80,13 +83,14 @@ describe('User DTOs Validation', () => {
               path: ['password'],
               message: expect.stringContaining('at least'),
             }),
-          ])
+          ]),
         );
       }
     });
 
     it('should reject invalid email', () => {
       const invalidUser = {
+        name: 'Test User',
         username: 'validuser',
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,
@@ -102,7 +106,7 @@ describe('User DTOs Validation', () => {
               path: ['email'],
               message: expect.stringContaining('Invalid email'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -112,10 +116,11 @@ describe('User DTOs Validation', () => {
       futureDate.setFullYear(futureDate.getFullYear() + 1);
 
       const invalidUser = {
+        name: 'Test User',
         username: 'validuser',
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,
-        DateOfBirth: futureDate,
+        dateOfBirth: futureDate,
       };
 
       const result = CreateUserSchema.safeParse(invalidUser);
@@ -124,10 +129,10 @@ describe('User DTOs Validation', () => {
         expect(result.error.issues).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
-              path: ['DateOfBirth'],
+              path: ['dateOfBirth'],
               message: expect.stringContaining('cannot be in the future'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -135,18 +140,49 @@ describe('User DTOs Validation', () => {
 
   describe('UpdateUserSchema', () => {
     it('should validate partial user updates', () => {
+      // Test with just email to verify partial updates work
       const validUpdate = {
-        email: 'newemail@example.com',
-        phoneNumber: '+9876543210',
+        email: 'newemail@example.com', // Valid email format
       };
 
       const result = UpdateUserSchema.safeParse(validUpdate);
       expect(result.success).toBe(true);
     });
 
-    it('should reject invalid partial updates', () => {
+    it('should validate phone number in partial updates', () => {
+      // Test with just phone number to verify partial updates work
+      const validPhoneUpdate = {
+        phoneNumber: '0123456789', // Format: starts with 0 and is 10 digits long
+      };
+
+      const result = UpdateUserSchema.safeParse(validPhoneUpdate);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject invalid phone number format', () => {
+      const invalidPhoneUpdate = {
+        phoneNumber: '+9876543210', // Invalid format: should start with 0 and be 10 digits
+      };
+
+      const result = UpdateUserSchema.safeParse(invalidPhoneUpdate);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              path: ['phoneNumber'],
+              message: expect.stringContaining(
+                'Phone number must start with 0',
+              ),
+            }),
+          ]),
+        );
+      }
+    });
+
+    it('should reject invalid email format', () => {
       const invalidUpdate = {
-        email: 'invalid-email-format',
+        email: 'invalid-email-format', // Invalid email format
       };
 
       const result = UpdateUserSchema.safeParse(invalidUpdate);
@@ -158,7 +194,7 @@ describe('User DTOs Validation', () => {
               path: ['email'],
               message: expect.stringContaining('Invalid email'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -200,7 +236,7 @@ describe('User DTOs Validation', () => {
               path: ['reason'],
               message: expect.stringContaining('Required'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -220,7 +256,7 @@ describe('User DTOs Validation', () => {
               path: ['reason'],
               message: expect.stringContaining('at least 5 characters'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -258,9 +294,7 @@ describe('User DTOs Validation', () => {
 
     it('should reject bulk role change without role', () => {
       const invalidBulkOperation = {
-        userIds: [
-          '550e8400-e29b-41d4-a716-446655440000',
-        ],
+        userIds: ['550e8400-e29b-41d4-a716-446655440000'],
         action: 'changeRole' as const,
         // Missing role
       };
@@ -271,16 +305,20 @@ describe('User DTOs Validation', () => {
         expect(result.error.issues).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
-              message: expect.stringContaining('Role is required when action is "changeRole"'),
+              message: expect.stringContaining(
+                'Role is required when action is "changeRole"',
+              ),
             }),
-          ])
+          ]),
         );
       }
     });
 
     it('should reject too many user IDs', () => {
-      const tooManyIds = Array.from({ length: 51 }, (_, i) => 
-        `550e8400-e29b-41d4-a716-44665544${i.toString().padStart(4, '0')}`
+      const tooManyIds = Array.from(
+        { length: 51 },
+        (_, i) =>
+          `550e8400-e29b-41d4-a716-44665544${i.toString().padStart(4, '0')}`,
       );
 
       const invalidBulkOperation = {
@@ -297,7 +335,7 @@ describe('User DTOs Validation', () => {
               path: ['userIds'],
               message: expect.stringContaining('more than 50 users'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -317,7 +355,7 @@ describe('User DTOs Validation', () => {
               path: ['userIds', 0],
               message: expect.stringContaining('Invalid user ID format'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -351,7 +389,7 @@ describe('User DTOs Validation', () => {
               path: ['confirmPassword'],
               message: expect.stringContaining('Passwords do not match'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -372,7 +410,7 @@ describe('User DTOs Validation', () => {
               path: ['newPassword'],
               message: expect.stringContaining('at least 6 characters'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -404,7 +442,7 @@ describe('User DTOs Validation', () => {
               path: ['reason'],
               message: expect.stringContaining('at least 5 characters'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -436,7 +474,7 @@ describe('User DTOs Validation', () => {
               path: ['avatar'],
               message: expect.stringContaining('Avatar URL must use HTTPS'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -455,7 +493,7 @@ describe('User DTOs Validation', () => {
               path: ['email'],
               message: expect.stringContaining('Invalid email'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -492,7 +530,7 @@ describe('User DTOs Validation', () => {
               path: ['page'],
               message: expect.stringContaining('Page must be at least 1'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -512,7 +550,7 @@ describe('User DTOs Validation', () => {
               path: ['limit'],
               message: expect.stringContaining('Limit cannot exceed 100'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -538,7 +576,7 @@ describe('User DTOs Validation', () => {
               path: ['createdAfter'],
               message: expect.stringContaining('createdAfter must be before'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -570,7 +608,7 @@ describe('User DTOs Validation', () => {
               path: ['q'],
               message: expect.stringContaining('Search query is required'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -589,7 +627,7 @@ describe('User DTOs Validation', () => {
               path: ['q'],
               message: expect.stringContaining('invalid characters'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -620,9 +658,11 @@ describe('User DTOs Validation', () => {
           expect.arrayContaining([
             expect.objectContaining({
               path: ['format'],
-              message: expect.stringContaining('Export format must be csv, excel, or json'),
+              message: expect.stringContaining(
+                'Export format must be csv, excel, or json',
+              ),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -641,7 +681,7 @@ describe('User DTOs Validation', () => {
               path: ['fields', 0],
               message: expect.stringContaining('Invalid field name'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -687,9 +727,11 @@ describe('User DTOs Validation', () => {
           expect.arrayContaining([
             expect.objectContaining({
               path: ['users'],
-              message: expect.stringContaining('Cannot import more than 100 users'),
+              message: expect.stringContaining(
+                'Cannot import more than 100 users',
+              ),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -708,7 +750,7 @@ describe('User DTOs Validation', () => {
               path: ['users'],
               message: expect.stringContaining('At least one user is required'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -732,7 +774,7 @@ describe('User DTOs Validation', () => {
               path: ['users', 0, 'username'],
               message: expect.stringContaining('at least 3 characters'),
             }),
-          ])
+          ]),
         );
       }
     });
@@ -748,10 +790,10 @@ describe('User DTOs Validation', () => {
         password: 'hashed_password',
         role: UserRole.TEAM_MEMBER,
         email: 'existing@example.com',
+        name: 'Existing User',
         gender: null,
-        DateOfBirth: null,
-        phoneNumber: null,
-        avatar: null,
+        dateOfBirth: null,
+        phoneNumber: '',
         isActive: true,
         lastLoginAt: null,
         emailVerified: false,
@@ -762,6 +804,7 @@ describe('User DTOs Validation', () => {
 
       // Test data that would typically be validated in a service
       const userData = {
+        name: 'New Test User', // Add the required name field
         username: 'newuser123',
         password: 'ValidPass123!',
         role: UserRole.TEAM_LEADER,
@@ -794,4 +837,3 @@ describe('User DTOs Validation', () => {
     });
   });
 });
-

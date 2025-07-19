@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import { TeamsService } from './teams.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
@@ -7,24 +17,25 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../utils/prisma-types';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('teams')
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  create(@Body() createTeamDto: CreateTeamDto) {
-    return this.teamsService.create(createTeamDto);
+  @UseGuards(JwtAuthGuard)
+  create(@CurrentUser() user, @Body() createTeamDto: CreateTeamDto) {
+    createTeamDto.userId = user.id;
+    return this.teamsService.createTeam(createTeamDto);
   }
 
-  @Post('import')
+  /*@Post('import')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   importTeams(@Body() importTeamsDto: ImportTeamsDto) {
     return this.teamsService.importTeams(importTeamsDto);
-  }
+  }*/
 
   @Get()
   findAll(@Query('tournamentId') tournamentId?: string) {
@@ -36,11 +47,9 @@ export class TeamsController {
     return this.teamsService.findOne(id);
   }
 
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  update(@Param('id') id: string, @Body() updateTeamDto: UpdateTeamDto) {
-    return this.teamsService.update(id, updateTeamDto);
+  @Patch()
+  update(@CurrentUser() user, @Body() updateTeamDto: UpdateTeamDto) {
+    return this.teamsService.update(updateTeamDto);
   }
 
   @Delete(':id')

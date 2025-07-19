@@ -1,19 +1,32 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { TournamentsService } from './tournaments.service';
 import { FieldRefereesService } from '../field-referees/field-referees.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
-import { AssignRefereesDto, BatchAssignRefereesDto } from '../field-referees/dto/referee-assignment.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import {
+  AssignRefereesDto,
+  BatchAssignRefereesDto,
+} from '../field-referees/dto/referee-assignment.dto';
+import { JwtAuthGuard, OptionalJwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../utils/prisma-types';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('tournaments')
 export class TournamentsController {
   constructor(
     private readonly tournamentsService: TournamentsService,
-    private readonly fieldRefereesService: FieldRefereesService
+    private readonly fieldRefereesService: FieldRefereesService,
   ) {}
 
   @Post()
@@ -29,8 +42,12 @@ export class TournamentsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tournamentsService.findOne(id);
+  @UseGuards(OptionalJwtAuthGuard)
+  findOne(
+    @Param('id') id: string,
+    @CurrentUser() user?: { id: string; role: string },
+  ) {
+    return this.tournamentsService.findOne(id, user);
   }
 
   @Get(':id/fields')
@@ -39,6 +56,8 @@ export class TournamentsController {
   }
 
   @Get(':id/details')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   async getTournamentDetails(@Param('id') id: string) {
     return this.tournamentsService.findOneWithFullDetails(id);
   }
@@ -63,9 +82,12 @@ export class TournamentsController {
   @Roles(UserRole.ADMIN)
   async assignFieldReferees(
     @Param('fieldId') fieldId: string,
-    @Body() assignmentDto: AssignRefereesDto
+    @Body() assignmentDto: AssignRefereesDto,
   ) {
-    return this.fieldRefereesService.assignRefereesToField(fieldId, assignmentDto.referees);
+    return this.fieldRefereesService.assignRefereesToField(
+      fieldId,
+      assignmentDto.referees,
+    );
   }
 
   @Delete(':id/fields/:fieldId/referees/:userId')
@@ -73,7 +95,7 @@ export class TournamentsController {
   @Roles(UserRole.ADMIN)
   async removeFieldReferee(
     @Param('fieldId') fieldId: string,
-    @Param('userId') userId: string
+    @Param('userId') userId: string,
   ) {
     return this.fieldRefereesService.removeRefereeFromField(fieldId, userId);
   }
@@ -90,13 +112,13 @@ export class TournamentsController {
   @Roles(UserRole.ADMIN)
   async assignMatchToField(
     @Param('fieldId') fieldId: string,
-    @Param('matchId') matchId: string
+    @Param('matchId') matchId: string,
   ) {
     // This will use the MatchesService method that auto-assigns head referee
     const MatchesService = await import('../matches/matches.service');
     const matchesService = new MatchesService.MatchesService(
       this.tournamentsService['prisma'],
-      null as any // matchScoresService not needed for this operation
+      null as any, // matchScoresService not needed for this operation
     );
     return matchesService.assignMatchToField(matchId, fieldId);
   }
@@ -104,7 +126,10 @@ export class TournamentsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  update(@Param('id') id: string, @Body() updateTournamentDto: UpdateTournamentDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateTournamentDto: UpdateTournamentDto,
+  ) {
     return this.tournamentsService.update(id, updateTournamentDto);
   }
 

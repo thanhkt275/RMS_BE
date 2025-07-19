@@ -27,5 +27,7 @@ export {
   ScoreElement,
   BonusCondition,
   PenaltyCondition,
-  MatchScore
+  MatchScore,
+  Gender,
+
 } from '../../generated/prisma';

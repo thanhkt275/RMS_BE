@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+  HttpStatus,
+  HttpException,
+} from '@nestjs/common';
 import { StagesService } from './stages.service';
 import { StageAdvancementService } from './stage-advancement.service';
 import { CreateStageDto } from './dto/create-stage.dto';
@@ -17,7 +29,7 @@ import { UserRole } from '../utils/prisma-types';
 export class StagesController {
   constructor(
     private readonly stagesService: StagesService,
-    private readonly stageAdvancementService: StageAdvancementService
+    private readonly stageAdvancementService: StageAdvancementService,
   ) {}
 
   /**
@@ -81,14 +93,20 @@ export class StagesController {
   @Post(':id/advance')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async advanceTeams(@Param('id') id: string, @Body() advanceTeamsDto: AdvanceTeamsDto) {
+  async advanceTeams(
+    @Param('id') id: string,
+    @Body() advanceTeamsDto: AdvanceTeamsDto,
+  ) {
     try {
-      const result = await this.stageAdvancementService.advanceTeamsToNextStage(id, {
-        teamsToAdvance: advanceTeamsDto.teamsToAdvance,
-        nextStageId: advanceTeamsDto.nextStageId,
-        createNextStage: advanceTeamsDto.createNextStage,
-        nextStageConfig: advanceTeamsDto.nextStageConfig,
-      });
+      const result = await this.stageAdvancementService.advanceTeamsToNextStage(
+        id,
+        {
+          teamsToAdvance: advanceTeamsDto.teamsToAdvance,
+          nextStageId: advanceTeamsDto.nextStageId,
+          createNextStage: advanceTeamsDto.createNextStage,
+          nextStageConfig: advanceTeamsDto.nextStageConfig,
+        },
+      );
 
       return {
         success: true,
@@ -96,7 +114,7 @@ export class StagesController {
           result.nextStage ? ` to "${result.nextStage.name}"` : ''
         }`,
         data: {
-          advancedTeams: result.advancedTeams.map(team => ({
+          advancedTeams: result.advancedTeams.map((team) => ({
             id: team.id,
             teamNumber: team.teamNumber,
             name: team.name,
@@ -107,11 +125,13 @@ export class StagesController {
             name: result.completedStage.name,
             status: result.completedStage.status,
           },
-          nextStage: result.nextStage ? {
-            id: result.nextStage.id,
-            name: result.nextStage.name,
-            type: result.nextStage.type,
-          } : undefined,
+          nextStage: result.nextStage
+            ? {
+                id: result.nextStage.id,
+                name: result.nextStage.name,
+                type: result.nextStage.type,
+              }
+            : undefined,
           totalTeamsAdvanced: result.totalTeamsAdvanced,
         },
       };
@@ -122,7 +142,7 @@ export class StagesController {
           message: error.message || 'Failed to advance teams',
           error: error.name || 'AdvancementError',
         },
-        error.status || HttpStatus.BAD_REQUEST
+        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -140,7 +160,7 @@ export class StagesController {
       return {
         success: true,
         message: `Retrieved rankings for stage`,
-        data: rankings.map(ranking => ({
+        data: rankings.map((ranking) => ({
           teamId: ranking.teamId,
           teamNumber: ranking.teamNumber,
           teamName: ranking.teamName,
@@ -163,7 +183,7 @@ export class StagesController {
           message: error.message || 'Failed to retrieve stage rankings',
           error: error.name || 'RankingError',
         },
-        error.status || HttpStatus.BAD_REQUEST
+        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -181,11 +201,11 @@ export class StagesController {
       return {
         success: true,
         message: `Retrieved teams for stage`,
-        data: teams.map(team => ({
+        data: teams.map((team) => ({
           teamId: team.id,
           teamNumber: team.teamNumber,
           teamName: team.name,
-          organization: team.organization,
+          //organization: team.organization,
         })),
       };
     } catch (error) {
@@ -195,7 +215,7 @@ export class StagesController {
           message: error.message || 'Failed to retrieve stage teams',
           error: error.name || 'TeamError',
         },
-        error.status || HttpStatus.BAD_REQUEST
+        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -208,12 +228,13 @@ export class StagesController {
   @UseGuards(JwtAuthGuard)
   async checkStageReadiness(@Param('id') id: string) {
     try {
-      const readiness = await this.stageAdvancementService.isStageReadyForAdvancement(id);
+      const readiness =
+        await this.stageAdvancementService.isStageReadyForAdvancement(id);
 
       return {
         success: true,
-        message: readiness.ready 
-          ? 'Stage is ready for advancement' 
+        message: readiness.ready
+          ? 'Stage is ready for advancement'
           : `Stage is not ready for advancement: ${readiness.reason}`,
         data: {
           ready: readiness.ready,
@@ -229,7 +250,7 @@ export class StagesController {
           message: error.message || 'Failed to check stage readiness',
           error: error.name || 'ReadinessError',
         },
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -240,10 +261,15 @@ export class StagesController {
    */
   @Get(':id/advancement-preview')
   @UseGuards(JwtAuthGuard)
-  async previewAdvancement(@Param('id') id: string, @Query('teamsToAdvance') teamsToAdvance?: string) {
+  async previewAdvancement(
+    @Param('id') id: string,
+    @Query('teamsToAdvance') teamsToAdvance?: string,
+  ) {
     try {
       const rankings = await this.stageAdvancementService.getStageRankings(id);
-      const count = teamsToAdvance ? parseInt(teamsToAdvance, 10) : Math.ceil(rankings.length / 2);
+      const count = teamsToAdvance
+        ? parseInt(teamsToAdvance, 10)
+        : Math.ceil(rankings.length / 2);
 
       if (isNaN(count) || count <= 0) {
         throw new HttpException(
@@ -252,7 +278,7 @@ export class StagesController {
             message: 'Invalid number of teams to advance',
             error: 'ValidationError',
           },
-          HttpStatus.BAD_REQUEST
+          HttpStatus.BAD_REQUEST,
         );
       }
 
@@ -263,7 +289,7 @@ export class StagesController {
             message: `Cannot advance ${count} teams when only ${rankings.length} teams participated`,
             error: 'ValidationError',
           },
-          HttpStatus.BAD_REQUEST
+          HttpStatus.BAD_REQUEST,
         );
       }
 
@@ -284,14 +310,14 @@ export class StagesController {
       if (error instanceof HttpException) {
         throw error;
       }
-      
+
       throw new HttpException(
         {
           success: false,
           message: error.message || 'Failed to preview advancement',
           error: error.name || 'PreviewError',
         },
-        error.status || HttpStatus.BAD_REQUEST
+        error.status || HttpStatus.BAD_REQUEST,
       );
     }
   }

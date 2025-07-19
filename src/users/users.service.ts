@@ -1,9 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { JwtService } from '@nestjs/jwt';
+import { EmailsService } from '../emails/emails.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRole } from '../utils/prisma-types';
 import * as bcrypt from 'bcrypt';
+import { Prisma } from 'generated/prisma';
 
 @Injectable()
 export class UsersService {
@@ -11,30 +19,51 @@ export class UsersService {
   private readonly defaultPageSize = 10;
   private readonly maxPageSize = 100;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly emailsService: EmailsService,
+  ) {}
 
   /**
    * Create a new user with hashed password
    */
   async create(createUserDto: CreateUserDto) {
-    await this.validateUserCreation(createUserDto);
-    
-    const hashedPassword = await this.hashPassword(createUserDto.password);
-    
     try {
-      return await this.prisma.user.create({
-        data: {
-          username: createUserDto.username,
-          password: hashedPassword,
-          role: createUserDto.role,
-          email: createUserDto.email,
-          phoneNumber: createUserDto.phoneNumber,
-          gender: createUserDto.gender,
-          DateOfBirth: createUserDto.DateOfBirth,
-          createdById: createUserDto.createdById,
-        },
+      await this.validateUserCreation(createUserDto);
+
+      const hashedPassword = await this.hashPassword(createUserDto.password);
+
+      const userData: Prisma.UserCreateInput = {
+        name: createUserDto.name,
+        username: createUserDto.username,
+        password: hashedPassword,
+        role: createUserDto.role || UserRole.COMMON,
+        email: createUserDto.email,
+        phoneNumber: createUserDto.phoneNumber ?? '',
+        gender: createUserDto.gender,
+        dateOfBirth: createUserDto.dateOfBirth,
+      };
+
+      if (createUserDto.createdById) {
+        userData.createdBy = { connect: { id: createUserDto.createdById } };
+      }
+
+      const newUser = await this.prisma.user.create({
+        data: userData,
         select: this.getUserSelectFields(),
       });
+
+      const activationToken = await this.jwtService.signAsync(
+        { email: createUserDto.email },
+        { expiresIn: '7d' },
+      );
+      await this.emailsService.sendAccountActivationInvite(
+        createUserDto.email,
+        `${process.env.FRONTEND_URL}/verify?token=${activationToken}`,
+      );
+
+      return newUser;
     } catch (error) {
       this.handlePrismaError(error);
     }
@@ -44,11 +73,11 @@ export class UsersService {
    * Get paginated list of users with filtering and search
    */
   async findAll(
-    page: number = 1, 
-    limit: number = this.defaultPageSize, 
-    role?: UserRole, 
+    page: number = 1,
+    limit: number = this.defaultPageSize,
+    role?: UserRole,
     search?: string,
-    isActive?: boolean
+    isActive?: boolean,
   ) {
     const { skip, take } = this.validateAndNormalizePagination(page, limit);
     const where = this.buildUserWhereClause(role, search, isActive);
@@ -82,7 +111,7 @@ export class UsersService {
    */
   async findOne(id: string) {
     this.validateUuid(id);
-    
+
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
@@ -90,7 +119,6 @@ export class UsersService {
         email: true,
         phoneNumber: true,
         gender: true,
-        DateOfBirth: true,
         isActive: true,
         lastLoginAt: true,
         emailVerified: true,
@@ -109,7 +137,7 @@ export class UsersService {
    */
   async update(id: string, updateUserDto: UpdateUserDto) {
     this.validateUuid(id);
-    
+
     const existingUser = await this.findUserById(id);
     await this.validateUserUpdate(updateUserDto, existingUser);
 
@@ -131,9 +159,9 @@ export class UsersService {
    */
   async changeRole(id: string, newRole: UserRole, currentUserId?: string) {
     this.validateUuid(id);
-    
+
     const user = await this.findUserById(id);
-    
+
     // Prevent changing own role to non-admin
     if (id === currentUserId && newRole !== UserRole.ADMIN) {
       throw new BadRequestException('Cannot change your own admin role');
@@ -160,7 +188,7 @@ export class UsersService {
    */
   async remove(id: string, currentUserId?: string) {
     this.validateUuid(id);
-    
+
     const user = await this.findUserById(id);
 
     // Prevent self-deletion
@@ -194,13 +222,16 @@ export class UsersService {
     });
 
     // Initialize all roles with 0
-    const result = Object.values(UserRole).reduce((acc, role) => {
-      acc[role] = 0;
-      return acc;
-    }, {} as Record<UserRole, number>);
+    const result = Object.values(UserRole).reduce(
+      (acc, role) => {
+        acc[role] = 0;
+        return acc;
+      },
+      {} as Record<UserRole, number>,
+    );
 
     // Fill in actual counts
-    stats.forEach(stat => {
+    stats.forEach((stat) => {
       result[stat.role] = stat._count.id;
     });
 
@@ -216,7 +247,7 @@ export class UsersService {
     }
 
     const searchTerm = query.trim().toLowerCase();
-    
+
     return await this.prisma.user.findMany({
       where: {
         AND: [
@@ -244,13 +275,16 @@ export class UsersService {
   /**
    * Bulk delete users
    */
-  async bulkDelete(ids: string[], currentUserId?: string): Promise<{ deleted: number }> {
+  async bulkDelete(
+    ids: string[],
+    currentUserId?: string,
+  ): Promise<{ deleted: number }> {
     if (!ids.length) {
       throw new BadRequestException('No user IDs provided');
     }
 
     // Validate all IDs
-    ids.forEach(id => this.validateUuid(id));
+    ids.forEach((id) => this.validateUuid(id));
 
     // Prevent self-deletion
     if (currentUserId && ids.includes(currentUserId)) {
@@ -263,8 +297,10 @@ export class UsersService {
       select: { id: true, role: true },
     });
 
-    const adminIds = users.filter(u => u.role === UserRole.ADMIN).map(u => u.id);
-    
+    const adminIds = users
+      .filter((u) => u.role === UserRole.ADMIN)
+      .map((u) => u.id);
+
     if (adminIds.length > 0) {
       const totalAdmins = await this.prisma.user.count({
         where: { role: UserRole.ADMIN, isActive: true },
@@ -289,16 +325,24 @@ export class UsersService {
   /**
    * Bulk change user roles
    */
-  async bulkChangeRole(ids: string[], newRole: UserRole, currentUserId?: string): Promise<{ updated: number }> {
+  async bulkChangeRole(
+    ids: string[],
+    newRole: UserRole,
+    currentUserId?: string,
+  ): Promise<{ updated: number }> {
     if (!ids.length) {
       throw new BadRequestException('No user IDs provided');
     }
 
     // Validate all IDs
-    ids.forEach(id => this.validateUuid(id));
+    ids.forEach((id) => this.validateUuid(id));
 
     // Prevent changing own role away from admin
-    if (currentUserId && ids.includes(currentUserId) && newRole !== UserRole.ADMIN) {
+    if (
+      currentUserId &&
+      ids.includes(currentUserId) &&
+      newRole !== UserRole.ADMIN
+    ) {
       throw new BadRequestException('Cannot change your own admin role');
     }
 
@@ -347,41 +391,46 @@ export class UsersService {
 
   // Private helper methods
 
-  private async validateUserCreation(createUserDto: CreateUserDto): Promise<void> {
+  private async validateUserCreation(
+    createUserDto: CreateUserDto,
+  ): Promise<void> {
     // Check username uniqueness
     if (await this.isUsernameExists(createUserDto.username)) {
       throw new ConflictException('Username already exists');
     }
-
-    // Check email uniqueness if provided
-    if (createUserDto.email && await this.isEmailExists(createUserDto.email)) {
+    // Ensure no further code executes after throwing
+    if (await this.isEmailExists(createUserDto.email)) {
       throw new ConflictException('Email already exists');
     }
-
-    // Validate creator exists if provided
+    // Ensure no further code executes after throwing
     if (createUserDto.createdById) {
       const creator = await this.prisma.user.findUnique({
         where: { id: createUserDto.createdById },
         select: { id: true },
       });
-      
       if (!creator) {
         throw new BadRequestException('Creator user not found');
       }
     }
   }
 
-  private async validateUserUpdate(updateUserDto: UpdateUserDto, existingUser: any): Promise<void> {
+  private async validateUserUpdate(
+    updateUserDto: UpdateUserDto,
+    existingUser: any,
+  ): Promise<void> {
     // Check username uniqueness if changing
-    if (updateUserDto.username && updateUserDto.username !== existingUser.username) {
+    if (
+      updateUserDto.username &&
+      updateUserDto.username !== existingUser.username
+    ) {
       if (await this.isUsernameExists(updateUserDto.username)) {
         throw new ConflictException('Username already exists');
       }
     }
 
     // Check email uniqueness if changing
-    if (updateUserDto.email !== undefined && updateUserDto.email !== existingUser.email) {
-      if (updateUserDto.email && await this.isEmailExists(updateUserDto.email)) {
+    if (updateUserDto.email && updateUserDto.email !== existingUser.email) {
+      if (await this.isEmailExists(updateUserDto.email)) {
         throw new ConflictException('Email already exists');
       }
     }
@@ -392,11 +441,10 @@ export class UsersService {
 
     if (updateUserDto.username) data.username = updateUserDto.username;
     if (updateUserDto.email !== undefined) data.email = updateUserDto.email;
-    if (updateUserDto.phoneNumber !== undefined) data.phoneNumber = updateUserDto.phoneNumber;
+    if (updateUserDto.phoneNumber !== undefined)
+      data.phoneNumber = updateUserDto.phoneNumber;
     if (updateUserDto.gender !== undefined) data.gender = updateUserDto.gender;
-    if (updateUserDto.DateOfBirth !== undefined) data.DateOfBirth = updateUserDto.DateOfBirth;
     if (updateUserDto.role) data.role = updateUserDto.role;
-    if (updateUserDto.isActive !== undefined) data.isActive = updateUserDto.isActive;
 
     if (updateUserDto.password) {
       data.password = await this.hashPassword(updateUserDto.password);
@@ -407,13 +455,20 @@ export class UsersService {
 
   private validateAndNormalizePagination(page: number, limit: number) {
     const normalizedPage = Math.max(1, Math.floor(page));
-    const normalizedLimit = Math.min(this.maxPageSize, Math.max(1, Math.floor(limit)));
+    const normalizedLimit = Math.min(
+      this.maxPageSize,
+      Math.max(1, Math.floor(limit)),
+    );
     const skip = (normalizedPage - 1) * normalizedLimit;
 
     return { skip, take: normalizedLimit };
   }
 
-  private buildUserWhereClause(role?: UserRole, search?: string, isActive?: boolean) {
+  private buildUserWhereClause(
+    role?: UserRole,
+    search?: string,
+    isActive?: boolean,
+  ) {
     const where: any = {};
 
     if (role) {
@@ -442,9 +497,8 @@ export class UsersService {
       username: true,
       role: true,
       email: true,
-      phoneNumber: true,
+      phoneNumber: true, // Changed from phone to phoneNumber to match the schema
       gender: true,
-      DateOfBirth: true,
       isActive: true,
       lastLoginAt: true,
       emailVerified: true,
@@ -501,20 +555,48 @@ export class UsersService {
   }
 
   private validateUuid(id: string): void {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {
       throw new BadRequestException('Invalid UUID format');
     }
   }
 
   private handlePrismaError(error: any): never {
-    if (error.code === 'P2002') {
-      const field = error.meta?.target?.[0] || 'field';
-      throw new ConflictException(`${field} already exists`);
+    // Check if this is a Prisma error with a code
+    if (error.code) {
+      // Handle unique constraint violations
+      if (error.code === 'P2002') {
+        const field = error.meta?.target?.[0] || 'field';
+        throw new ConflictException(`${field} already exists`);
+      }
+
+      // Handle record not found errors
+      if (error.code === 'P2025') {
+        throw new NotFoundException('Record not found');
+      }
     }
-    
-    if (error.code === 'P2025') {
-      throw new NotFoundException('Record not found');
+
+    // Handle Zod validation errors
+    if (error.name === 'ZodError') {
+      const messages = error.errors.map((err: any) => {
+        if (err.path.includes('gender')) {
+          return `Gender must be one of: MALE, FEMALE, or OTHER`;
+        }
+        return `${err.path.join('.')}: ${err.message}`;
+      });
+      throw new BadRequestException(
+        `Validation failed: ${messages.join(', ')}`,
+      );
+    }
+
+    // If the error is already a NestJS exception, rethrow it
+    if (
+      error instanceof ConflictException ||
+      error instanceof NotFoundException ||
+      error instanceof BadRequestException
+    ) {
+      throw error;
     }
 
     // Log unexpected errors

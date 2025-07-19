@@ -1,48 +1,60 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { CreateTeamDto } from './dto/create-team.dto';
+import { CreateTeamDto, CreateTeamMemberDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { ImportTeamsDto } from './dto/import-teams.dto';
-
-interface TeamData {
-  name: string;
-  organization?: string;
-  description?: string;
-}
+import { Gender, TeamMember } from '../../generated/prisma';
+import { Prisma } from '../../generated/prisma';
+import { EmailsService } from '../emails/emails.service';
 
 @Injectable()
 export class TeamsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailsService,
+  ) {}
 
   /**
    * Generate a sequential team number in the format 000001, 000002, etc.
    */
-  private async generateNextTeamNumber(): Promise<string> {
+  private async generateNextTeamNumber(tournamentId: string): Promise<string> {
     try {
-      const allTeams = await this.prisma.team.findMany({
-        select: {
-          teamNumber: true
-        }
+      const tournament = await this.prisma.tournament.findUnique({
+        where: { id: tournamentId },
+        select: { id: true, name: true },
       });
 
-      let highestNumber = 0;
-
-      for (const team of allTeams) {
-        const cleanNumber = team.teamNumber.replace(/^0+/, '');
-
-        if (/^\d+$/.test(cleanNumber)) {
-          const num = parseInt(cleanNumber, 10);
-          if (num > highestNumber) {
-            highestNumber = num;
-          }
-        }
+      if (!tournament || !tournament.name) {
+        throw new Error(`Tournament not found for ID: ${tournamentId}`);
       }
 
-      const nextNumber = highestNumber + 1;
-      return nextNumber.toString().padStart(6, '0');
+      const prefix = tournament.name
+        .split(/\s+/)
+        .map((word) => word.charAt(0).toUpperCase())
+        .join('');
+
+      const latestTeam = await this.prisma.team.findFirst({
+        where: {
+          tournamentId: tournament.id,
+          teamNumber: { startsWith: prefix },
+        },
+        orderBy: { teamNumber: 'desc' },
+      });
+
+      const latestNumber = latestTeam?.teamNumber
+        ? parseInt(latestTeam.teamNumber.replace(prefix, ''), 10) || 0
+        : 0;
+
+      const newTeamNumber = `${prefix}${String(latestNumber + 1).padStart(5, '0')}`;
+      return newTeamNumber;
     } catch (error) {
-      console.error("Error generating team number:", error);
-      return Math.floor(100000 + Math.random() * 900000).toString();
+      console.error('Error generating team number:', error);
+      // Generate a fallback random 6-digit number
+      return `TMP${Math.floor(100000 + Math.random() * 900000)}`;
     }
   }
 
@@ -62,9 +74,13 @@ export class TeamsService {
    * Throws BadRequestException if not unique.
    */
   private async ensureTeamNumberUnique(teamNumber: string, excludeId?: string) {
-    const existingTeam = await this.prisma.team.findUnique({ where: { teamNumber } });
+    const existingTeam = await this.prisma.team.findUnique({
+      where: { teamNumber },
+    });
     if (existingTeam && existingTeam.id !== excludeId) {
-      throw new BadRequestException(`Team with number ${teamNumber} already exists`);
+      throw new BadRequestException(
+        `Team with number ${teamNumber} already exists`,
+      );
     }
   }
 
@@ -78,29 +94,100 @@ export class TeamsService {
       try {
         return JSON.parse(input);
       } catch (error) {
-        throw new BadRequestException(`Invalid teamMembers format: ${error.message}`);
+        throw new BadRequestException(
+          `Invalid teamMembers format: ${error.message}`,
+        );
       }
     }
     return input;
   }
 
-  async create(createTeamDto: CreateTeamDto) {
-    const teamNumber = createTeamDto.teamNumber || await this.generateNextTeamNumber();
-    await this.ensureTeamNumberUnique(teamNumber);
-    const teamMembers = this.parseTeamMembers(createTeamDto.teamMembers);
+  private async createTeamMember(
+    createTeamMemberDto: CreateTeamMemberDto,
+    teamName: string,
+    tournamentName: string,
+  ) {
     try {
-      return this.prisma.team.create({
+      const member = await this.prisma.teamMember.create({
+        data: {
+          name: createTeamMemberDto.name,
+          gender: createTeamMemberDto.gender,
+          phoneNumber: createTeamMemberDto.phoneNumber,
+          email: createTeamMemberDto.email,
+          province: createTeamMemberDto.province,
+          ward: createTeamMemberDto.ward,
+          organization: createTeamMemberDto.organization,
+          organizationAddress: createTeamMemberDto.organizationAddress,
+          team: {
+            connect: { id: createTeamMemberDto.teamId },
+          },
+        },
+      });
+
+      if (member.email) {
+        await this.emailService.sendTeamAssignmentInvitationEmail(
+          member.email,
+          teamName,
+          tournamentName,
+        );
+      }
+
+      return member;
+    } catch (error) {
+      throw new BadRequestException(
+        `Failed to create team member: ${error.message}`,
+      );
+    }
+  }
+
+  async createTeam(createTeamDto: CreateTeamDto) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: createTeamDto.tournamentId },
+    });
+
+    if (!tournament) {
+      throw new BadRequestException(
+        `Tournament with ID ${createTeamDto.tournamentId} does not exist.`,
+      );
+    }
+
+    const teamNumber = await this.generateNextTeamNumber(tournament.id);
+
+    try {
+      const createdTeam = await this.prisma.team.create({
         data: {
           teamNumber,
           name: createTeamDto.name,
-          organization: createTeamDto.organization,
-          avatar: createTeamDto.avatar,
-          description: createTeamDto.description,
-          teamMembers,
-          tournamentId: createTeamDto.tournamentId,
+          referralSource: createTeamDto.referralSource,
+          tournament: {
+            connect: { id: tournament.id },
+          },
+          user: {
+            connect: { id: createTeamDto.userId },
+          },
         },
-        include: { tournament: true },
+        include: {
+          tournament: true,
+        },
       });
+
+      const createdMembers = await Promise.all(
+        createTeamDto.teamMembers.map((memberDto) =>
+          this.createTeamMember(
+            {
+              ...memberDto,
+              teamId: createdTeam.id,
+            },
+            createTeamDto.name,
+            tournament.name,
+          ),
+        ),
+      );
+
+      return {
+        ...createdTeam,
+        teamMembers: createdMembers,
+      };
     } catch (error) {
       throw new BadRequestException(`Failed to create team: ${error.message}`);
     }
@@ -148,25 +235,83 @@ export class TeamsService {
     return team;
   }
 
-  async update(id: string, updateTeamDto: UpdateTeamDto) {
-    await this.ensureTeamExistsById(id);
-    if (updateTeamDto.teamNumber) {
-      await this.ensureTeamNumberUnique(updateTeamDto.teamNumber, id);
+  async update(updateTeamDto: UpdateTeamDto) {
+    if (!updateTeamDto.id) {
+      throw new Error('Team ID is required');
     }
-    const teamMembers = this.parseTeamMembers(updateTeamDto.teamMembers);
+
+    const team = await this.prisma.team.findUnique({
+      where: { id: updateTeamDto.id },
+      include: { tournament: true },
+    });
+
+    if (!team) {
+      throw new Error('Team not found');
+    }
+
+    const teamMemberUpdates = updateTeamDto.teamMembers ?? [];
+
+    const existingMembers = await this.prisma.teamMember.findMany({
+      where: { teamId: updateTeamDto.id },
+      select: { id: true },
+    });
+
+    const incomingIds = teamMemberUpdates
+      .filter((member) => member.id)
+      .map((member) => member.id);
+
+    const idsToDelete = existingMembers
+      .map((member) => member.id)
+      .filter((id) => !incomingIds.includes(id));
+
+    if (idsToDelete.length > 0) {
+      await this.prisma.teamMember.deleteMany({
+        where: { id: { in: idsToDelete } },
+      });
+    }
+
+    for (const member of teamMemberUpdates) {
+      const { id, ...fields } = member;
+
+      const data = Object.fromEntries(
+        Object.entries(fields).filter(([_, v]) => v !== undefined),
+      );
+
+      if (id) {
+        if (Object.keys(data).length > 0) {
+          await this.prisma.teamMember.update({
+            where: { id },
+            data,
+          });
+        }
+      } else {
+        await this.createTeamMember(
+          {
+            name: data.name!,
+            email: data.email!,
+            phoneNumber: data.phoneNumber!,
+            province: data.province!,
+            ward: data.ward!,
+            organization: data.organization!,
+            organizationAddress: data.organizationAddress!,
+            teamId: updateTeamDto.id,
+          },
+          team.name,
+          team.tournament.name,
+        );
+      }
+    }
+
+    const teamData: any = {};
+    if (updateTeamDto.name !== undefined) teamData.name = updateTeamDto.name;
+    if (updateTeamDto.referralSource !== undefined)
+      teamData.referralSource = updateTeamDto.referralSource;
+
     try {
       return this.prisma.team.update({
-        where: { id },
-        data: {
-          teamNumber: updateTeamDto.teamNumber,
-          name: updateTeamDto.name,
-          organization: updateTeamDto.organization,
-          avatar: updateTeamDto.avatar,
-          description: updateTeamDto.description,
-          teamMembers,
-          tournamentId: updateTeamDto.tournamentId,
-        },
-        include: { tournament: true },
+        where: { id: updateTeamDto.id },
+        data: teamData,
+        include: { tournament: true, teamMembers: true },
       });
     } catch (error) {
       throw new BadRequestException(`Failed to update team: ${error.message}`);
@@ -181,23 +326,33 @@ export class TeamsService {
   /**
    * Import multiple teams from CSV content or copy-pasted text
    */
-  async importTeams(importTeamsDto: ImportTeamsDto) {
-    const { content, format, hasHeader = false, delimiter = ',', tournamentId } = importTeamsDto;
+  /*async importTeams(importTeamsDto: ImportTeamsDto) {
+    const {
+      content,
+      format,
+      hasHeader = false,
+      delimiter = ',',
+      tournamentId,
+    } = importTeamsDto;
     try {
-      const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
+      const lines = content.split(/\r?\n/).filter((line) => line.trim() !== '');
       const dataLines = hasHeader ? lines.slice(1) : lines;
       if (dataLines.length === 0) {
         throw new BadRequestException('No team data found in the content');
       }
-      const teamsToCreate: TeamData[] = dataLines.map(line => {
-        const parts = line.split(delimiter).map(part => part.trim());
+      const teamsToCreate: TeamData[] = dataLines.map((line) => {
+        const parts = line.split(delimiter).map((part) => part.trim());
         if (!parts[0]) {
-          throw new BadRequestException(`Invalid line format: ${line}. Expected at least team name`);
+          throw new BadRequestException(
+            `Invalid line format: ${line}. Expected at least team name`,
+          );
         }
         return {
           name: parts[0],
-          organization: parts[1] !== undefined && parts[1] !== '' ? parts[1] : undefined,
-          description: parts[2] !== undefined && parts[2] !== '' ? parts[2] : undefined,
+          organization:
+            parts[1] !== undefined && parts[1] !== '' ? parts[1] : undefined,
+          description:
+            parts[2] !== undefined && parts[2] !== '' ? parts[2] : undefined,
         };
       });
       const createdTeams: any[] = [];
@@ -209,9 +364,8 @@ export class TeamsService {
             data: {
               teamNumber,
               name: teamData.name,
-              organization: teamData.organization,
               description: teamData.description,
-              tournamentId: tournamentId || null,
+              tournamentId: tournamentId,
             },
             include: { tournament: true },
           });
@@ -229,5 +383,5 @@ export class TeamsService {
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(`Failed to import teams: ${error.message}`);
     }
-  }
+  }*/
 }

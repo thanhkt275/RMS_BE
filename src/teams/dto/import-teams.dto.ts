@@ -7,8 +7,11 @@ export const ImportTeamsSchema = z.object({
   format: z.enum(['csv', 'text']).default('text'),
   hasHeader: z.boolean().default(false),
   delimiter: z.string().default(','),
-  tournamentId: z.string().uuid('Invalid tournament ID format').min(1, 'Tournament ID is required'),
+  tournamentId: z
+    .string()
+    .uuid('Invalid tournament ID format')
+    .min(1, 'Tournament ID is required'),
 });
 
 // Create a DTO class from the Zod schema
-export class ImportTeamsDto extends createZodDto(ImportTeamsSchema) { }
+export class ImportTeamsDto extends createZodDto(ImportTeamsSchema) {}
