@@ -648,8 +648,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.6.0
-   * Query Engine version: f676762280b54cd07c770017ed3711ddde35f37a
+   * Prisma Client JS version: 6.11.1
+   * Query Engine version: f40f79ec31188888a2e33acda0ecc8fd10a853a9
    */
   export type PrismaVersion = {
     client: string
@@ -3081,7 +3081,7 @@ export namespace Prisma {
     password: string | null
     role: $Enums.UserRole | null
     name: string | null
-    DateOfBirth: Date | null
+    dateOfBirth: Date | null
     email: string | null
     phoneNumber: string | null
     gender: $Enums.Gender | null
@@ -3099,7 +3099,7 @@ export namespace Prisma {
     password: string | null
     role: $Enums.UserRole | null
     name: string | null
-    DateOfBirth: Date | null
+    dateOfBirth: Date | null
     email: string | null
     phoneNumber: string | null
     gender: $Enums.Gender | null
@@ -3117,7 +3117,7 @@ export namespace Prisma {
     password: number
     role: number
     name: number
-    DateOfBirth: number
+    dateOfBirth: number
     email: number
     phoneNumber: number
     gender: number
@@ -3137,7 +3137,7 @@ export namespace Prisma {
     password?: true
     role?: true
     name?: true
-    DateOfBirth?: true
+    dateOfBirth?: true
     email?: true
     phoneNumber?: true
     gender?: true
@@ -3155,7 +3155,7 @@ export namespace Prisma {
     password?: true
     role?: true
     name?: true
-    DateOfBirth?: true
+    dateOfBirth?: true
     email?: true
     phoneNumber?: true
     gender?: true
@@ -3173,7 +3173,7 @@ export namespace Prisma {
     password?: true
     role?: true
     name?: true
-    DateOfBirth?: true
+    dateOfBirth?: true
     email?: true
     phoneNumber?: true
     gender?: true
@@ -3264,7 +3264,7 @@ export namespace Prisma {
     password: string
     role: $Enums.UserRole
     name: string
-    DateOfBirth: Date | null
+    dateOfBirth: Date | null
     email: string
     phoneNumber: string
     gender: $Enums.Gender | null
@@ -3299,7 +3299,7 @@ export namespace Prisma {
     password?: boolean
     role?: boolean
     name?: boolean
-    DateOfBirth?: boolean
+    dateOfBirth?: boolean
     email?: boolean
     phoneNumber?: boolean
     gender?: boolean
@@ -3326,7 +3326,7 @@ export namespace Prisma {
     password?: boolean
     role?: boolean
     name?: boolean
-    DateOfBirth?: boolean
+    dateOfBirth?: boolean
     email?: boolean
     phoneNumber?: boolean
     gender?: boolean
@@ -3345,7 +3345,7 @@ export namespace Prisma {
     password?: boolean
     role?: boolean
     name?: boolean
-    DateOfBirth?: boolean
+    dateOfBirth?: boolean
     email?: boolean
     phoneNumber?: boolean
     gender?: boolean
@@ -3364,7 +3364,7 @@ export namespace Prisma {
     password?: boolean
     role?: boolean
     name?: boolean
-    DateOfBirth?: boolean
+    dateOfBirth?: boolean
     email?: boolean
     phoneNumber?: boolean
     gender?: boolean
@@ -3376,7 +3376,7 @@ export namespace Prisma {
     createdById?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "role" | "name" | "DateOfBirth" | "email" | "phoneNumber" | "gender" | "isActive" | "lastLoginAt" | "emailVerified" | "createdAt" | "updatedAt" | "createdById", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password" | "role" | "name" | "dateOfBirth" | "email" | "phoneNumber" | "gender" | "isActive" | "lastLoginAt" | "emailVerified" | "createdAt" | "updatedAt" | "createdById", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     createdBy?: boolean | User$createdByArgs<ExtArgs>
     createdUsers?: boolean | User$createdUsersArgs<ExtArgs>
@@ -3413,7 +3413,7 @@ export namespace Prisma {
       password: string
       role: $Enums.UserRole
       name: string
-      DateOfBirth: Date | null
+      dateOfBirth: Date | null
       email: string
       phoneNumber: string
       gender: $Enums.Gender | null
@@ -3859,7 +3859,7 @@ export namespace Prisma {
     readonly password: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'UserRole'>
     readonly name: FieldRef<"User", 'String'>
-    readonly DateOfBirth: FieldRef<"User", 'DateTime'>
+    readonly dateOfBirth: FieldRef<"User", 'DateTime'>
     readonly email: FieldRef<"User", 'String'>
     readonly phoneNumber: FieldRef<"User", 'String'>
     readonly gender: FieldRef<"User", 'Gender'>
@@ -12012,7 +12012,7 @@ export namespace Prisma {
     id: string | null
     name: string | null
     gender: $Enums.Gender | null
-    phone: string | null
+    phoneNumber: string | null
     email: string | null
     province: string | null
     ward: string | null
@@ -12027,7 +12027,7 @@ export namespace Prisma {
     id: string | null
     name: string | null
     gender: $Enums.Gender | null
-    phone: string | null
+    phoneNumber: string | null
     email: string | null
     province: string | null
     ward: string | null
@@ -12042,7 +12042,7 @@ export namespace Prisma {
     id: number
     name: number
     gender: number
-    phone: number
+    phoneNumber: number
     email: number
     province: number
     ward: number
@@ -12059,7 +12059,7 @@ export namespace Prisma {
     id?: true
     name?: true
     gender?: true
-    phone?: true
+    phoneNumber?: true
     email?: true
     province?: true
     ward?: true
@@ -12074,7 +12074,7 @@ export namespace Prisma {
     id?: true
     name?: true
     gender?: true
-    phone?: true
+    phoneNumber?: true
     email?: true
     province?: true
     ward?: true
@@ -12089,7 +12089,7 @@ export namespace Prisma {
     id?: true
     name?: true
     gender?: true
-    phone?: true
+    phoneNumber?: true
     email?: true
     province?: true
     ward?: true
@@ -12177,7 +12177,7 @@ export namespace Prisma {
     id: string
     name: string
     gender: $Enums.Gender | null
-    phone: string | null
+    phoneNumber: string | null
     email: string | null
     province: string
     ward: string
@@ -12209,7 +12209,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     gender?: boolean
-    phone?: boolean
+    phoneNumber?: boolean
     email?: boolean
     province?: boolean
     ward?: boolean
@@ -12225,7 +12225,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     gender?: boolean
-    phone?: boolean
+    phoneNumber?: boolean
     email?: boolean
     province?: boolean
     ward?: boolean
@@ -12241,7 +12241,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     gender?: boolean
-    phone?: boolean
+    phoneNumber?: boolean
     email?: boolean
     province?: boolean
     ward?: boolean
@@ -12257,7 +12257,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     gender?: boolean
-    phone?: boolean
+    phoneNumber?: boolean
     email?: boolean
     province?: boolean
     ward?: boolean
@@ -12268,7 +12268,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type TeamMemberOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "gender" | "phone" | "email" | "province" | "ward" | "organization" | "organizationAddress" | "teamId" | "createdAt" | "updatedAt", ExtArgs["result"]["teamMember"]>
+  export type TeamMemberOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "gender" | "phoneNumber" | "email" | "province" | "ward" | "organization" | "organizationAddress" | "teamId" | "createdAt" | "updatedAt", ExtArgs["result"]["teamMember"]>
   export type TeamMemberInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     team?: boolean | TeamDefaultArgs<ExtArgs>
   }
@@ -12288,7 +12288,7 @@ export namespace Prisma {
       id: string
       name: string
       gender: $Enums.Gender | null
-      phone: string | null
+      phoneNumber: string | null
       email: string | null
       province: string
       ward: string
@@ -12724,7 +12724,7 @@ export namespace Prisma {
     readonly id: FieldRef<"TeamMember", 'String'>
     readonly name: FieldRef<"TeamMember", 'String'>
     readonly gender: FieldRef<"TeamMember", 'Gender'>
-    readonly phone: FieldRef<"TeamMember", 'String'>
+    readonly phoneNumber: FieldRef<"TeamMember", 'String'>
     readonly email: FieldRef<"TeamMember", 'String'>
     readonly province: FieldRef<"TeamMember", 'String'>
     readonly ward: FieldRef<"TeamMember", 'String'>
@@ -24881,7 +24881,7 @@ export namespace Prisma {
     password: 'password',
     role: 'role',
     name: 'name',
-    DateOfBirth: 'DateOfBirth',
+    dateOfBirth: 'dateOfBirth',
     email: 'email',
     phoneNumber: 'phoneNumber',
     gender: 'gender',
@@ -24999,7 +24999,7 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     gender: 'gender',
-    phone: 'phone',
+    phoneNumber: 'phoneNumber',
     email: 'email',
     province: 'province',
     ward: 'ward',
@@ -25436,7 +25436,7 @@ export namespace Prisma {
     password?: StringFilter<"User"> | string
     role?: EnumUserRoleFilter<"User"> | $Enums.UserRole
     name?: StringFilter<"User"> | string
-    DateOfBirth?: DateTimeNullableFilter<"User"> | Date | string | null
+    dateOfBirth?: DateTimeNullableFilter<"User"> | Date | string | null
     email?: StringFilter<"User"> | string
     phoneNumber?: StringFilter<"User"> | string
     gender?: EnumGenderNullableFilter<"User"> | $Enums.Gender | null
@@ -25462,7 +25462,7 @@ export namespace Prisma {
     password?: SortOrder
     role?: SortOrder
     name?: SortOrder
-    DateOfBirth?: SortOrderInput | SortOrder
+    dateOfBirth?: SortOrderInput | SortOrder
     email?: SortOrder
     phoneNumber?: SortOrder
     gender?: SortOrderInput | SortOrder
@@ -25485,7 +25485,6 @@ export namespace Prisma {
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     username?: string
-    name?: string
     email?: string
     phoneNumber?: string
     AND?: UserWhereInput | UserWhereInput[]
@@ -25493,7 +25492,8 @@ export namespace Prisma {
     NOT?: UserWhereInput | UserWhereInput[]
     password?: StringFilter<"User"> | string
     role?: EnumUserRoleFilter<"User"> | $Enums.UserRole
-    DateOfBirth?: DateTimeNullableFilter<"User"> | Date | string | null
+    name?: StringFilter<"User"> | string
+    dateOfBirth?: DateTimeNullableFilter<"User"> | Date | string | null
     gender?: EnumGenderNullableFilter<"User"> | $Enums.Gender | null
     isActive?: BoolFilter<"User"> | boolean
     lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
@@ -25509,7 +25509,7 @@ export namespace Prisma {
     fieldDisplays?: FieldDisplayListRelationFilter
     fieldReferees?: FieldRefereeListRelationFilter
     Team?: TeamListRelationFilter
-  }, "id" | "username" | "name" | "email" | "phoneNumber">
+  }, "id" | "username" | "email" | "phoneNumber">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
@@ -25517,7 +25517,7 @@ export namespace Prisma {
     password?: SortOrder
     role?: SortOrder
     name?: SortOrder
-    DateOfBirth?: SortOrderInput | SortOrder
+    dateOfBirth?: SortOrderInput | SortOrder
     email?: SortOrder
     phoneNumber?: SortOrder
     gender?: SortOrderInput | SortOrder
@@ -25541,7 +25541,7 @@ export namespace Prisma {
     password?: StringWithAggregatesFilter<"User"> | string
     role?: EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
     name?: StringWithAggregatesFilter<"User"> | string
-    DateOfBirth?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+    dateOfBirth?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     email?: StringWithAggregatesFilter<"User"> | string
     phoneNumber?: StringWithAggregatesFilter<"User"> | string
     gender?: EnumGenderNullableWithAggregatesFilter<"User"> | $Enums.Gender | null
@@ -26130,7 +26130,7 @@ export namespace Prisma {
     id?: StringFilter<"TeamMember"> | string
     name?: StringFilter<"TeamMember"> | string
     gender?: EnumGenderNullableFilter<"TeamMember"> | $Enums.Gender | null
-    phone?: StringNullableFilter<"TeamMember"> | string | null
+    phoneNumber?: StringNullableFilter<"TeamMember"> | string | null
     email?: StringNullableFilter<"TeamMember"> | string | null
     province?: StringFilter<"TeamMember"> | string
     ward?: StringFilter<"TeamMember"> | string
@@ -26146,7 +26146,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     gender?: SortOrderInput | SortOrder
-    phone?: SortOrderInput | SortOrder
+    phoneNumber?: SortOrderInput | SortOrder
     email?: SortOrderInput | SortOrder
     province?: SortOrder
     ward?: SortOrder
@@ -26165,7 +26165,7 @@ export namespace Prisma {
     NOT?: TeamMemberWhereInput | TeamMemberWhereInput[]
     name?: StringFilter<"TeamMember"> | string
     gender?: EnumGenderNullableFilter<"TeamMember"> | $Enums.Gender | null
-    phone?: StringNullableFilter<"TeamMember"> | string | null
+    phoneNumber?: StringNullableFilter<"TeamMember"> | string | null
     email?: StringNullableFilter<"TeamMember"> | string | null
     province?: StringFilter<"TeamMember"> | string
     ward?: StringFilter<"TeamMember"> | string
@@ -26181,7 +26181,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     gender?: SortOrderInput | SortOrder
-    phone?: SortOrderInput | SortOrder
+    phoneNumber?: SortOrderInput | SortOrder
     email?: SortOrderInput | SortOrder
     province?: SortOrder
     ward?: SortOrder
@@ -26202,7 +26202,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"TeamMember"> | string
     name?: StringWithAggregatesFilter<"TeamMember"> | string
     gender?: EnumGenderNullableWithAggregatesFilter<"TeamMember"> | $Enums.Gender | null
-    phone?: StringNullableWithAggregatesFilter<"TeamMember"> | string | null
+    phoneNumber?: StringNullableWithAggregatesFilter<"TeamMember"> | string | null
     email?: StringNullableWithAggregatesFilter<"TeamMember"> | string | null
     province?: StringWithAggregatesFilter<"TeamMember"> | string
     ward?: StringWithAggregatesFilter<"TeamMember"> | string
@@ -27031,7 +27031,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -27056,7 +27056,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -27081,7 +27081,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -27106,7 +27106,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -27131,7 +27131,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -27149,7 +27149,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -27166,7 +27166,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -27806,7 +27806,7 @@ export namespace Prisma {
     id?: string
     name: string
     gender?: $Enums.Gender | null
-    phone?: string | null
+    phoneNumber?: string | null
     email?: string | null
     province: string
     ward: string
@@ -27821,7 +27821,7 @@ export namespace Prisma {
     id?: string
     name: string
     gender?: $Enums.Gender | null
-    phone?: string | null
+    phoneNumber?: string | null
     email?: string | null
     province: string
     ward: string
@@ -27836,7 +27836,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     province?: StringFieldUpdateOperationsInput | string
     ward?: StringFieldUpdateOperationsInput | string
@@ -27851,7 +27851,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     province?: StringFieldUpdateOperationsInput | string
     ward?: StringFieldUpdateOperationsInput | string
@@ -27866,7 +27866,7 @@ export namespace Prisma {
     id?: string
     name: string
     gender?: $Enums.Gender | null
-    phone?: string | null
+    phoneNumber?: string | null
     email?: string | null
     province: string
     ward: string
@@ -27881,7 +27881,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     province?: StringFieldUpdateOperationsInput | string
     ward?: StringFieldUpdateOperationsInput | string
@@ -27895,7 +27895,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     province?: StringFieldUpdateOperationsInput | string
     ward?: StringFieldUpdateOperationsInput | string
@@ -28906,7 +28906,7 @@ export namespace Prisma {
     password?: SortOrder
     role?: SortOrder
     name?: SortOrder
-    DateOfBirth?: SortOrder
+    dateOfBirth?: SortOrder
     email?: SortOrder
     phoneNumber?: SortOrder
     gender?: SortOrder
@@ -28924,7 +28924,7 @@ export namespace Prisma {
     password?: SortOrder
     role?: SortOrder
     name?: SortOrder
-    DateOfBirth?: SortOrder
+    dateOfBirth?: SortOrder
     email?: SortOrder
     phoneNumber?: SortOrder
     gender?: SortOrder
@@ -28942,7 +28942,7 @@ export namespace Prisma {
     password?: SortOrder
     role?: SortOrder
     name?: SortOrder
-    DateOfBirth?: SortOrder
+    dateOfBirth?: SortOrder
     email?: SortOrder
     phoneNumber?: SortOrder
     gender?: SortOrder
@@ -29634,7 +29634,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     gender?: SortOrder
-    phone?: SortOrder
+    phoneNumber?: SortOrder
     email?: SortOrder
     province?: SortOrder
     ward?: SortOrder
@@ -29649,7 +29649,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     gender?: SortOrder
-    phone?: SortOrder
+    phoneNumber?: SortOrder
     email?: SortOrder
     province?: SortOrder
     ward?: SortOrder
@@ -29664,7 +29664,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     gender?: SortOrder
-    phone?: SortOrder
+    phoneNumber?: SortOrder
     email?: SortOrder
     province?: SortOrder
     ward?: SortOrder
@@ -32593,7 +32593,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -32617,7 +32617,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -32646,7 +32646,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -32670,7 +32670,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -32943,7 +32943,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -32967,7 +32967,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -33010,7 +33010,7 @@ export namespace Prisma {
     password?: StringFilter<"User"> | string
     role?: EnumUserRoleFilter<"User"> | $Enums.UserRole
     name?: StringFilter<"User"> | string
-    DateOfBirth?: DateTimeNullableFilter<"User"> | Date | string | null
+    dateOfBirth?: DateTimeNullableFilter<"User"> | Date | string | null
     email?: StringFilter<"User"> | string
     phoneNumber?: StringFilter<"User"> | string
     gender?: EnumGenderNullableFilter<"User"> | $Enums.Gender | null
@@ -33220,7 +33220,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -33244,7 +33244,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -33480,7 +33480,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -33504,7 +33504,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -34027,7 +34027,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -34051,7 +34051,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -34283,7 +34283,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -34307,7 +34307,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -34481,7 +34481,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -34505,7 +34505,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -34602,7 +34602,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -34626,7 +34626,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -35017,7 +35017,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -35041,7 +35041,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -35068,7 +35068,7 @@ export namespace Prisma {
     id?: string
     name: string
     gender?: $Enums.Gender | null
-    phone?: string | null
+    phoneNumber?: string | null
     email?: string | null
     province: string
     ward: string
@@ -35082,7 +35082,7 @@ export namespace Prisma {
     id?: string
     name: string
     gender?: $Enums.Gender | null
-    phone?: string | null
+    phoneNumber?: string | null
     email?: string | null
     province: string
     ward: string
@@ -35241,7 +35241,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -35265,7 +35265,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -35306,7 +35306,7 @@ export namespace Prisma {
     id?: StringFilter<"TeamMember"> | string
     name?: StringFilter<"TeamMember"> | string
     gender?: EnumGenderNullableFilter<"TeamMember"> | $Enums.Gender | null
-    phone?: StringNullableFilter<"TeamMember"> | string | null
+    phoneNumber?: StringNullableFilter<"TeamMember"> | string | null
     email?: StringNullableFilter<"TeamMember"> | string | null
     province?: StringFilter<"TeamMember"> | string
     ward?: StringFilter<"TeamMember"> | string
@@ -36119,7 +36119,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -36143,7 +36143,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -36277,7 +36277,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -36301,7 +36301,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -36356,7 +36356,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -36380,7 +36380,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -36457,7 +36457,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -36481,7 +36481,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -37258,7 +37258,7 @@ export namespace Prisma {
     password: string
     role?: $Enums.UserRole
     name: string
-    DateOfBirth?: Date | string | null
+    dateOfBirth?: Date | string | null
     email: string
     phoneNumber: string
     gender?: $Enums.Gender | null
@@ -37347,7 +37347,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -37371,7 +37371,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -37395,7 +37395,7 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     name?: StringFieldUpdateOperationsInput | string
-    DateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email?: StringFieldUpdateOperationsInput | string
     phoneNumber?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -38401,7 +38401,7 @@ export namespace Prisma {
     id?: string
     name: string
     gender?: $Enums.Gender | null
-    phone?: string | null
+    phoneNumber?: string | null
     email?: string | null
     province: string
     ward: string
@@ -38502,7 +38502,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     province?: StringFieldUpdateOperationsInput | string
     ward?: StringFieldUpdateOperationsInput | string
@@ -38516,7 +38516,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     province?: StringFieldUpdateOperationsInput | string
     ward?: StringFieldUpdateOperationsInput | string
@@ -38530,7 +38530,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     gender?: NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     province?: StringFieldUpdateOperationsInput | string
     ward?: StringFieldUpdateOperationsInput | string

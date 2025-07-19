@@ -13,8 +13,8 @@ model User {
   username      String         @unique
   password      String
   role          UserRole       @default(COMMON)
-  name          String         @unique
-  DateOfBirth   DateTime?       
+  name          String
+  dateOfBirth   DateTime?
   email         String         @unique
   phoneNumber   String         @unique
   gender        Gender?
@@ -177,7 +177,7 @@ model TeamMember {
   id                  String  @id @default(uuid())
   name                String
   gender              Gender?
-  phone               String?
+  phoneNumber         String?
   email               String?
   province            String
   ward                String
@@ -300,7 +300,7 @@ model ScoreConfig {
   updatedAt         DateTime           @updatedAt
   bonusConditions   BonusCondition[]
   penaltyConditions PenaltyCondition[]
-  tournament        Tournament?         @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  tournament        Tournament?        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   scoreElements     ScoreElement[]
 
   @@index([tournamentId])
@@ -373,7 +373,6 @@ model MatchScore {
   @@index([allianceId])
   @@index([scoreElementId])
 }
-
 
 enum UserRole {
   ADMIN

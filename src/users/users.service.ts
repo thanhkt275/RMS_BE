@@ -23,7 +23,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailsService: EmailsService,
-  ) { }
+  ) {}
 
   /**
    * Create a new user with hashed password
@@ -42,7 +42,7 @@ export class UsersService {
         email: createUserDto.email,
         phoneNumber: createUserDto.phoneNumber ?? '',
         gender: createUserDto.gender,
-        DateOfBirth: createUserDto.DateOfBirth,
+        dateOfBirth: createUserDto.dateOfBirth,
       };
 
       if (createUserDto.createdById) {
@@ -585,13 +585,17 @@ export class UsersService {
         }
         return `${err.path.join('.')}: ${err.message}`;
       });
-      throw new BadRequestException(`Validation failed: ${messages.join(', ')}`);
+      throw new BadRequestException(
+        `Validation failed: ${messages.join(', ')}`,
+      );
     }
 
     // If the error is already a NestJS exception, rethrow it
-    if (error instanceof ConflictException ||
+    if (
+      error instanceof ConflictException ||
       error instanceof NotFoundException ||
-      error instanceof BadRequestException) {
+      error instanceof BadRequestException
+    ) {
       throw error;
     }
 

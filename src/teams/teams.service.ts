@@ -112,7 +112,7 @@ export class TeamsService {
         data: {
           name: createTeamMemberDto.name,
           gender: createTeamMemberDto.gender,
-          phone: createTeamMemberDto.phone,
+          phoneNumber: createTeamMemberDto.phoneNumber,
           email: createTeamMemberDto.email,
           province: createTeamMemberDto.province,
           ward: createTeamMemberDto.ward,
@@ -124,11 +124,13 @@ export class TeamsService {
         },
       });
 
-      await this.emailService.sendTeamAssignmentInvitationEmail(
-        member.email!,
-        teamName,
-        tournamentName,
-      );
+      if (member.email) {
+        await this.emailService.sendTeamAssignmentInvitationEmail(
+          member.email,
+          teamName,
+          tournamentName,
+        );
+      }
 
       return member;
     } catch (error) {
@@ -287,7 +289,7 @@ export class TeamsService {
           {
             name: data.name!,
             email: data.email!,
-            phone: data.phone!,
+            phoneNumber: data.phoneNumber!,
             province: data.province!,
             ward: data.ward!,
             organization: data.organization!,

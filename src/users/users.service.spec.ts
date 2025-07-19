@@ -29,7 +29,7 @@ describe('UsersService', () => {
     email: 'test@example.com',
     phoneNumber: '0345678965',
     gender: Gender.MALE,
-    DateOfBirth: new Date('1990-01-01'),
+    dateOfBirth: new Date('1990-01-01'),
     avatar: null,
     isActive: true,
     lastLoginAt: new Date(),
@@ -51,7 +51,7 @@ describe('UsersService', () => {
     email: 'newuser@example.com',
     phoneNumber: '0345678965',
     gender: Gender.MALE,
-    DateOfBirth: new Date('1995-01-01'),
+    dateOfBirth: new Date('1995-01-01'),
     createdById: '123e4567-e89b-42d3-a456-426614174001',
   };
 
@@ -61,8 +61,12 @@ describe('UsersService', () => {
       .mockImplementation(async (password) => `hashed-${password}`);
 
     prisma = mockDeep<PrismaService>();
-    jwtService = { signAsync: jest.fn().mockResolvedValue('fake-token') } as any;
-    emailsService = { sendAccountActivationInvite: jest.fn().mockResolvedValue(undefined) } as any;
+    jwtService = {
+      signAsync: jest.fn().mockResolvedValue('fake-token'),
+    } as any;
+    emailsService = {
+      sendAccountActivationInvite: jest.fn().mockResolvedValue(undefined),
+    } as any;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -84,7 +88,11 @@ describe('UsersService', () => {
       prisma.user.count.mockResolvedValueOnce(0); // Email doesn't exist
       prisma.user.findUnique.mockResolvedValueOnce(mockUser); // Creator exists
 
-      const createdUser = { ...mockUser, password: 'hashed-password123', emailVerified: true };
+      const createdUser = {
+        ...mockUser,
+        password: 'hashed-password123',
+        emailVerified: true,
+      };
       prisma.user.create.mockResolvedValue(createdUser);
 
       const result = await service.create(mockCreateUserDto);
@@ -99,7 +107,7 @@ describe('UsersService', () => {
           email: mockCreateUserDto.email,
           phoneNumber: mockCreateUserDto.phoneNumber, // service uses 'phoneNumber'
           gender: mockCreateUserDto.gender,
-          DateOfBirth: mockCreateUserDto.DateOfBirth, // service uses 'DateOfBirth'
+          dateOfBirth: mockCreateUserDto.dateOfBirth, // service uses 'dateOfBirth'
           createdBy: { connect: { id: mockCreateUserDto.createdById } },
         },
         select: expect.any(Object),
@@ -349,7 +357,7 @@ describe('UsersService', () => {
       const updatedUser = {
         ...mockUser,
         role: UserRole.ADMIN,
-        phoneNumber: mockUser.phoneNumber || '' // Ensure phoneNumber is not null
+        phoneNumber: mockUser.phoneNumber || '', // Ensure phoneNumber is not null
       };
       prisma.user.update.mockResolvedValue(updatedUser);
 
@@ -367,7 +375,7 @@ describe('UsersService', () => {
       const adminUser = {
         ...mockUser,
         role: UserRole.ADMIN,
-        phoneNumber: mockUser.phoneNumber || '' // Ensure phoneNumber is not null
+        phoneNumber: mockUser.phoneNumber || '', // Ensure phoneNumber is not null
       };
       prisma.user.findUnique.mockResolvedValue(adminUser);
 
@@ -380,7 +388,7 @@ describe('UsersService', () => {
       const adminUser = {
         ...mockUser,
         role: UserRole.ADMIN,
-        phoneNumber: mockUser.phoneNumber || '' // Ensure phoneNumber is not null
+        phoneNumber: mockUser.phoneNumber || '', // Ensure phoneNumber is not null
       };
       prisma.user.findUnique.mockResolvedValue(adminUser);
       prisma.user.count.mockResolvedValue(1); // Only one admin
@@ -418,7 +426,7 @@ describe('UsersService', () => {
       const adminUser = {
         ...mockUser,
         role: UserRole.ADMIN,
-        phoneNumber: mockUser.phoneNumber || '' // Ensure phoneNumber is not null
+        phoneNumber: mockUser.phoneNumber || '', // Ensure phoneNumber is not null
       };
       prisma.user.findUnique.mockResolvedValue(adminUser);
       prisma.user.count.mockResolvedValue(1); // Only one admin
