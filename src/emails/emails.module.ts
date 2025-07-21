@@ -23,7 +23,7 @@ import { EmailsService } from './emails.service';
         from: 'Support Team',
       },
       template: {
-        dir: join(__dirname, '/emails/templates'),
+        dir: join(__dirname, '../emails/templates'),
         adapter: new HandlebarsAdapter(),
         options: {
           strict: true,
@@ -34,4 +34,4 @@ import { EmailsService } from './emails.service';
   providers: [EmailsService],
   exports: [EmailsService],
 })
-export class EmailsModule {}
+export class EmailsModule { }
