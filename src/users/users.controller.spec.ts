@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../generated/prisma';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma.service';
@@ -18,22 +18,28 @@ describe('UsersController', () => {
   } as unknown as Request;
 
   // Helper function to create mock user data matching service return type
-  const createMockUser = (overrides: Partial<any> = {}) => ({
-    id: '550e8400-e29b-41d4-a716-446655440000',
-    username: 'testuser',
-    role: UserRole.TEAM_LEADER,
-    email: 'test@example.com',
-    phoneNumber: null,
-    gender: null,
-    DateOfBirth: null,
-    isActive: true,
-    lastLoginAt: null,
-    emailVerified: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: null,
-    ...overrides,
-  });
+  const createMockUser = (overrides: Partial<any> = {}) => {
+    // Create the base mock object
+    const mockUser = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      name: 'Test User',
+      username: 'testuser',
+      role: UserRole.TEAM_LEADER,
+      email: 'test@example.com',
+      phoneNumber: '', // Changed from null to empty string to match expected type
+      gender: null,
+      dateOfBirth: null,
+      isActive: true,
+      lastLoginAt: null,
+      emailVerified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: null,
+    };
+
+    // Apply overrides
+    return { ...mockUser, ...overrides };
+  };
 
   // Helper for complete user stats
   const createMockStats = () => ({
@@ -75,6 +81,7 @@ describe('UsersController', () => {
   describe('create', () => {
     it('should create a user with creator ID', async () => {
       const createUserDto = {
+        name: 'Test User', // Add the required name property
         username: 'testuser',
         password: 'password123',
         role: UserRole.TEAM_LEADER,
@@ -87,7 +94,7 @@ describe('UsersController', () => {
         role: createUserDto.role,
         email: createUserDto.email,
       });
-      
+
       mockUsersService.create.mockResolvedValue(expectedResult);
 
       const result = await controller.create(createUserDto, mockRequest);
@@ -104,19 +111,42 @@ describe('UsersController', () => {
     it('should return paginated users', async () => {
       const expectedResult = {
         users: [createMockUser({ id: '1', username: 'user1' })],
-        pagination: { total: 1, page: 1, limit: 10, totalPages: 1, hasNext: false, hasPrev: false },
+        pagination: {
+          total: 1,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
       };
       mockUsersService.findAll.mockResolvedValue(expectedResult);
 
-      const result = await controller.findAll(1, 10, UserRole.ADMIN, 'search', true);
+      const result = await controller.findAll(
+        1,
+        10,
+        UserRole.ADMIN,
+        'search',
+        true,
+      );
 
-      expect(mockUsersService.findAll).toHaveBeenCalledWith(1, 10, UserRole.ADMIN, 'search', true);
+      expect(mockUsersService.findAll).toHaveBeenCalledWith(
+        1,
+        10,
+        UserRole.ADMIN,
+        'search',
+        true,
+      );
       expect(result).toEqual(expectedResult);
     });
 
     it('should validate pagination parameters', async () => {
-      await expect(controller.findAll(0, 10)).rejects.toThrow(BadRequestException);
-      await expect(controller.findAll(1, 101)).rejects.toThrow(BadRequestException);
+      await expect(controller.findAll(0, 10)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(controller.findAll(1, 101)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -133,7 +163,9 @@ describe('UsersController', () => {
     });
 
     it('should validate UUID format', async () => {
-      await expect(controller.findOne('invalid-uuid')).rejects.toThrow(BadRequestException);
+      await expect(controller.findOne('invalid-uuid')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -150,8 +182,12 @@ describe('UsersController', () => {
     });
 
     it('should require search query', async () => {
-      await expect(controller.searchUsers('', 20)).rejects.toThrow(BadRequestException);
-      await expect(controller.searchUsers('   ', 20)).rejects.toThrow(BadRequestException);
+      await expect(controller.searchUsers('', 20)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(controller.searchUsers('   ', 20)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -159,7 +195,10 @@ describe('UsersController', () => {
     it('should update a user', async () => {
       const userId = '550e8400-e29b-41d4-a716-446655440000';
       const updateDto = { username: 'newusername' };
-      const expectedResult = createMockUser({ id: userId, username: 'newusername' });
+      const expectedResult = createMockUser({
+        id: userId,
+        username: 'newusername',
+      });
       mockUsersService.update.mockResolvedValue(expectedResult);
 
       const result = await controller.update(userId, updateDto, mockRequest);
@@ -172,16 +211,27 @@ describe('UsersController', () => {
   describe('changeRole', () => {
     it('should change user role', async () => {
       const userId = '550e8400-e29b-41d4-a716-446655440000';
-      const changeRoleDto = { 
+      const changeRoleDto = {
         role: UserRole.HEAD_REFEREE,
-        reason: 'Promoting to head referee due to excellent performance' 
+        reason: 'Promoting to head referee due to excellent performance',
       };
-      const expectedResult = createMockUser({ id: userId, role: UserRole.HEAD_REFEREE });
+      const expectedResult = createMockUser({
+        id: userId,
+        role: UserRole.HEAD_REFEREE,
+      });
       mockUsersService.changeRole.mockResolvedValue(expectedResult);
 
-      const result = await controller.changeRole(userId, changeRoleDto, mockRequest);
+      const result = await controller.changeRole(
+        userId,
+        changeRoleDto,
+        mockRequest,
+      );
 
-      expect(mockUsersService.changeRole).toHaveBeenCalledWith(userId, UserRole.HEAD_REFEREE, 'test-user-id');
+      expect(mockUsersService.changeRole).toHaveBeenCalledWith(
+        userId,
+        UserRole.HEAD_REFEREE,
+        'test-user-id',
+      );
       expect(result).toEqual(expectedResult);
     });
   });
@@ -189,11 +239,17 @@ describe('UsersController', () => {
   describe('remove', () => {
     it('should delete a user', async () => {
       const userId = '550e8400-e29b-41d4-a716-446655440000';
-      mockUsersService.remove.mockResolvedValue({ id: userId, username: 'deleteduser' });
+      mockUsersService.remove.mockResolvedValue({
+        id: userId,
+        username: 'deleteduser',
+      });
 
       const result = await controller.remove(userId, mockRequest);
 
-      expect(mockUsersService.remove).toHaveBeenCalledWith(userId, 'test-user-id');
+      expect(mockUsersService.remove).toHaveBeenCalledWith(
+        userId,
+        'test-user-id',
+      );
       expect(result).toEqual({ message: 'User deleted successfully' });
     });
   });
@@ -203,12 +259,16 @@ describe('UsersController', () => {
       const bulkOperationDto = {
         userIds: ['user1', 'user2'],
         action: 'delete' as const,
+        reason: 'Valid reason for deletion', // Add required reason field
       };
       mockUsersService.bulkDelete.mockResolvedValue({ deleted: 2 });
 
       const result = await controller.bulkDelete(bulkOperationDto, mockRequest);
 
-      expect(mockUsersService.bulkDelete).toHaveBeenCalledWith(['user1', 'user2'], 'test-user-id');
+      expect(mockUsersService.bulkDelete).toHaveBeenCalledWith(
+        ['user1', 'user2'],
+        'test-user-id',
+      );
       expect(result).toEqual({ deleted: 2 });
     });
 
@@ -216,9 +276,12 @@ describe('UsersController', () => {
       const invalidDto = {
         userIds: [],
         action: 'delete' as const,
+        reason: 'Valid reason for deletion', // Add required reason field
       };
 
-      await expect(controller.bulkDelete(invalidDto, mockRequest)).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.bulkDelete(invalidDto, mockRequest),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -228,12 +291,20 @@ describe('UsersController', () => {
         userIds: ['user1', 'user2'],
         action: 'changeRole' as const,
         role: UserRole.TEAM_MEMBER,
+        reason: 'Valid reason for role change', // Add required reason field
       };
       mockUsersService.bulkChangeRole.mockResolvedValue({ updated: 2 });
 
-      const result = await controller.bulkChangeRole(bulkOperationDto, mockRequest);
+      const result = await controller.bulkChangeRole(
+        bulkOperationDto,
+        mockRequest,
+      );
 
-      expect(mockUsersService.bulkChangeRole).toHaveBeenCalledWith(['user1', 'user2'], UserRole.TEAM_MEMBER, 'test-user-id');
+      expect(mockUsersService.bulkChangeRole).toHaveBeenCalledWith(
+        ['user1', 'user2'],
+        UserRole.TEAM_MEMBER,
+        'test-user-id',
+      );
       expect(result).toEqual({ updated: 2 });
     });
 
@@ -241,9 +312,12 @@ describe('UsersController', () => {
       const invalidDto = {
         userIds: ['user1'],
         action: 'changeRole' as const,
+        reason: 'Valid reason for role change', // Add required reason field
       };
 
-      await expect(controller.bulkChangeRole(invalidDto, mockRequest)).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.bulkChangeRole(invalidDto, mockRequest),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -261,7 +335,10 @@ describe('UsersController', () => {
 
   describe('getMyProfile', () => {
     it('should return current user profile', async () => {
-      const expectedProfile = createMockUser({ id: 'test-user-id', username: 'currentuser' });
+      const expectedProfile = createMockUser({
+        id: 'test-user-id',
+        username: 'currentuser',
+      });
       mockUsersService.findOne.mockResolvedValue(expectedProfile);
 
       const result = await controller.getMyProfile(mockRequest);
@@ -279,7 +356,10 @@ describe('UsersController', () => {
         role: UserRole.ADMIN, // This should be filtered out
         phoneNumber: '123-456-7890',
       };
-      const expectedResult = createMockUser({ id: 'test-user-id', email: 'new@example.com' });
+      const expectedResult = createMockUser({
+        id: 'test-user-id',
+        email: 'new@example.com',
+      });
       mockUsersService.update.mockResolvedValue(expectedResult);
 
       const result = await controller.updateMyProfile(mockRequest, updateDto);

@@ -1,12 +1,12 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete, 
-  UseGuards, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
   Query,
   ParseIntPipe,
   DefaultValuePipe,
@@ -16,12 +16,20 @@ import {
   HttpCode,
   HttpStatus,
   UseInterceptors,
-  BadRequestException
+  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto, ChangeRoleDto, BulkOperationDto } from './dto/update-user.dto';
-import { UserQueryDto, UserSearchDto, UserExportDto } from './dto/user-query.dto';
+import {
+  UpdateUserDto,
+  ChangeRoleDto,
+  BulkOperationDto,
+} from './dto/update-user.dto';
+import {
+  UserQueryDto,
+  UserSearchDto,
+  UserExportDto,
+} from './dto/user-query.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserOperationGuard } from './guards/user-operation.guard';
@@ -60,7 +68,8 @@ export class UsersController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('role') role?: UserRole,
     @Query('search') search?: string,
-    @Query('isActive', new DefaultValuePipe(true), ParseBoolPipe) isActive?: boolean,
+    @Query('isActive', new DefaultValuePipe(true), ParseBoolPipe)
+    isActive?: boolean,
   ) {
     this.validatePaginationParams(page, limit);
     return await this.usersService.findAll(page, limit, role, search, isActive);
@@ -110,7 +119,7 @@ export class UsersController {
   @UseGuards(RolesGuard, UserOperationGuard)
   @Roles(UserRole.ADMIN)
   async update(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
     @Req() req: Request,
   ) {
@@ -125,13 +134,17 @@ export class UsersController {
   @UseGuards(RolesGuard, UserOperationGuard)
   @Roles(UserRole.ADMIN)
   async changeRole(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() changeRoleDto: ChangeRoleDto,
     @Req() req: Request,
   ) {
     this.validateUuidParam(id);
     const currentUserId = this.getCurrentUserId(req);
-    return await this.usersService.changeRole(id, changeRoleDto.role, currentUserId);
+    return await this.usersService.changeRole(
+      id,
+      changeRoleDto.role,
+      currentUserId,
+    );
   }
 
   /**
@@ -154,12 +167,21 @@ export class UsersController {
   @Post('bulk-delete')
   @UseGuards(RolesGuard, UserOperationGuard)
   @Roles(UserRole.ADMIN)
-  async bulkDelete(@Body() bulkOperationDto: BulkOperationDto, @Req() req: Request) {
-    console.log('[Controller] Received bulk delete request:', JSON.stringify(bulkOperationDto, null, 2));
-    
+  async bulkDelete(
+    @Body() bulkOperationDto: BulkOperationDto,
+    @Req() req: Request,
+  ) {
+    console.log(
+      '[Controller] Received bulk delete request:',
+      JSON.stringify(bulkOperationDto, null, 2),
+    );
+
     this.validateBulkOperation(bulkOperationDto, 'delete');
     const currentUserId = this.getCurrentUserId(req);
-    return await this.usersService.bulkDelete(bulkOperationDto.userIds, currentUserId);
+    return await this.usersService.bulkDelete(
+      bulkOperationDto.userIds,
+      currentUserId,
+    );
   }
 
   /**
@@ -168,18 +190,24 @@ export class UsersController {
   @Post('bulk-role')
   @UseGuards(RolesGuard, UserOperationGuard)
   @Roles(UserRole.ADMIN)
-  async bulkChangeRole(@Body() bulkOperationDto: BulkOperationDto, @Req() req: Request) {
-    console.log('[Controller] Received bulk role change request:', JSON.stringify(bulkOperationDto, null, 2));
-    
+  async bulkChangeRole(
+    @Body() bulkOperationDto: BulkOperationDto,
+    @Req() req: Request,
+  ) {
+    console.log(
+      '[Controller] Received bulk role change request:',
+      JSON.stringify(bulkOperationDto, null, 2),
+    );
+
     this.validateBulkOperation(bulkOperationDto, 'changeRole');
     if (!bulkOperationDto.role) {
       throw new BadRequestException('Role is required for bulk role change');
     }
     const currentUserId = this.getCurrentUserId(req);
     return await this.usersService.bulkChangeRole(
-      bulkOperationDto.userIds, 
-      bulkOperationDto.role, 
-      currentUserId
+      bulkOperationDto.userIds,
+      bulkOperationDto.role,
+      currentUserId,
     );
   }
 
@@ -192,11 +220,18 @@ export class UsersController {
   async exportUsers(
     @Query('role') role?: UserRole,
     @Query('search') search?: string,
-    @Query('isActive', new DefaultValuePipe(true), ParseBoolPipe) isActive?: boolean,
+    @Query('isActive', new DefaultValuePipe(true), ParseBoolPipe)
+    isActive?: boolean,
   ) {
     // For now, return filtered users data for export
     // In a full implementation, this would generate CSV/Excel files
-    const result = await this.usersService.findAll(1, 1000, role, search, isActive);
+    const result = await this.usersService.findAll(
+      1,
+      1000,
+      role,
+      search,
+      isActive,
+    );
     return {
       data: result.users,
       total: result.pagination.total,
@@ -218,7 +253,10 @@ export class UsersController {
    * Update current user profile (limited fields)
    */
   @Patch('profile/me')
-  async updateMyProfile(@Req() req: Request, @Body() updateDto: Partial<UpdateUserDto>) {
+  async updateMyProfile(
+    @Req() req: Request,
+    @Body() updateDto: Partial<UpdateUserDto>,
+  ) {
     const currentUserId = this.getCurrentUserId(req);
     // Restrict what users can update about themselves
     const allowedUpdates = this.filterAllowedProfileUpdates(updateDto);
@@ -232,15 +270,23 @@ export class UsersController {
    */
   private getCurrentUserId(req: Request): string {
     // Add debugging to understand what's in req.user
-    console.log('[getCurrentUserId] req.user:', JSON.stringify(req.user, null, 2));
+    console.log(
+      '[getCurrentUserId] req.user:',
+      JSON.stringify(req.user, null, 2),
+    );
     console.log('[getCurrentUserId] req.user type:', typeof req.user);
-    console.log('[getCurrentUserId] req.user keys:', req.user ? Object.keys(req.user) : 'no user');
-    
+    console.log(
+      '[getCurrentUserId] req.user keys:',
+      req.user ? Object.keys(req.user) : 'no user',
+    );
+
     const userId = req.user?.['sub'] || req.user?.['id'];
     console.log('[getCurrentUserId] Extracted userId:', userId);
-    
+
     if (!userId) {
-      console.error('[getCurrentUserId] Unable to extract user ID from request');
+      console.error(
+        '[getCurrentUserId] Unable to extract user ID from request',
+      );
       throw new BadRequestException('Unable to identify current user');
     }
     return userId;
@@ -250,7 +296,8 @@ export class UsersController {
    * Validate UUID parameter format
    */
   private validateUuidParam(id: string): void {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {
       throw new BadRequestException('Invalid UUID format');
     }
@@ -271,25 +318,34 @@ export class UsersController {
   /**
    * Validate bulk operation parameters
    */
-  private validateBulkOperation(dto: BulkOperationDto, expectedAction: string): void {
+  private validateBulkOperation(
+    dto: BulkOperationDto,
+    expectedAction: string,
+  ): void {
     if (dto.action !== expectedAction) {
-      throw new BadRequestException(`Invalid action. Expected: ${expectedAction}`);
+      throw new BadRequestException(
+        `Invalid action. Expected: ${expectedAction}`,
+      );
     }
     if (!dto.userIds || dto.userIds.length === 0) {
       throw new BadRequestException('User IDs are required');
     }
     if (dto.userIds.length > 50) {
-      throw new BadRequestException('Cannot perform bulk operation on more than 50 users at once');
+      throw new BadRequestException(
+        'Cannot perform bulk operation on more than 50 users at once',
+      );
     }
   }
 
   /**
    * Filter allowed profile updates for regular users
    */
-  private filterAllowedProfileUpdates(updateDto: Partial<UpdateUserDto>): Partial<UpdateUserDto> {
-    const allowedFields = ['email', 'phoneNumber', 'gender', 'DateOfBirth'];
+  private filterAllowedProfileUpdates(
+    updateDto: Partial<UpdateUserDto>,
+  ): Partial<UpdateUserDto> {
+    const allowedFields = ['email', 'phoneNumber', 'gender', 'dateOfBirth'];
     return Object.keys(updateDto)
-      .filter(key => allowedFields.includes(key))
+      .filter((key) => allowedFields.includes(key))
       .reduce((obj, key) => {
         obj[key] = updateDto[key];
         return obj;
