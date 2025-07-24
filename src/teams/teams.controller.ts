@@ -13,6 +13,7 @@ import { TeamsService } from './teams.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { ImportTeamsDto } from './dto/import-teams.dto';
+import { BulkCreateTeamsDto } from './dto/bulk-create-teams.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -28,6 +29,13 @@ export class TeamsController {
   create(@CurrentUser() user, @Body() createTeamDto: CreateTeamDto) {
     createTeamDto.userId = user.id;
     return this.teamsService.createTeam(createTeamDto);
+  }
+
+  @Post('bulk-create')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  bulkCreate(@CurrentUser() user, @Body() bulkCreateTeamsDto: BulkCreateTeamsDto) {
+    return this.teamsService.bulkCreateTeams(bulkCreateTeamsDto, user.id);
   }
 
   /*@Post('import')

@@ -1,15 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ConditionEvaluatorFactory } from './strategies/condition-evaluator.factory';
 import { Condition } from './interfaces/condition.interface';
 import { FormulaEvaluatorService } from './formula-evaluator.service';
+import { ScoreConfigResolutionService, ScoreConfigWithDetails } from './score-config-resolution.service';
 
 @Injectable()
 export class ScoreCalculationService {
+  private readonly logger = new Logger(ScoreCalculationService.name);
+  
   constructor(
     private prisma: PrismaService,
     private conditionEvaluatorFactory: ConditionEvaluatorFactory,
     private formulaEvaluator: FormulaEvaluatorService,
+    private scoreConfigResolutionService: ScoreConfigResolutionService,
   ) {}
 
   private isValidCondition(condition: any): condition is Condition {
@@ -478,5 +482,385 @@ export class ScoreCalculationService {
 
     sectionLog.totalScore = sectionScore;
     return sectionLog;
+  }
+
+  /**
+   * Enhanced method that uses ScoreConfigResolutionService for automatic tournament config resolution
+   */
+  async calculateMatchScoreWithTournamentConfig(
+    matchId: string,
+    allianceId: string,
+    elementScores: Record<string, number>
+  ) {
+    this.logger.log(`Calculating match score for match: ${matchId}, alliance: ${allianceId}`);
+
+    try {
+      // 1. Resolve score configuration using the resolution service
+      const scoreConfig = await this.scoreConfigResolutionService.resolveScoreConfigForMatch(matchId);
+      
+      if (!scoreConfig) {
+        this.logger.warn(`No score configuration found for match ${matchId}, using fallback`);
+        return this.calculateFallbackScore(matchId, allianceId, elementScores);
+      }
+
+      // 2. Verify alliance exists
+      const alliance = await this.prisma.alliance.findUnique({
+        where: { id: allianceId },
+      });
+      
+      if (!alliance) {
+        throw new NotFoundException(`Alliance with ID ${allianceId} not found`);
+      }
+
+      // 3. Use the enhanced calculation method with the resolved config
+      return this.calculateScoreWithConfig(matchId, allianceId, elementScores, scoreConfig);
+      
+    } catch (error) {
+      this.logger.error(`Error calculating score for match ${matchId}:`, error);
+      
+      // If there's an error with the tournament config, fall back to basic calculation
+      if (error instanceof NotFoundException && error.message.includes('score configuration')) {
+        this.logger.warn(`Score configuration error for match ${matchId}, using fallback calculation`);
+        return this.calculateFallbackScore(matchId, allianceId, elementScores);
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Enhanced method that persists scores with tournament configuration
+   */
+  async calculateAndPersistWithTournamentConfig(
+    matchId: string,
+    allianceId: string,
+    elementScores: Record<string, number>
+  ) {
+    this.logger.log(`Calculating and persisting score for match: ${matchId}, alliance: ${allianceId}`);
+
+    // 1. Calculate the score using tournament configuration
+    const calculationResult = await this.calculateMatchScoreWithTournamentConfig(
+      matchId,
+      allianceId,
+      elementScores
+    );
+
+    // 2. Extract category scores for persistence
+    const { autoScore, driveScore } = this.extractCategoryScores(calculationResult.calculationLog);
+
+    try {
+      // 3. Persist scores to database
+      await this.prisma.alliance.update({
+        where: { id: allianceId },
+        data: {
+          autoScore,
+          driveScore,
+          score: calculationResult.totalScore,
+        },
+      });
+
+      this.logger.log(`Successfully persisted scores for alliance ${allianceId}: total=${calculationResult.totalScore}, auto=${autoScore}, drive=${driveScore}`);
+      
+      return {
+        ...calculationResult,
+        persistedScores: {
+          autoScore,
+          driveScore,
+          totalScore: calculationResult.totalScore,
+        },
+      };
+      
+    } catch (error) {
+      this.logger.error(`Failed to persist scores for alliance ${allianceId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate score using a specific score configuration
+   */
+  private async calculateScoreWithConfig(
+    matchId: string,
+    allianceId: string,
+    elementScores: Record<string, number>,
+    scoreConfig: ScoreConfigWithDetails
+  ) {
+    const calculationLog: any = {
+      configId: scoreConfig.id,
+      configName: scoreConfig.name,
+      sections: [],
+      legacyElements: [],
+      legacyBonuses: [],
+      legacyPenalties: [],
+      sectionScores: {},
+      totalScore: 0,
+      usingSections: false,
+      usingFallback: false,
+    };
+
+    // Calculate section scores if sections exist
+    if (scoreConfig.scoreSections?.length > 0) {
+      calculationLog.usingSections = true;
+      
+      for (const section of scoreConfig.scoreSections) {
+        const sectionResult = this.calculateSectionScore(section, elementScores);
+        calculationLog.sections.push(sectionResult);
+        calculationLog.sectionScores[section.code] = sectionResult.totalScore;
+      }
+
+      // Apply formula to calculate total score
+      if (scoreConfig.totalScoreFormula) {
+        try {
+          calculationLog.totalScore = this.formulaEvaluator.evaluateFormula(
+            scoreConfig.totalScoreFormula,
+            calculationLog.sectionScores
+          );
+        } catch (error) {
+          this.logger.warn(`Formula evaluation failed for config ${scoreConfig.id}, using sum instead:`, error);
+          calculationLog.totalScore = Object.values(calculationLog.sectionScores)
+            .reduce((sum: number, score: number) => sum + score, 0);
+        }
+      } else {
+        // If no formula, sum all section scores
+        calculationLog.totalScore = Object.values(calculationLog.sectionScores)
+          .reduce((sum: number, score: number) => sum + score, 0);
+      }
+    } else {
+      // Handle legacy elements for backward compatibility
+      let legacyScore = 0;
+
+      // Process legacy elements
+      for (const element of scoreConfig.scoreElements || []) {
+        const value = elementScores[element.code] || 0;
+        const elementScore = value * element.pointsPerUnit;
+        legacyScore += elementScore;
+        
+        calculationLog.legacyElements.push({
+          elementCode: element.code,
+          elementName: element.name,
+          value,
+          pointsPerUnit: element.pointsPerUnit,
+          totalPoints: elementScore,
+        });
+      }
+
+      // Process legacy bonuses
+      const bonusesEarned: string[] = [];
+      for (const bonus of scoreConfig.bonusConditions || []) {
+        if (!this.isValidCondition(bonus.condition)) continue;
+        
+        try {
+          const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(bonus.condition);
+          const conditionMet = conditionEvaluator.evaluate(elementScores);
+          
+          if (conditionMet) {
+            legacyScore += bonus.bonusPoints;
+            bonusesEarned.push(bonus.id);
+            
+            calculationLog.legacyBonuses.push({
+              bonusCode: bonus.code,
+              bonusName: bonus.name,
+              bonusPoints: bonus.bonusPoints,
+            });
+          }
+        } catch (error) {
+          this.logger.warn(`Failed to evaluate bonus condition for ${bonus.name}:`, error);
+        }
+      }
+
+      // Process legacy penalties
+      const penaltiesIncurred: string[] = [];
+      for (const penalty of scoreConfig.penaltyConditions || []) {
+        if (!this.isValidCondition(penalty.condition)) continue;
+        
+        try {
+          const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(penalty.condition);
+          const conditionMet = conditionEvaluator.evaluate(elementScores);
+          
+          if (conditionMet) {
+            legacyScore += penalty.penaltyPoints;
+            penaltiesIncurred.push(penalty.id);
+            
+            calculationLog.legacyPenalties.push({
+              penaltyCode: penalty.code,
+              penaltyName: penalty.name, 
+              penaltyPoints: penalty.penaltyPoints,
+            });
+          }
+        } catch (error) {
+          this.logger.warn(`Failed to evaluate penalty condition for ${penalty.name}:`, error);
+        }
+      }
+
+      calculationLog.totalScore = legacyScore;
+    }
+
+    return {
+      matchId,
+      allianceId,
+      elementScores,
+      bonusesEarned: [],
+      penaltiesIncurred: [],
+      totalScore: calculationLog.totalScore,
+      calculationLog,
+      usingSections: calculationLog.usingSections,
+      formula: scoreConfig.totalScoreFormula,
+    };
+  }
+
+  /**
+   * Fallback score calculation for tournaments without assigned score configurations
+   */
+  private async calculateFallbackScore(
+    matchId: string,
+    allianceId: string,
+    elementScores: Record<string, number>
+  ) {
+    this.logger.log(`Using fallback score calculation for match: ${matchId}`);
+    
+    // Simple fallback: sum all element scores with basic point values
+    let totalScore = 0;
+    const calculationLog: any = {
+      elements: [],
+      totalScore: 0,
+      usingFallback: true,
+      fallbackReason: 'No score configuration found for tournament',
+    };
+
+    // Apply basic scoring rules
+    Object.entries(elementScores).forEach(([elementCode, value]) => {
+      const pointsPerUnit = this.getFallbackPointValue(elementCode);
+      const elementScore = value * pointsPerUnit;
+      totalScore += elementScore;
+      
+      calculationLog.elements.push({
+        elementCode,
+        elementName: elementCode.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        value,
+        pointsPerUnit,
+        totalPoints: elementScore,
+      });
+    });
+
+    calculationLog.totalScore = totalScore;
+
+    return {
+      matchId,
+      allianceId,
+      elementScores,
+      bonusesEarned: [],
+      penaltiesIncurred: [],
+      totalScore,
+      calculationLog,
+      usingSections: false,
+      usingFallback: true,
+    };
+  }
+
+  /**
+   * Get fallback point values for elements when no score config is available
+   */
+  private getFallbackPointValue(elementCode: string): number {
+    const code = elementCode.toLowerCase();
+    
+    // Basic scoring rules based on element naming conventions
+    if (code.includes('auto')) {
+      return 10; // Autonomous actions worth more
+    } else if (code.includes('teleop') || code.includes('driver')) {
+      return 5; // Teleop actions worth medium
+    } else if (code.includes('endgame') || code.includes('park') || code.includes('climb')) {
+      return 15; // Endgame actions worth more
+    } else if (code.includes('penalty') || code.includes('foul')) {
+      return -10; // Penalties are negative
+    } else {
+      return 3; // Default low value
+    }
+  }
+
+  /**
+   * Enhanced method to extract category scores with better categorization
+   */
+  private extractCategoryScores(calculationLog: any): { autoScore: number; driveScore: number } {
+    let autoScore = 0;
+    let driveScore = 0;
+
+    // Extract from sections if available
+    if (calculationLog.sections?.length > 0) {
+      for (const section of calculationLog.sections) {
+        const sectionCode = section.sectionCode.toLowerCase();
+        if (sectionCode.includes('auto') || sectionCode.includes('autonomous')) {
+          autoScore += section.totalScore;
+        } else if (sectionCode.includes('teleop') || sectionCode.includes('driver')) {
+          driveScore += section.totalScore;
+        } else {
+          // Default unknown sections to drive score
+          driveScore += section.totalScore;
+        }
+      }
+    }
+    
+    // Extract from legacy elements if no sections
+    if (calculationLog.legacyElements?.length > 0) {
+      for (const element of calculationLog.legacyElements) {
+        const elementCode = element.elementCode.toLowerCase();
+        if (elementCode.includes('auto')) {
+          autoScore += element.totalPoints;
+        } else {
+          driveScore += element.totalPoints;
+        }
+      }
+    }
+    
+    // Extract from fallback elements
+    if (calculationLog.elements?.length > 0) {
+      for (const element of calculationLog.elements) {
+        const elementCode = element.elementCode.toLowerCase();
+        if (elementCode.includes('auto')) {
+          autoScore += element.totalPoints;
+        } else {
+          driveScore += element.totalPoints;
+        }
+      }
+    }
+
+    return { autoScore, driveScore };
+  }
+
+  /**
+   * Validate score configuration before calculation
+   */
+  private validateScoreConfig(scoreConfig: ScoreConfigWithDetails): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    // Check if config has any scoring mechanism
+    const hasElements = (scoreConfig.scoreElements?.length || 0) > 0;
+    const hasSections = (scoreConfig.scoreSections?.length || 0) > 0;
+    const hasSectionElements = scoreConfig.scoreSections?.some(section => (section.scoreElements?.length || 0) > 0);
+    
+    if (!hasElements && !hasSections) {
+      errors.push('Score configuration has no scoring elements or sections');
+    }
+    
+    if (hasSections && !hasSectionElements) {
+      errors.push('Score sections exist but contain no elements');
+    }
+    
+    // Validate formula if present
+    if (scoreConfig.totalScoreFormula) {
+      try {
+        // Basic formula validation - check for obvious syntax errors
+        if (scoreConfig.totalScoreFormula.includes('undefined') || 
+            scoreConfig.totalScoreFormula.includes('null')) {
+          errors.push('Score formula contains invalid references');
+        }
+      } catch (error) {
+        errors.push(`Score formula validation failed: ${error.message}`);
+      }
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   }
 }

@@ -16,7 +16,7 @@ describe('StagesController - Stage Advancement', () => {
 
   beforeEach(async () => {
     prisma = mockDeep<PrismaService>();
-    
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StagesController],
       providers: [
@@ -33,43 +33,35 @@ describe('StagesController - Stage Advancement', () => {
     stagesService = module.get<StagesService>(StagesService);
     stageAdvancementService = module.get<StageAdvancementService>(StageAdvancementService);
   });
-  beforeEach(() => {
-    jest.clearAllMocks();
-    // Reset all Prisma mocks
+
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('advanceTeams', () => {    const mockAdvancementResult = {
+  describe('advanceTeams', () => {
+    const mockAdvancementResult = {
       advancedTeams: [
-        { 
-          id: 'team-1', 
-          teamNumber: '1001', 
-          name: 'Team A', 
-          organization: null,
-          avatar: null,
-          description: null,
-          teamLead: null,
-          teamLeadId: null,
-          teamMembers: null,
+        {
+          id: 'team-1',
+          teamNumber: '1001',
+          name: 'Team A',
           tournamentId: 'tournament-1',
           currentStageId: 'stage-2',
           createdAt: new Date(),
           updatedAt: new Date(),
+          userId: 'user-1',
+          referralSource: 'direct',
         },
-        { 
-          id: 'team-2', 
-          teamNumber: '1002', 
-          name: 'Team B', 
-          organization: null,
-          avatar: null,
-          description: null,
-          teamLead: null,
-          teamLeadId: null,
-          teamMembers: null,
+        {
+          id: 'team-2',
+          teamNumber: '1002',
+          name: 'Team B',
           tournamentId: 'tournament-1',
           currentStageId: 'stage-2',
           createdAt: new Date(),
           updatedAt: new Date(),
+          userId: 'user-2',
+          referralSource: 'direct',
         },
       ],
       completedStage: {
@@ -97,11 +89,15 @@ describe('StagesController - Stage Advancement', () => {
         updatedAt: new Date(),
       },
       totalTeamsAdvanced: 2,
-    };    const advanceTeamsDto: AdvanceTeamsDto = {
+    };
+
+    const advanceTeamsDto: AdvanceTeamsDto = {
       teamsToAdvance: 2,
       nextStageId: 'stage-2',
       createNextStage: false,
-    };    it('should successfully advance teams to next stage', async () => {
+    };
+
+    it('should successfully advance teams to next stage', async () => {
       const advanceTeamsSpy = jest.spyOn(stageAdvancementService, 'advanceTeamsToNextStage').mockResolvedValue(mockAdvancementResult);
 
       const result = await controller.advanceTeams('stage-1', advanceTeamsDto);
@@ -226,7 +222,9 @@ describe('StagesController - Stage Advancement', () => {
         matchesPlayed: 0,
         opponentWinPercentage: 0,
       },
-    ];    it('should return stage rankings successfully', async () => {
+    ];
+
+    it('should return stage rankings successfully', async () => {
       const getRankingsSpy = jest.spyOn(stageAdvancementService, 'getStageRankings').mockResolvedValue(mockRankings);
 
       const result = await controller.getStageRankings('stage-1');
@@ -247,7 +245,8 @@ describe('StagesController - Stage Advancement', () => {
     });
   });
 
-  describe('checkStageReadiness', () => {    it('should return ready status when stage can be advanced', async () => {
+  describe('checkStageReadiness', () => {
+    it('should return ready status when stage can be advanced', async () => {
       const mockReadiness = {
         ready: true,
         totalTeams: 8,
@@ -359,14 +358,17 @@ describe('StagesController - Stage Advancement', () => {
   });
 
   describe('Integration scenarios', () => {
-    it('should handle complete advancement workflow', async () => {      // First check readiness
+    it('should handle complete advancement workflow', async () => {
+      // First check readiness
       const readinessSpy3 = jest.spyOn(stageAdvancementService, 'isStageReadyForAdvancement').mockResolvedValue({
         ready: true,
         totalTeams: 8,
       });
 
       const readinessResult = await controller.checkStageReadiness('stage-1');
-      expect(readinessResult.data.ready).toBe(true);      // Then preview advancement
+      expect(readinessResult.data.ready).toBe(true);
+
+      // Then preview advancement
       const mockRankings = Array.from({ length: 8 }, (_, i) => ({
         teamId: `team-${i + 1}`,
         teamNumber: `100${i + 1}`,
@@ -386,22 +388,20 @@ describe('StagesController - Stage Advancement', () => {
       const getRankingsSpy3 = jest.spyOn(stageAdvancementService, 'getStageRankings').mockResolvedValue(mockRankings);
 
       const previewResult = await controller.previewAdvancement('stage-1', '4');
-      expect(previewResult.data.teamsToAdvance).toHaveLength(4);      // Finally advance teams
+      expect(previewResult.data.teamsToAdvance).toHaveLength(4);
+
+      // Finally advance teams
       const mockAdvancementResult = {
         advancedTeams: mockRankings.slice(0, 4).map(team => ({
           id: team.teamId,
           teamNumber: team.teamNumber,
           name: team.teamName,
-          organization: null,
-          avatar: null,
-          description: null,
-          teamLead: null,
-          teamLeadId: null,
-          teamMembers: null,
           tournamentId: 'tournament-1',
           currentStageId: 'stage-2',
           createdAt: new Date(),
           updatedAt: new Date(),
+          userId: 'user-1',
+          referralSource: 'direct',
         })),
         completedStage: {
           id: 'stage-1',

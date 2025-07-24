@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto, CreateScoreSectionDto, UpdateScoreSectionDto } from './dto';
+import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto, CreateScoreSectionDto, UpdateScoreSectionDto, UpdateScoreConfigDto } from './dto';
 import { FormulaEvaluatorService } from './formula-evaluator.service';
 
 @Injectable()
@@ -207,6 +207,384 @@ export class ScoreConfigService {
     return scoreConfig;
   }
 
+  async updateScoreConfig(id: string, data: UpdateScoreConfigDto) {
+    // Check if score config exists
+    const scoreConfig = await this.prisma.scoreConfig.findUnique({ 
+      where: { id },
+      include: { 
+        scoreSections: {
+          include: {
+            scoreElements: true,
+            bonusConditions: true,
+            penaltyConditions: true,
+          }
+        },
+        scoreElements: true,
+        bonusConditions: true,
+        penaltyConditions: true,
+      }
+    });
+    
+    if (!scoreConfig) {
+      throw new NotFoundException(`Score config with ID ${id} not found`);
+    }
+
+    // If updating tournamentId, validate it exists (unless it's null to unassign)
+    if (data.tournamentId !== undefined && data.tournamentId !== null) {
+      const tournament = await this.prisma.tournament.findUnique({ where: { id: data.tournamentId } });
+      if (!tournament) {
+        throw new NotFoundException(`Tournament with ID ${data.tournamentId} not found`);
+      }
+    }
+
+    // If updating formula, validate it
+    if (data.totalScoreFormula && data.scoreSections && data.scoreSections.length > 0) {
+      const sectionCodes = data.scoreSections
+        .map(section => section.code)
+        .filter((code): code is string => code !== undefined);
+      const validation = this.formulaEvaluator.validateFormulaSyntax(data.totalScoreFormula, sectionCodes);
+      if (!validation.isValid) {
+        throw new BadRequestException(`Invalid formula: ${validation.error}`);
+      }
+    }
+
+    // Use transaction for complex nested updates
+    return this.prisma.$transaction(async (tx) => {
+      // Update the main score config
+      const updatedConfig = await tx.scoreConfig.update({
+        where: { id },
+        data: {
+          name: data.name,
+          description: data.description,
+          tournamentId: data.tournamentId,
+          totalScoreFormula: data.totalScoreFormula,
+        },
+      });
+
+      // Handle score sections updates
+      if (data.scoreSections !== undefined) {
+        // Delete existing sections that are not in the update
+        const newSectionIds = data.scoreSections
+          .filter(section => section.id)
+          .map(section => section.id)
+          .filter((id): id is string => id !== undefined);
+        
+        if (newSectionIds.length > 0) {
+          await tx.scoreSection.deleteMany({
+            where: {
+              scoreConfigId: id,
+              id: { notIn: newSectionIds }
+            }
+          });
+        } else {
+          // If no sections have IDs, delete all existing sections
+          await tx.scoreSection.deleteMany({
+            where: { scoreConfigId: id }
+          });
+        }
+
+        // Update or create sections
+        for (const sectionData of data.scoreSections) {
+          if (sectionData.id) {
+            // Update existing section
+            await tx.scoreSection.update({
+              where: { id: sectionData.id },
+              data: {
+                name: sectionData.name,
+                code: sectionData.code,
+                description: sectionData.description,
+                displayOrder: sectionData.displayOrder,
+              }
+            });
+
+            // Handle nested elements in sections
+            if (sectionData.scoreElements !== undefined) {
+              // Delete existing elements not in update
+              const newElementIds = sectionData.scoreElements
+                .filter(element => element.id)
+                .map(element => element.id)
+                .filter((id): id is string => id !== undefined);
+              
+              if (newElementIds.length > 0) {
+                await tx.scoreElement.deleteMany({
+                  where: {
+                    scoreSectionId: sectionData.id,
+                    id: { notIn: newElementIds }
+                  }
+                });
+              } else {
+                await tx.scoreElement.deleteMany({
+                  where: { scoreSectionId: sectionData.id }
+                });
+              }
+
+              // Update or create elements
+              for (const elementData of sectionData.scoreElements) {
+                if (elementData.id) {
+                  await tx.scoreElement.update({
+                    where: { id: elementData.id },
+                    data: {
+                      name: elementData.name,
+                      code: elementData.code,
+                      description: elementData.description,
+                      pointsPerUnit: elementData.pointsPerUnit,
+                      category: elementData.category,
+                      elementType: elementData.elementType,
+                      displayOrder: elementData.displayOrder || 0,
+                      icon: elementData.icon,
+                      color: elementData.color,
+                    }
+                  });
+                } else {
+                  // Only create if we have required fields
+                  if (elementData.name && elementData.code) {
+                    await tx.scoreElement.create({
+                      data: {
+                        name: elementData.name,
+                        code: elementData.code,
+                        description: elementData.description,
+                        pointsPerUnit: elementData.pointsPerUnit || 0,
+                        category: elementData.category,
+                        elementType: elementData.elementType || 'COUNTER',
+                        displayOrder: elementData.displayOrder || 0,
+                        icon: elementData.icon,
+                        color: elementData.color,
+                        scoreSectionId: sectionData.id,
+                      }
+                    });
+                  }
+                }
+              }
+            }
+          } else {
+            // Create new section with nested elements
+            if (sectionData.name && sectionData.code) {
+              const createdSection = await tx.scoreSection.create({
+                data: {
+                  name: sectionData.name,
+                  code: sectionData.code,
+                  description: sectionData.description,
+                  displayOrder: sectionData.displayOrder || 0,
+                  scoreConfigId: id,
+                }
+              });
+
+              // Create nested elements if provided
+              if (sectionData.scoreElements && sectionData.scoreElements.length > 0) {
+                for (const elementData of sectionData.scoreElements) {
+                  if (elementData.name && elementData.code) {
+                    await tx.scoreElement.create({
+                      data: {
+                        name: elementData.name,
+                        code: elementData.code,
+                        description: elementData.description,
+                        pointsPerUnit: elementData.pointsPerUnit || 0,
+                        category: elementData.category,
+                        elementType: elementData.elementType || 'COUNTER',
+                        displayOrder: elementData.displayOrder || 0,
+                        icon: elementData.icon,
+                        color: elementData.color,
+                        scoreSectionId: createdSection.id,
+                      }
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Handle legacy score elements (direct to config)
+      if (data.scoreElements !== undefined) {
+        const newElementIds = data.scoreElements
+          .filter(element => element.id)
+          .map(element => element.id)
+          .filter((id): id is string => id !== undefined);
+        
+        if (newElementIds.length > 0) {
+          await tx.scoreElement.deleteMany({
+            where: {
+              scoreConfigId: id,
+              scoreSectionId: null,
+              id: { notIn: newElementIds }
+            }
+          });
+        } else {
+          await tx.scoreElement.deleteMany({
+            where: { 
+              scoreConfigId: id,
+              scoreSectionId: null 
+            }
+          });
+        }
+
+        for (const elementData of data.scoreElements) {
+          if (elementData.id) {
+            await tx.scoreElement.update({
+              where: { id: elementData.id },
+              data: {
+                name: elementData.name,
+                code: elementData.code,
+                description: elementData.description,
+                pointsPerUnit: elementData.pointsPerUnit,
+                category: elementData.category,
+                elementType: elementData.elementType,
+                displayOrder: elementData.displayOrder || 0,
+                icon: elementData.icon,
+                color: elementData.color,
+              }
+            });
+          } else {
+            // Only create if we have required fields
+            if (elementData.name && elementData.code) {
+              await tx.scoreElement.create({
+                data: {
+                  name: elementData.name,
+                  code: elementData.code,
+                  description: elementData.description,
+                  pointsPerUnit: elementData.pointsPerUnit || 0,
+                  category: elementData.category,
+                  elementType: elementData.elementType || 'COUNTER',
+                  displayOrder: elementData.displayOrder || 0,
+                  icon: elementData.icon,
+                  color: elementData.color,
+                  scoreConfigId: id,
+                }
+              });
+            }
+          }
+        }
+      }
+
+      // Handle bonus conditions
+      if (data.bonusConditions !== undefined) {
+        const newBonusIds = data.bonusConditions
+          .filter(bonus => bonus.id)
+          .map(bonus => bonus.id)
+          .filter((id): id is string => id !== undefined);
+        
+        if (newBonusIds.length > 0) {
+          await tx.bonusCondition.deleteMany({
+            where: {
+              scoreConfigId: id,
+              id: { notIn: newBonusIds }
+            }
+          });
+        } else {
+          await tx.bonusCondition.deleteMany({
+            where: { scoreConfigId: id }
+          });
+        }
+
+        for (const bonusData of data.bonusConditions) {
+          if (bonusData.id) {
+            await tx.bonusCondition.update({
+              where: { id: bonusData.id },
+              data: {
+                name: bonusData.name,
+                description: bonusData.description,
+                bonusPoints: bonusData.bonusPoints,
+                condition: bonusData.condition,
+                displayOrder: bonusData.displayOrder || 0,
+              }
+            });
+          } else {
+            // Only create if we have required fields
+            if (bonusData.name && bonusData.code) {
+              await tx.bonusCondition.create({
+                data: {
+                  name: bonusData.name,
+                  code: bonusData.code,
+                  description: bonusData.description,
+                  bonusPoints: bonusData.bonusPoints || 0,
+                  condition: bonusData.condition,
+                  displayOrder: bonusData.displayOrder || 0,
+                  scoreConfigId: id,
+                }
+              });
+            }
+          }
+        }
+      }
+
+      // Handle penalty conditions
+      if (data.penaltyConditions !== undefined) {
+        const newPenaltyIds = data.penaltyConditions
+          .filter(penalty => penalty.id)
+          .map(penalty => penalty.id)
+          .filter((id): id is string => id !== undefined);
+        
+        if (newPenaltyIds.length > 0) {
+          await tx.penaltyCondition.deleteMany({
+            where: {
+              scoreConfigId: id,
+              id: { notIn: newPenaltyIds }
+            }
+          });
+        } else {
+          await tx.penaltyCondition.deleteMany({
+            where: { scoreConfigId: id }
+          });
+        }
+
+        for (const penaltyData of data.penaltyConditions) {
+          if (penaltyData.id) {
+            await tx.penaltyCondition.update({
+              where: { id: penaltyData.id },
+              data: {
+                name: penaltyData.name,
+                description: penaltyData.description,
+                penaltyPoints: penaltyData.penaltyPoints,
+                condition: penaltyData.condition,
+                displayOrder: penaltyData.displayOrder || 0,
+              }
+            });
+          } else {
+            // Only create if we have required fields
+            if (penaltyData.name && penaltyData.code) {
+              await tx.penaltyCondition.create({
+                data: {
+                  name: penaltyData.name,
+                  code: penaltyData.code,
+                  description: penaltyData.description,
+                  penaltyPoints: penaltyData.penaltyPoints || 0,
+                  condition: penaltyData.condition,
+                  displayOrder: penaltyData.displayOrder || 0,
+                  scoreConfigId: id,
+                }
+              });
+            }
+          }
+        }
+      }
+
+      // Return the updated config with all relations
+      return tx.scoreConfig.findUnique({
+        where: { id },
+        include: {
+          scoreSections: {
+            orderBy: { displayOrder: 'asc' },
+            include: {
+              scoreElements: { orderBy: { displayOrder: 'asc' } },
+              bonusConditions: { orderBy: { displayOrder: 'asc' } },
+              penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+            },
+          },
+          scoreElements: {
+            orderBy: { displayOrder: 'asc' },
+          },
+          bonusConditions: {
+            orderBy: { displayOrder: 'asc' },
+          },
+          penaltyConditions: {
+            orderBy: { displayOrder: 'asc' },
+          },
+        },
+      });
+    });
+  }
+
   async addScoreElement(scoreConfigId: string, data: CreateScoreElementDto) {
     // Check if score config exists
     const scoreConfig = await this.prisma.scoreConfig.findUnique({
@@ -326,11 +704,46 @@ export class ScoreConfigService {
 
   // Assign ScoreConfig to Tournament
   async assignToTournament(scoreConfigId: string, tournamentId: string) {
-    // Ensure both exist
+    // Ensure score config exists
     const scoreConfig = await this.prisma.scoreConfig.findUnique({ where: { id: scoreConfigId } });
-    if (!scoreConfig) throw new NotFoundException(`Score config with ID ${scoreConfigId} not found`);
+    if (!scoreConfig) {
+      throw new NotFoundException(`Score config with ID ${scoreConfigId} not found`);
+    }
+
+    // Handle null/unassign case
+    if (tournamentId === 'null' || tournamentId === '' || !tournamentId) {
+      return this.prisma.scoreConfig.update({ 
+        where: { id: scoreConfigId }, 
+        data: { tournamentId: null } 
+      });
+    }
+
+    // Validate tournament exists before assignment
+    const tournament = await this.prisma.tournament.findUnique({ where: { id: tournamentId } });
+    if (!tournament) {
+      throw new NotFoundException(`Tournament with ID ${tournamentId} not found`);
+    }
+
     // Update the scoreConfig's tournamentId
-    return this.prisma.scoreConfig.update({ where: { id: scoreConfigId }, data: { tournamentId } });
+    return this.prisma.scoreConfig.update({ 
+      where: { id: scoreConfigId }, 
+      data: { tournamentId } 
+    });
+  }
+
+  // Unassign ScoreConfig from Tournament
+  async unassignFromTournament(scoreConfigId: string) {
+    // Ensure score config exists
+    const scoreConfig = await this.prisma.scoreConfig.findUnique({ where: { id: scoreConfigId } });
+    if (!scoreConfig) {
+      throw new NotFoundException(`Score config with ID ${scoreConfigId} not found`);
+    }
+
+    // Unassign from tournament
+    return this.prisma.scoreConfig.update({ 
+      where: { id: scoreConfigId }, 
+      data: { tournamentId: null } 
+    });
   }
 
   async assignToTournaments(scoreConfigId: string, tournamentIds: string[]) {
@@ -654,5 +1067,14 @@ export class ScoreConfigService {
     
     // Add penalty to the section
     return this.addPenaltyToSection(penaltySection.id, data);
+  }
+
+  // Delete Score Config
+  async deleteScoreConfig(id: string) {
+    const scoreConfig = await this.prisma.scoreConfig.findUnique({ where: { id } });
+    if (!scoreConfig) {
+      throw new NotFoundException(`Score config with ID ${id} not found`);
+    }
+    return this.prisma.scoreConfig.delete({ where: { id } });
   }
 }

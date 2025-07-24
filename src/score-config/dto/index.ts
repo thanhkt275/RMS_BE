@@ -8,3 +8,4 @@ export * from './update-score-element.dto';
 export * from './update-bonus-condition.dto';
 export * from './update-penalty-condition.dto';
 export * from './update-score-section.dto';
+export * from './update-score-config.dto';

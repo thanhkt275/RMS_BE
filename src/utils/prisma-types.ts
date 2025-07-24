@@ -24,6 +24,7 @@ export {
   TeamStats,
   MatchType,
   ScoreConfig,
+  ScoreSection,
   ScoreElement,
   BonusCondition,
   PenaltyCondition,

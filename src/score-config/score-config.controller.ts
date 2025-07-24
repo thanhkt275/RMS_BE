@@ -17,7 +17,7 @@ import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../utils/prisma-types';
 import { ScoreConfigService } from './score-config.service';
 import { ScoreCalculationService } from './score-calculation.service';
-import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto, CreateScoreSectionDto, UpdateScoreSectionDto, SubmitScoreDto, UpdateScoreElementDto, UpdateBonusConditionDto, UpdatePenaltyConditionDto } from './dto';
+import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto, CreateScoreSectionDto, UpdateScoreSectionDto, SubmitScoreDto, UpdateScoreElementDto, UpdateBonusConditionDto, UpdatePenaltyConditionDto, UpdateScoreConfigDto } from './dto';
 
 @ApiTags('score-configs')
 @Controller('score-configs')
@@ -56,6 +56,25 @@ export class ScoreConfigController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Score configuration retrieved successfully' })
   async findOne(@Param('id') id: string) {
     return this.scoreConfigService.getScoreConfigById(id);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a score configuration' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Score configuration updated successfully' })
+  async update(
+    @Param('id') id: string,
+    @Body() updateScoreConfigDto: UpdateScoreConfigDto,
+  ) {
+    return this.scoreConfigService.updateScoreConfig(id, updateScoreConfigDto);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete a score configuration' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Score configuration deleted successfully' })
+  async remove(@Param('id') id: string) {
+    return this.scoreConfigService.deleteScoreConfig(id);
   }
 
   @Post(':id/elements')
@@ -200,11 +219,21 @@ export class ScoreConfigController {
   @Post(':id/assign-tournament/:tournamentId')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Assign score config to a tournament' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Score config assigned to tournament successfully' })
   async assignToTournament(
     @Param('id') id: string,
     @Param('tournamentId') tournamentId: string,
   ) {
     return this.scoreConfigService.assignToTournament(id, tournamentId);
+  }
+
+  // Unassign ScoreConfig from Tournament
+  @Delete(':id/assign-tournament')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Unassign score config from tournament' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Score config unassigned from tournament successfully' })
+  async unassignFromTournament(@Param('id') id: string) {
+    return this.scoreConfigService.unassignFromTournament(id);
   }
 
   // Score Section Management

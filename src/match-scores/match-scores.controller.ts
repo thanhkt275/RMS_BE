@@ -17,7 +17,8 @@ import { Roles } from '../auth/roles.decorator';
 import { Public } from '../auth/public.decorator';
 import { UserRole } from '../utils/prisma-types';
 import { MatchScoresService } from './match-scores.service';
-import { CreateMatchScoresDto, UpdateMatchScoresDto } from './dto';
+import { CreateMatchScoresDto, UpdateMatchScoresDto, ScorePreviewDto } from './dto';
+import { ScoreConfigResolutionService } from '../score-config/score-config-resolution.service';
 
 @ApiTags('match-scores')
 @Controller('match-scores')
@@ -26,6 +27,7 @@ import { CreateMatchScoresDto, UpdateMatchScoresDto } from './dto';
 export class MatchScoresController {
   constructor(
     private readonly matchScoresService: MatchScoresService,
+    private readonly scoreConfigResolutionService: ScoreConfigResolutionService,
   ) {}
 
   @Post()
@@ -62,7 +64,7 @@ export class MatchScoresController {
   @Get('match/:matchId')
   @Public()
   @ApiOperation({ summary: 'Get match scores by match ID' })
-  @ApiParam({ name: 'matchId', description: 'Match ID' })
+@ApiParam({ name: 'matchId', description: 'Match ID' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
     description: 'Returns the match scores for the specified match ID.'
@@ -73,6 +75,95 @@ export class MatchScoresController {
   })
   findByMatchId(@Param('matchId') matchId: string) {
     return this.matchScoresService.findByMatchId(matchId);
+  }
+
+  @Get(':matchId/score-config')
+  @Public()
+  @ApiOperation({ summary: 'Get score configuration for a match' })
+  @ApiParam({ name: 'matchId', description: 'Match ID' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Returns the score configuration for the specified match ID.'
+  })
+  @ApiResponse({ 
+    status: HttpStatus.NOT_FOUND, 
+    description: 'Score configuration not found for the specified match.'
+  })
+  async getScoreConfig(@Param('matchId') matchId: string) {
+    return this.scoreConfigResolutionService.resolveScoreConfigForMatch(matchId);
+  }
+
+  @Get('frontend/score-panel-config')
+  @Public()
+  @ApiOperation({ summary: 'Get UI score panel configuration' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Returns the UI score panel configuration.'
+  })
+  async getScorePanelConfig() {
+    // Return a basic configuration structure for the frontend score panel
+    return {
+      layout: 'standard',
+      sections: [
+        {
+          name: 'Autonomous',
+          code: 'auto',
+          displayOrder: 1,
+          elements: ['auto_cone', 'auto_cube', 'auto_mobility']
+        },
+        {
+          name: 'Driver Controlled',
+          code: 'teleop',
+          displayOrder: 2,
+          elements: ['teleop_cone', 'teleop_cube', 'teleop_links']
+        },
+        {
+          name: 'Endgame',
+          code: 'endgame',
+          displayOrder: 3,
+          elements: ['endgame_climb', 'endgame_park']
+        }
+      ],
+      theme: {
+        primaryColor: '#1976d2',
+        secondaryColor: '#dc004e'
+      }
+    };
+  }
+
+  @Post('preview-score')
+  @Roles(UserRole.ADMIN, UserRole.HEAD_REFEREE)
+  @ApiOperation({ summary: 'Preview score calculation for a match and alliance' })
+  @ApiResponse({ 
+    status: HttpStatus.OK, 
+    description: 'Returns the preview score calculation.'
+  })
+  async previewScore(@Body() dto: ScorePreviewDto) {
+    const { matchId, allianceId, elementScores, scoreConfigId } = dto;
+    
+    // Get the score configuration for the match
+    const config = await this.scoreConfigResolutionService.resolveScoreConfigForMatch(matchId);
+    
+    // For now, return a simple calculation preview
+    // This can be extended later to integrate with a dedicated calculation service
+    const totalScore = Object.values(elementScores).reduce((sum, score) => sum + score, 0);
+    
+    return {
+      matchId,
+      allianceId,
+      elementScores,
+      totalScore,
+      configUsed: config ? config.id : 'fallback',
+      calculationPreview: {
+        sections: [
+          { name: 'Auto', score: Math.floor(totalScore * 0.3) },
+          { name: 'Teleop', score: Math.floor(totalScore * 0.6) },
+          { name: 'Endgame', score: Math.floor(totalScore * 0.1) }
+        ],
+        bonuses: [],
+        penalties: []
+      }
+    };
   }
 
 

@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma.service';
 import { CreateTeamDto, CreateTeamMemberDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { ImportTeamsDto } from './dto/import-teams.dto';
+import { BulkCreateTeamsDto } from './dto/bulk-create-teams.dto';
 import { Gender, TeamMember } from '../../generated/prisma';
 import { Prisma } from '../../generated/prisma';
 import { EmailsService } from '../emails/emails.service';
@@ -321,6 +322,96 @@ export class TeamsService {
   async remove(id: string) {
     await this.ensureTeamExistsById(id);
     return this.prisma.team.delete({ where: { id } });
+  }
+
+  /**
+   * Bulk create teams for development purposes
+   * Creates 8 or 16 teams with minimal data
+   */
+  async bulkCreateTeams(bulkCreateTeamsDto: BulkCreateTeamsDto, userId: string) {
+    const { tournamentId, count, namePrefix, referralSource } = bulkCreateTeamsDto;
+
+    // Verify tournament exists
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+    });
+
+    if (!tournament) {
+      throw new BadRequestException(
+        `Tournament with ID ${tournamentId} does not exist.`,
+      );
+    }
+
+    const createdTeams: any[] = [];
+    const provinces = ['Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ'];
+    const wards = ['Phường 1', 'Phường 2', 'Phường 3', 'Phường 4', 'Phường 5'];
+
+    try {
+      for (let i = 1; i <= count; i++) {
+        const teamNumber = await this.generateNextTeamNumber(tournament.id);
+        const teamName = `${namePrefix} ${i.toString().padStart(2, '0')}`;
+
+        // Create team with basic data
+        const team = await this.prisma.team.create({
+          data: {
+            teamNumber,
+            name: teamName,
+            referralSource,
+            tournament: {
+              connect: { id: tournament.id },
+            },
+            user: {
+              connect: { id: userId },
+            },
+          },
+          include: {
+            tournament: true,
+          },
+        });
+
+        // Create 2 default team members for each team
+        const teamMembers: any[] = [];
+        for (let j = 1; j <= 2; j++) {
+          const randomProvince = provinces[Math.floor(Math.random() * provinces.length)];
+          const randomWard = wards[Math.floor(Math.random() * wards.length)];
+          
+          const member = await this.prisma.teamMember.create({
+            data: {
+              name: `Member ${j} of ${teamName}`,
+              province: randomProvince,
+              ward: randomWard,
+              organization: `Dev Organization ${i}`,
+              team: {
+                connect: { id: team.id },
+              },
+            },
+          });
+          teamMembers.push(member);
+        }
+
+        createdTeams.push({
+          ...team,
+          teamMembers,
+        });
+      }
+
+      return {
+        success: true,
+        message: `Successfully created ${count} teams for development`,
+        data: {
+          tournament: {
+            id: tournament.id,
+            name: tournament.name,
+          },
+          teamsCreated: count,
+          teams: createdTeams,
+        },
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        `Failed to bulk create teams: ${error.message}`,
+      );
+    }
   }
 
   /**

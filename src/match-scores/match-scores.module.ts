@@ -7,6 +7,7 @@ import { AllianceRepository } from './services/alliance.repository';
 import { MatchResultService } from './services/match-result.service';
 import { TeamStatsService } from './team-stats.service';
 import { ITeamStatsService } from './interfaces/team-stats.interface';
+import { ScoreConfigResolutionService } from '../score-config/score-config-resolution.service';
 
 
 @Module({
@@ -17,6 +18,7 @@ import { ITeamStatsService } from './interfaces/team-stats.interface';
     ScoreCalculationService,
     AllianceRepository,
     MatchResultService,
+    ScoreConfigResolutionService,
     {
       provide: 'ITeamStatsService',
       useClass: TeamStatsService,
