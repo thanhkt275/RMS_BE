@@ -370,6 +370,7 @@ export class ScoreCalculationService {
 
   /**
    * Calculate score for a single section
+   * Now handles bonus and penalty sections separately
    */
   private calculateSectionScore(section: any, elementScores: Record<string, number>) {
     const sectionLog: any = {
@@ -383,7 +384,7 @@ export class ScoreCalculationService {
 
     let sectionScore = 0;
 
-    // Process section elements
+    // Process section elements (for regular sections)
     for (const element of section.scoreElements || []) {
       const value = elementScores[element.code] || 0;
       const elementScore = value * element.pointsPerUnit;
@@ -398,39 +399,80 @@ export class ScoreCalculationService {
       });
     }
 
-    // Process section bonuses
-    for (const bonus of section.bonusConditions || []) {
-      if (!this.isValidCondition(bonus.condition)) continue;
-      
-      const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(bonus.condition);
-      const conditionMet = conditionEvaluator.evaluate(elementScores);
-      
-      if (conditionMet) {
-        sectionScore += bonus.bonusPoints;
+    // For bonus sections (code === 'bonus'), only calculate bonuses
+    if (section.code === 'bonus') {
+      for (const bonus of section.bonusConditions || []) {
+        if (!this.isValidCondition(bonus.condition)) continue;
         
-        sectionLog.bonuses.push({
-          bonusCode: bonus.code,
-          bonusName: bonus.name,
-          bonusPoints: bonus.bonusPoints,
-        });
+        const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(bonus.condition);
+        const conditionMet = conditionEvaluator.evaluate(elementScores);
+        
+        if (conditionMet) {
+          sectionScore += bonus.bonusPoints;
+          
+          sectionLog.bonuses.push({
+            bonusCode: bonus.code,
+            bonusName: bonus.name,
+            bonusPoints: bonus.bonusPoints,
+          });
+        }
       }
     }
-
-    // Process section penalties
-    for (const penalty of section.penaltyConditions || []) {
-      if (!this.isValidCondition(penalty.condition)) continue;
-      
-      const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(penalty.condition);
-      const conditionMet = conditionEvaluator.evaluate(elementScores);
-      
-      if (conditionMet) {
-        sectionScore += penalty.penaltyPoints;
+    // For penalty sections (code === 'penalty'), only calculate penalties  
+    else if (section.code === 'penalty') {
+      for (const penalty of section.penaltyConditions || []) {
+        if (!this.isValidCondition(penalty.condition)) continue;
         
-        sectionLog.penalties.push({
-          penaltyCode: penalty.code,
-          penaltyName: penalty.name,
-          penaltyPoints: penalty.penaltyPoints,
-        });
+        const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(penalty.condition);
+        const conditionMet = conditionEvaluator.evaluate(elementScores);
+        
+        if (conditionMet) {
+          sectionScore += penalty.penaltyPoints;
+          
+          sectionLog.penalties.push({
+            penaltyCode: penalty.code,
+            penaltyName: penalty.name,
+            penaltyPoints: penalty.penaltyPoints,
+          });
+        }
+      }
+    }
+    // For regular sections, still process bonuses and penalties if they exist
+    else {
+      // Process section bonuses
+      for (const bonus of section.bonusConditions || []) {
+        if (!this.isValidCondition(bonus.condition)) continue;
+        
+        const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(bonus.condition);
+        const conditionMet = conditionEvaluator.evaluate(elementScores);
+        
+        if (conditionMet) {
+          sectionScore += bonus.bonusPoints;
+          
+          sectionLog.bonuses.push({
+            bonusCode: bonus.code,
+            bonusName: bonus.name,
+            bonusPoints: bonus.bonusPoints,
+          });
+        }
+      }
+
+      // Process section penalties
+      for (const penalty of section.penaltyConditions || []) {
+        if (!this.isValidCondition(penalty.condition)) continue;
+        
+        const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(penalty.condition);
+        const conditionMet = conditionEvaluator.evaluate(elementScores);
+        
+        if (conditionMet) {
+          sectionScore += penalty.penaltyPoints;
+          
+          sectionLog.penalties.push({
+            penaltyCode: penalty.code,
+            penaltyName: penalty.name,
+            penaltyPoints: penalty.penaltyPoints,
+          });
+        }
       }
     }
 

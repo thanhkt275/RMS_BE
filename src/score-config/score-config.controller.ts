@@ -295,4 +295,43 @@ export class ScoreConfigController {
       scoreData.scoreConfigId,
     );
   }
+
+  // Default section management
+  @Post(':id/default-bonus-section')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create default bonus section for a configuration' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Default bonus section created successfully' })
+  async createDefaultBonusSection(@Param('id') id: string) {
+    return this.scoreConfigService.createDefaultBonusSection(id);
+  }
+
+  @Post(':id/default-penalty-section')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create default penalty section for a configuration' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Default penalty section created successfully' })
+  async createDefaultPenaltySection(@Param('id') id: string) {
+    return this.scoreConfigService.createDefaultPenaltySection(id);
+  }
+
+  @Post(':id/default-bonuses')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add a bonus to the default bonus section' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Bonus added to default section successfully' })
+  async addBonusToDefaultSection(
+    @Param('id') id: string,
+    @Body() createBonusConditionDto: CreateBonusConditionDto,
+  ) {
+    return this.scoreConfigService.addBonusToDefaultSection(id, createBonusConditionDto);
+  }
+
+  @Post(':id/default-penalties')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add a penalty to the default penalty section' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Penalty added to default section successfully' })
+  async addPenaltyToDefaultSection(
+    @Param('id') id: string,
+    @Body() createPenaltyConditionDto: CreatePenaltyConditionDto,
+  ) {
+    return this.scoreConfigService.addPenaltyToDefaultSection(id, createPenaltyConditionDto);
+  }
 }

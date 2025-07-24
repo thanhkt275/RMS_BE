@@ -33,7 +33,12 @@ export class ScoreConfigService {
     
     // Validate formula if provided
     if (totalScoreFormula && scoreSections) {
-      const sectionCodes = scoreSections.map(section => section.code);
+      const sectionCodes = [...scoreSections.map(section => section.code)];
+      
+      // Add bonus/penalty section codes if they exist
+      if (bonusConditions && bonusConditions.length > 0) sectionCodes.push('bonus');
+      if (penaltyConditions && penaltyConditions.length > 0) sectionCodes.push('penalty');
+      
       const validation = this.formulaEvaluator.validateFormulaSyntax(totalScoreFormula, sectionCodes);
       if (!validation.isValid) {
         throw new BadRequestException(`Invalid formula: ${validation.error}`);
@@ -54,19 +59,34 @@ export class ScoreConfigService {
               displayOrder: section.displayOrder ?? index,
               scoreElements: {
                 create: section.scoreElements?.map((element, elemIndex) => ({
-                  ...element,
+                  name: element.name,
+                  code: element.code,
+                  description: element.description,
+                  pointsPerUnit: element.pointsPerUnit,
+                  category: element.category,
+                  elementType: element.elementType,
+                  icon: element.icon,
+                  color: element.color,
                   displayOrder: element.displayOrder ?? elemIndex,
                 })) || [],
               },
               bonusConditions: {
                 create: section.bonusConditions?.map((bonus, bonusIndex) => ({
-                  ...bonus,
+                  name: bonus.name,
+                  code: bonus.code,
+                  description: bonus.description,
+                  bonusPoints: bonus.bonusPoints,
+                  condition: bonus.condition,
                   displayOrder: bonus.displayOrder ?? bonusIndex,
                 })) || [],
               },
               penaltyConditions: {
                 create: section.penaltyConditions?.map((penalty, penaltyIndex) => ({
-                  ...penalty,
+                  name: penalty.name,
+                  code: penalty.code,
+                  description: penalty.description,
+                  penaltyPoints: penalty.penaltyPoints,
+                  condition: penalty.condition,
                   displayOrder: penalty.displayOrder ?? penaltyIndex,
                 })) || [],
               },
@@ -74,19 +94,34 @@ export class ScoreConfigService {
           },
           scoreElements: {
             create: scoreElements?.map((element, index) => ({
-              ...element,
+              name: element.name,
+              code: element.code,
+              description: element.description,
+              pointsPerUnit: element.pointsPerUnit,
+              category: element.category,
+              elementType: element.elementType,
+              icon: element.icon,
+              color: element.color,
               displayOrder: element.displayOrder ?? index,
             })) || [],
           },
           bonusConditions: {
             create: bonusConditions?.map((bonus, index) => ({
-              ...bonus,
+              name: bonus.name,
+              code: bonus.code,
+              description: bonus.description,
+              bonusPoints: bonus.bonusPoints,
+              condition: bonus.condition,
               displayOrder: bonus.displayOrder ?? index,
             })) || [],
           },
           penaltyConditions: {
             create: penaltyConditions?.map((penalty, index) => ({
-              ...penalty,
+              name: penalty.name,
+              code: penalty.code,
+              description: penalty.description,
+              penaltyPoints: penalty.penaltyPoints,
+              condition: penalty.condition,
               displayOrder: penalty.displayOrder ?? index,
             })) || [],
           },
@@ -533,5 +568,91 @@ export class ScoreConfigService {
       where: { id: scoreConfigId },
       data: { totalScoreFormula: formula },
     });
+  }
+
+  // Create default bonus section
+  async createDefaultBonusSection(scoreConfigId: string) {
+    const scoreConfig = await this.prisma.scoreConfig.findUnique({
+      where: { id: scoreConfigId },
+      include: { scoreSections: true },
+    });
+
+    if (!scoreConfig) {
+      throw new NotFoundException(`Score config with ID ${scoreConfigId} not found`);
+    }
+
+    // Check if bonus section already exists
+    const existingBonusSection = scoreConfig.scoreSections.find(s => s.code === 'bonus');
+    if (existingBonusSection) {
+      return existingBonusSection;
+    }
+
+    // Create bonus section
+    return this.prisma.scoreSection.create({
+      data: {
+        scoreConfigId,
+        name: 'Bonus',
+        code: 'bonus',
+        description: 'Bonus points section',
+        displayOrder: 999,
+      },
+      include: {
+        scoreElements: { orderBy: { displayOrder: 'asc' } },
+        bonusConditions: { orderBy: { displayOrder: 'asc' } },
+        penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+      },
+    });
+  }
+
+  // Create default penalty section
+  async createDefaultPenaltySection(scoreConfigId: string) {
+    const scoreConfig = await this.prisma.scoreConfig.findUnique({
+      where: { id: scoreConfigId },
+      include: { scoreSections: true },
+    });
+
+    if (!scoreConfig) {
+      throw new NotFoundException(`Score config with ID ${scoreConfigId} not found`);
+    }
+
+    // Check if penalty section already exists
+    const existingPenaltySection = scoreConfig.scoreSections.find(s => s.code === 'penalty');
+    if (existingPenaltySection) {
+      return existingPenaltySection;
+    }
+
+    // Create penalty section
+    return this.prisma.scoreSection.create({
+      data: {
+        scoreConfigId,
+        name: 'Penalty',
+        code: 'penalty',
+        description: 'Penalty points section',
+        displayOrder: 1000,
+      },
+      include: {
+        scoreElements: { orderBy: { displayOrder: 'asc' } },
+        bonusConditions: { orderBy: { displayOrder: 'asc' } },
+        penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+      },
+    });
+  }
+
+  // Add bonus to default bonus section (creates section if it doesn't exist)
+  async addBonusToDefaultSection(scoreConfigId: string, data: CreateBonusConditionDto) {
+    // Ensure bonus section exists
+    const bonusSection = await this.createDefaultBonusSection(scoreConfigId);
+    
+    // Add bonus to the section
+    return this.addBonusToSection(bonusSection.id, data);
+  }
+
+  // Add penalty to default penalty section (creates section if it doesn't exist)
+  async addPenaltyToDefaultSection(scoreConfigId: string, data: CreatePenaltyConditionDto) {
+    // Ensure penalty section exists
+    const penaltySection = await this.createDefaultPenaltySection(scoreConfigId);
+    
+    // Add penalty to the section
+    return this.addPenaltyToSection(penaltySection.id, data);
   }
 }
