@@ -8,6 +8,8 @@ import { JwtStrategy } from './jwt.strategy';
 import { PrismaService } from '../prisma.service';
 import { AuthSecurityService } from './auth-security.service';
 import { RolesGuard } from './roles.guard';
+import { EmailsModule } from '../emails/emails.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -28,8 +30,16 @@ import { RolesGuard } from './roles.guard';
         limit: parseInt(process.env.THROTTLE_LIMIT_MEDIUM || '50'), // 50 requests per 5 minutes
       },
     ]),
+    EmailsModule,
+    UsersModule,
   ],
-  providers: [AuthService, JwtStrategy, PrismaService, AuthSecurityService, RolesGuard],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    PrismaService,
+    AuthSecurityService,
+    RolesGuard,
+  ],
   controllers: [AuthController],
   exports: [AuthService, AuthSecurityService],
 })
@@ -39,15 +49,22 @@ export class AuthModule implements OnModuleInit {
   onModuleInit() {
     // Validate critical environment variables on startup
     if (process.env.NODE_ENV === 'production') {
-      if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key') {
-        this.logger.error('JWT_SECRET must be set to a secure value in production');
+      if (
+        !process.env.JWT_SECRET ||
+        process.env.JWT_SECRET === 'your-secret-key'
+      ) {
+        this.logger.error(
+          'JWT_SECRET must be set to a secure value in production',
+        );
         process.exit(1);
       }
-      
+
       if (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) {
-        this.logger.warn('ADMIN_USERNAME and ADMIN_PASSWORD should be set in production');
+        this.logger.warn(
+          'ADMIN_USERNAME and ADMIN_PASSWORD should be set in production',
+        );
       }
-      
+
       if (process.env.ADMIN_PASSWORD === 'admin123') {
         this.logger.error('Default admin password detected in production');
         process.exit(1);

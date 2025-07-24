@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
+import { Team, UserRole } from '../../generated/prisma';
 
 @Injectable()
 export class TournamentsService {
@@ -20,7 +21,10 @@ export class TournamentsService {
     });
 
     // Create fields if numberOfFields is specified and > 0
-    if (createTournamentDto.numberOfFields && createTournamentDto.numberOfFields > 0) {
+    if (
+      createTournamentDto.numberOfFields &&
+      createTournamentDto.numberOfFields > 0
+    ) {
       for (let n = 1; n <= createTournamentDto.numberOfFields; n++) {
         await this.prisma.field.create({
           data: {
@@ -48,8 +52,29 @@ export class TournamentsService {
     });
   }
 
-  findOne(id: string) {
-    return this.prisma.tournament.findUnique({
+  async findOne(id: string, user?: { id: string; role: string }) {
+    if (user?.role === UserRole.COMMON) {
+      const tournament = await this.prisma.tournament.findUnique({
+        where: { id },
+      });
+
+      let userTeam: Team | null = null;
+      if (user.id) {
+        userTeam = await this.prisma.team.findFirst({
+          where: { tournamentId: id, userId: user.id },
+          include: {
+            teamMembers: true,
+          },
+        });
+      }
+
+      return {
+        ...tournament,
+        userTeam,
+      };
+    }
+
+    return await this.prisma.tournament.findUnique({
       where: { id },
       include: {
         admin: {
@@ -128,13 +153,17 @@ export class TournamentsService {
         }
       } else if (newNumberOfFields < existingFields.length) {
         // Prevent decrease if any matches are assigned to fields that would be deleted
-        const fieldsToDelete = existingFields.filter(f => f.number > newNumberOfFields);
-        const fieldIdsToDelete = fieldsToDelete.map(f => f.id);
+        const fieldsToDelete = existingFields.filter(
+          (f) => f.number > newNumberOfFields,
+        );
+        const fieldIdsToDelete = fieldsToDelete.map((f) => f.id);
         const matchesOnFields = await this.prisma.match.findFirst({
           where: { fieldId: { in: fieldIdsToDelete } },
         });
         if (matchesOnFields) {
-          throw new Error('Cannot decrease numberOfFields: matches are assigned to fields that would be deleted. Please reassign or remove those matches first.');
+          throw new Error(
+            'Cannot decrease numberOfFields: matches are assigned to fields that would be deleted. Please reassign or remove those matches first.',
+          );
         }
         // Safe to delete fields
         await this.prisma.field.deleteMany({
@@ -162,61 +191,41 @@ export class TournamentsService {
     return this.prisma.tournament.findUnique({
       where: { id },
       include: {
-        admin: { 
-          select: { id: true, username: true, email: true } 
+        admin: {
+          select: { id: true, username: true, email: true },
         },
         stages: {
           include: {
-            _count: { 
-              select: { 
-                matches: true
-              } 
-            }
+            _count: { select: { matches: true } },
           },
-          orderBy: { startDate: 'asc' }
+          orderBy: { startDate: 'asc' },
         },
         fields: {
           include: {
             fieldReferees: {
               include: {
-                user: { 
-                  select: { 
-                    id: true, 
-                    username: true, 
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
                     email: true,
-                    role: true 
-                  } 
-                }
+                    role: true,
+                  },
+                },
               },
-              orderBy: [
-                { isHeadRef: 'desc' },
-                { createdAt: 'asc' }
-              ]
+              orderBy: [{ isHeadRef: 'desc' }, { createdAt: 'asc' }],
             },
-            _count: { 
-              select: { 
-                matches: true
-              } 
-            }
+            _count: { select: { matches: true } },
           },
-          orderBy: { number: 'asc' }
+          orderBy: { number: 'asc' },
         },
         teams: {
-          select: {
-            id: true,
-            teamNumber: true,
-            name: true,
-            organization: true
-          }
+          select: { id: true, teamNumber: true, name: true },
         },
         _count: {
-          select: {
-            stages: true,
-            fields: true,
-            teams: true
-          }
-        }
-      }
+          select: { stages: true, fields: true, teams: true },
+        },
+      },
     });
   }
 
@@ -231,22 +240,19 @@ export class TournamentsService {
                 id: true,
                 username: true,
                 email: true,
-                role: true
-              }
-            }
+                role: true,
+              },
+            },
           },
-          orderBy: [
-            { isHeadRef: 'desc' },
-            { createdAt: 'asc' }
-          ]
+          orderBy: [{ isHeadRef: 'desc' }, { createdAt: 'asc' }],
         },
         _count: {
           select: {
-            matches: true
-          }
-        }
+            matches: true,
+          },
+        },
       },
-      orderBy: { number: 'asc' }
+      orderBy: { number: 'asc' },
     });
   }
 }

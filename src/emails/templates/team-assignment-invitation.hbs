@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>You've Been Added to a Team</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; background-color: #f6f6f6; padding: 20px; color: #333;">
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+      <h2 style="color: #333;">You've Been Added to a Team!</h2>
+
+      <p>Hi {{email}},</p>
+
+      <p>
+        You've been added to the team <strong>{{teamName}}</strong>
+        {{#if tournamentName}}
+          for the tournament <strong>{{tournamentName}}</strong>
+        {{/if}}.
+      </p>
+
+      <p>We're happy to have your team participating in this tournament and excited for what's ahead!</p>
+
+      <p>Please follow the next steps provided by your team lead to get fully set up.</p>
+
+      <p style="margin-top: 30px;">Best regards,<br /><strong>The STEAM Team</strong></p>
+    </div>
+  </body>
+</html>

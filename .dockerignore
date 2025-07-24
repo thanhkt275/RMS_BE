@@ -9,7 +9,7 @@ yarn-error.log*
 .env.example
 
 # Build outputs
-dist
+
 build
 
 # Logs
@@ -65,7 +65,8 @@ Thumbs.db
 # Git
 .git
 .gitignore
-
+.kiro
+.github
 # Docker
 Dockerfile
 docker-compose*.yml
