@@ -17,7 +17,7 @@ import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../utils/prisma-types';
 import { ScoreConfigService } from './score-config.service';
 import { ScoreCalculationService } from './score-calculation.service';
-import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto, SubmitScoreDto, UpdateScoreElementDto, UpdateBonusConditionDto, UpdatePenaltyConditionDto } from './dto';
+import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto, CreateScoreSectionDto, UpdateScoreSectionDto, SubmitScoreDto, UpdateScoreElementDto, UpdateBonusConditionDto, UpdatePenaltyConditionDto } from './dto';
 
 @ApiTags('score-configs')
 @Controller('score-configs')
@@ -205,5 +205,94 @@ export class ScoreConfigController {
     @Param('tournamentId') tournamentId: string,
   ) {
     return this.scoreConfigService.assignToTournament(id, tournamentId);
+  }
+
+  // Score Section Management
+  @Post(':id/sections')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add a score section to a configuration' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Score section added successfully' })
+  async addSection(
+    @Param('id') id: string,
+    @Body() createScoreSectionDto: CreateScoreSectionDto,
+  ) {
+    return this.scoreConfigService.addScoreSection(id, createScoreSectionDto);
+  }
+
+  @Patch('sections/:sectionId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a score section' })
+  async updateSection(
+    @Param('sectionId') sectionId: string,
+    @Body() updateScoreSectionDto: UpdateScoreSectionDto,
+  ) {
+    return this.scoreConfigService.updateScoreSection(sectionId, updateScoreSectionDto);
+  }
+
+  @Delete('sections/:sectionId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete a score section' })
+  async removeSection(@Param('sectionId') sectionId: string) {
+    return this.scoreConfigService.deleteScoreSection(sectionId);
+  }
+
+  // Add elements/conditions to sections
+  @Post('sections/:sectionId/elements')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add a score element to a section' })
+  async addElementToSection(
+    @Param('sectionId') sectionId: string,
+    @Body() createScoreElementDto: CreateScoreElementDto,
+  ) {
+    return this.scoreConfigService.addElementToSection(sectionId, createScoreElementDto);
+  }
+
+  @Post('sections/:sectionId/bonuses')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add a bonus condition to a section' })
+  async addBonusToSection(
+    @Param('sectionId') sectionId: string,
+    @Body() createBonusConditionDto: CreateBonusConditionDto,
+  ) {
+    return this.scoreConfigService.addBonusToSection(sectionId, createBonusConditionDto);
+  }
+
+  @Post('sections/:sectionId/penalties')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add a penalty condition to a section' })
+  async addPenaltyToSection(
+    @Param('sectionId') sectionId: string,
+    @Body() createPenaltyConditionDto: CreatePenaltyConditionDto,
+  ) {
+    return this.scoreConfigService.addPenaltyToSection(sectionId, createPenaltyConditionDto);
+  }
+
+  // Formula management
+  @Patch(':id/formula')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update the total score formula' })
+  async updateFormula(
+    @Param('id') id: string,
+    @Body('formula') formula: string,
+  ) {
+    return this.scoreConfigService.updateScoreFormula(id, formula);
+  }
+
+  // New section-based calculation endpoint
+  @Post('calculate-sections/:matchId/:allianceId')
+  @Roles(UserRole.ALLIANCE_REFEREE, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Calculate scores using section-based configuration' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Scores calculated with sections successfully' })
+  async calculateWithSections(
+    @Param('matchId') matchId: string,
+    @Param('allianceId') allianceId: string,
+    @Body() scoreData: SubmitScoreDto,
+  ) {
+    return this.scoreCalculationService.calculateMatchScoreWithSections(
+      matchId,
+      allianceId,
+      scoreData.elementScores,
+      scoreData.scoreConfigId,
+    );
   }
 }

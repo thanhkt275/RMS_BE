@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Match Schedule Update - {{tournamentName}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f6f6f6; padding: 20px; color: #333; }
+        .container { max-width: 650px; margin: auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .header { text-align: center; border-bottom: 2px solid #28a745; padding-bottom: 20px; margin-bottom: 30px; }
+        .logo { font-size: 24px; font-weight: bold; color: #28a745; }
+        .match-card { background: #f8f9fa; border-left: 4px solid #28a745; padding: 20px; margin: 15px 0; border-radius: 0 5px 5px 0; }
+        .match-header { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 10px; }
+        .match-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+        .detail-item { display: flex; justify-content: space-between; padding: 5px 0; }
+        .detail-label { font-weight: bold; color: #555; }
+        .detail-value { color: #333; }
+        .alliance { padding: 10px; margin: 5px 0; border-radius: 3px; }
+        .alliance.red { background: #ffebee; border-left: 3px solid #f44336; }
+        .alliance.blue { background: #e3f2fd; border-left: 3px solid #2196f3; }
+        .teams-list { font-size: 14px; margin-top: 5px; }
+        .urgent { background: #fff3cd; border-color: #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .upcoming { background: #d1ecf1; border-color: #17a2b8; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">⚡ RMS Match Scheduler</div>
+        </div>
+        
+        <h2 style="color: #333;">{{notificationType}} - {{tournamentName}}</h2>
+        
+        <p>Hello {{teamName}} Team,</p>
+        
+        {{#if isUrgent}}
+        <div class="urgent">
+            <strong>⚠️ URGENT UPDATE:</strong> Your match schedule has been updated. Please review the details below immediately.
+        </div>
+        {{/if}}
+        
+        <p>{{message}}</p>
+        
+        {{#each matches}}
+        <div class="match-card {{#if this.isUpcoming}}upcoming{{/if}}">
+            <div class="match-header">
+                {{this.stageName}} - Match {{this.matchNumber}}
+                {{#if this.isUpcoming}}
+                <span style="color: #17a2b8; font-size: 14px;">🔜 UPCOMING</span>
+                {{/if}}
+            </div>
+            
+            <div class="match-details">
+                <div class="detail-item">
+                    <span class="detail-label">Date & Time:</span>
+                    <span class="detail-value">{{this.scheduledTime}}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Field:</span>
+                    <span class="detail-value">{{this.fieldName}}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Round:</span>
+                    <span class="detail-value">{{this.roundType}}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value">{{this.status}}</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <div class="alliance red">
+                    <strong>🔴 Red Alliance:</strong>
+                    <div class="teams-list">{{this.redTeams}}</div>
+                </div>
+                <div class="alliance blue">
+                    <strong>🔵 Blue Alliance:</strong>
+                    <div class="teams-list">{{this.blueTeams}}</div>
+                </div>
+            </div>
+            
+            {{#if this.notes}}
+            <div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 3px; font-size: 14px;">
+                <strong>Notes:</strong> {{this.notes}}
+            </div>
+            {{/if}}
+        </div>
+        {{/each}}
+        
+        {{#if nextAction}}
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <strong>Next Steps:</strong> {{nextAction}}
+        </div>
+        {{/if}}
+        
+        <p style="margin-top: 30px;">Please ensure your team is ready at least <strong>15 minutes before</strong> your scheduled match time.</p>
+        
+        <div class="footer">
+            <p>Good luck in your matches!<br />
+            <strong>Tournament Operations Team</strong></p>
+            
+            <p style="font-size: 12px; color: #999;">
+                This is an automated notification from the RMS Tournament System.<br />
+                If you have questions, please contact the tournament organizers.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,14 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto } from './dto';
+import { CreateScoreConfigDto, CreateScoreElementDto, CreateBonusConditionDto, CreatePenaltyConditionDto, CreateScoreSectionDto, UpdateScoreSectionDto } from './dto';
+import { FormulaEvaluatorService } from './formula-evaluator.service';
 
 @Injectable()
 export class ScoreConfigService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private formulaEvaluator: FormulaEvaluatorService,
+  ) {}
 
   async findAll() {
     return this.prisma.scoreConfig.findMany({
       include: {
+        scoreSections: {
+          orderBy: { displayOrder: 'asc' },
+          include: {
+            scoreElements: { orderBy: { displayOrder: 'asc' } },
+            bonusConditions: { orderBy: { displayOrder: 'asc' } },
+            penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+          },
+        },
         scoreElements: { orderBy: { displayOrder: 'asc' } },
         bonusConditions: { orderBy: { displayOrder: 'asc' } },
         penaltyConditions: { orderBy: { displayOrder: 'asc' } },
@@ -17,13 +29,49 @@ export class ScoreConfigService {
   }
 
   async createScoreConfig(data: CreateScoreConfigDto) {
-    const { scoreElements, bonusConditions, penaltyConditions, ...configData } = data;
+    const { scoreElements, bonusConditions, penaltyConditions, scoreSections, totalScoreFormula, ...configData } = data;
+    
+    // Validate formula if provided
+    if (totalScoreFormula && scoreSections) {
+      const sectionCodes = scoreSections.map(section => section.code);
+      const validation = this.formulaEvaluator.validateFormulaSyntax(totalScoreFormula, sectionCodes);
+      if (!validation.isValid) {
+        throw new BadRequestException(`Invalid formula: ${validation.error}`);
+      }
+    }
     
     return this.prisma.$transaction(async (prisma) => {
       // Create the score config
       const scoreConfig = await prisma.scoreConfig.create({
         data: {
           ...configData,
+          totalScoreFormula,
+          scoreSections: {
+            create: scoreSections?.map((section, index) => ({
+              name: section.name,
+              code: section.code,
+              description: section.description,
+              displayOrder: section.displayOrder ?? index,
+              scoreElements: {
+                create: section.scoreElements?.map((element, elemIndex) => ({
+                  ...element,
+                  displayOrder: element.displayOrder ?? elemIndex,
+                })) || [],
+              },
+              bonusConditions: {
+                create: section.bonusConditions?.map((bonus, bonusIndex) => ({
+                  ...bonus,
+                  displayOrder: bonus.displayOrder ?? bonusIndex,
+                })) || [],
+              },
+              penaltyConditions: {
+                create: section.penaltyConditions?.map((penalty, penaltyIndex) => ({
+                  ...penalty,
+                  displayOrder: penalty.displayOrder ?? penaltyIndex,
+                })) || [],
+              },
+            })) || [],
+          },
           scoreElements: {
             create: scoreElements?.map((element, index) => ({
               ...element,
@@ -44,6 +92,14 @@ export class ScoreConfigService {
           },
         },
         include: {
+          scoreSections: {
+            orderBy: { displayOrder: 'asc' },
+            include: {
+              scoreElements: { orderBy: { displayOrder: 'asc' } },
+              bonusConditions: { orderBy: { displayOrder: 'asc' } },
+              penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+            },
+          },
           scoreElements: {
             orderBy: { displayOrder: 'asc' },
           },
@@ -64,6 +120,14 @@ export class ScoreConfigService {
     return this.prisma.scoreConfig.findFirst({
       where: { tournamentId },
       include: {
+        scoreSections: {
+          orderBy: { displayOrder: 'asc' },
+          include: {
+            scoreElements: { orderBy: { displayOrder: 'asc' } },
+            bonusConditions: { orderBy: { displayOrder: 'asc' } },
+            penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+          },
+        },
         scoreElements: {
           orderBy: { displayOrder: 'asc' },
         },
@@ -81,6 +145,14 @@ export class ScoreConfigService {
     const scoreConfig = await this.prisma.scoreConfig.findUnique({
       where: { id },
       include: {
+        scoreSections: {
+          orderBy: { displayOrder: 'asc' },
+          include: {
+            scoreElements: { orderBy: { displayOrder: 'asc' } },
+            bonusConditions: { orderBy: { displayOrder: 'asc' } },
+            penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+          },
+        },
         scoreElements: {
           orderBy: { displayOrder: 'asc' },
         },
@@ -243,5 +315,223 @@ export class ScoreConfigService {
       });
     }
     return { message: 'No tournaments assigned' };
+  }
+
+  // Score Section Management Methods
+  async addScoreSection(scoreConfigId: string, data: CreateScoreSectionDto) {
+    const scoreConfig = await this.prisma.scoreConfig.findUnique({
+      where: { id: scoreConfigId },
+      include: { scoreSections: true },
+    });
+
+    if (!scoreConfig) {
+      throw new NotFoundException(`Score config with ID ${scoreConfigId} not found`);
+    }
+
+    // Get the current max display order
+    const maxOrder = await this.prisma.scoreSection.findFirst({
+      where: { scoreConfigId },
+      orderBy: { displayOrder: 'desc' },
+    });
+
+    const { scoreElements, bonusConditions, penaltyConditions, ...sectionData } = data;
+
+    return this.prisma.$transaction(async (prisma) => {
+      const section = await prisma.scoreSection.create({
+        data: {
+          ...sectionData,
+          scoreConfigId,
+          displayOrder: data.displayOrder ?? ((maxOrder?.displayOrder || 0) + 1),
+          scoreElements: {
+            create: scoreElements?.map((element, index) => ({
+              ...element,
+              displayOrder: element.displayOrder ?? index,
+            })) || [],
+          },
+          bonusConditions: {
+            create: bonusConditions?.map((bonus, index) => ({
+              ...bonus,
+              displayOrder: bonus.displayOrder ?? index,
+            })) || [],
+          },
+          penaltyConditions: {
+            create: penaltyConditions?.map((penalty, index) => ({
+              ...penalty,
+              displayOrder: penalty.displayOrder ?? index,
+            })) || [],
+          },
+        },
+        include: {
+          scoreElements: { orderBy: { displayOrder: 'asc' } },
+          bonusConditions: { orderBy: { displayOrder: 'asc' } },
+          penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+        },
+      });
+
+      return section;
+    });
+  }
+
+  async updateScoreSection(sectionId: string, data: UpdateScoreSectionDto) {
+    const section = await this.prisma.scoreSection.findUnique({ 
+      where: { id: sectionId },
+      include: { scoreConfig: { include: { scoreSections: true } } },
+    });
+    
+    if (!section) {
+      throw new NotFoundException(`Score section with ID ${sectionId} not found`);
+    }
+
+    // If updating the code, validate formula if it exists
+    if (data.code && section.scoreConfig.totalScoreFormula) {
+      const updatedSectionCodes = section.scoreConfig.scoreSections.map(s => 
+        s.id === sectionId ? data.code! : s.code
+      );
+      const validation = this.formulaEvaluator.validateFormulaSyntax(
+        section.scoreConfig.totalScoreFormula, 
+        updatedSectionCodes
+      );
+      if (!validation.isValid) {
+        throw new BadRequestException(`Invalid formula after section code update: ${validation.error}`);
+      }
+    }
+
+    return this.prisma.scoreSection.update({ 
+      where: { id: sectionId }, 
+      data: {
+        name: data.name,
+        code: data.code,
+        description: data.description,
+        displayOrder: data.displayOrder,
+      },
+      include: {
+        scoreElements: { orderBy: { displayOrder: 'asc' } },
+        bonusConditions: { orderBy: { displayOrder: 'asc' } },
+        penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+      },
+    });
+  }
+
+  async deleteScoreSection(sectionId: string) {
+    const section = await this.prisma.scoreSection.findUnique({ 
+      where: { id: sectionId },
+      include: { scoreConfig: { include: { scoreSections: true } } },
+    });
+    
+    if (!section) {
+      throw new NotFoundException(`Score section with ID ${sectionId} not found`);
+    }
+
+    // If formula exists, validate it after section removal
+    if (section.scoreConfig.totalScoreFormula) {
+      const remainingSectionCodes = section.scoreConfig.scoreSections
+        .filter(s => s.id !== sectionId)
+        .map(s => s.code);
+      
+      const validation = this.formulaEvaluator.validateFormulaSyntax(
+        section.scoreConfig.totalScoreFormula, 
+        remainingSectionCodes
+      );
+      
+      if (!validation.isValid) {
+        throw new BadRequestException(`Cannot delete section: Formula would become invalid: ${validation.error}`);
+      }
+    }
+
+    return this.prisma.scoreSection.delete({ where: { id: sectionId } });
+  }
+
+  // Section Element Management
+  async addElementToSection(sectionId: string, data: CreateScoreElementDto) {
+    const section = await this.prisma.scoreSection.findUnique({
+      where: { id: sectionId },
+    });
+
+    if (!section) {
+      throw new NotFoundException(`Score section with ID ${sectionId} not found`);
+    }
+
+    const maxOrder = await this.prisma.scoreElement.findFirst({
+      where: { scoreSectionId: sectionId },
+      orderBy: { displayOrder: 'desc' },
+    });
+
+    return this.prisma.scoreElement.create({
+      data: {
+        ...data,
+        scoreSectionId: sectionId,
+        displayOrder: data.displayOrder ?? ((maxOrder?.displayOrder || 0) + 1),
+      },
+    });
+  }
+
+  async addBonusToSection(sectionId: string, data: CreateBonusConditionDto) {
+    const section = await this.prisma.scoreSection.findUnique({
+      where: { id: sectionId },
+    });
+
+    if (!section) {
+      throw new NotFoundException(`Score section with ID ${sectionId} not found`);
+    }
+
+    const maxOrder = await this.prisma.bonusCondition.findFirst({
+      where: { scoreSectionId: sectionId },
+      orderBy: { displayOrder: 'desc' },
+    });
+
+    return this.prisma.bonusCondition.create({
+      data: {
+        ...data,
+        scoreSectionId: sectionId,
+        displayOrder: data.displayOrder ?? ((maxOrder?.displayOrder || 0) + 1),
+      },
+    });
+  }
+
+  async addPenaltyToSection(sectionId: string, data: CreatePenaltyConditionDto) {
+    const section = await this.prisma.scoreSection.findUnique({
+      where: { id: sectionId },
+    });
+
+    if (!section) {
+      throw new NotFoundException(`Score section with ID ${sectionId} not found`);
+    }
+
+    const maxOrder = await this.prisma.penaltyCondition.findFirst({
+      where: { scoreSectionId: sectionId },
+      orderBy: { displayOrder: 'desc' },
+    });
+
+    return this.prisma.penaltyCondition.create({
+      data: {
+        ...data,
+        scoreSectionId: sectionId,
+        displayOrder: data.displayOrder ?? ((maxOrder?.displayOrder || 0) + 1),
+      },
+    });
+  }
+
+  // Update formula
+  async updateScoreFormula(scoreConfigId: string, formula: string) {
+    const scoreConfig = await this.prisma.scoreConfig.findUnique({
+      where: { id: scoreConfigId },
+      include: { scoreSections: true },
+    });
+
+    if (!scoreConfig) {
+      throw new NotFoundException(`Score config with ID ${scoreConfigId} not found`);
+    }
+
+    const sectionCodes = scoreConfig.scoreSections.map(section => section.code);
+    const validation = this.formulaEvaluator.validateFormulaSyntax(formula, sectionCodes);
+    
+    if (!validation.isValid) {
+      throw new BadRequestException(`Invalid formula: ${validation.error}`);
+    }
+
+    return this.prisma.scoreConfig.update({
+      where: { id: scoreConfigId },
+      data: { totalScoreFormula: formula },
+    });
   }
 }

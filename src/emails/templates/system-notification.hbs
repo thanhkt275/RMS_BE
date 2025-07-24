@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>System Notification - {{notificationType}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f6f6f6; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .header { text-align: center; padding-bottom: 20px; margin-bottom: 30px; }
+        .header.info { border-bottom: 2px solid #17a2b8; }
+        .header.warning { border-bottom: 2px solid #ffc107; }
+        .header.error { border-bottom: 2px solid #dc3545; }
+        .header.success { border-bottom: 2px solid #28a745; }
+        .logo { font-size: 24px; font-weight: bold; }
+        .logo.info { color: #17a2b8; }
+        .logo.warning { color: #ffc107; }
+        .logo.error { color: #dc3545; }
+        .logo.success { color: #28a745; }
+        .notification-card { padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .notification-card.info { background: #d1ecf1; border-left: 4px solid #17a2b8; }
+        .notification-card.warning { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .notification-card.error { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .notification-card.success { background: #d4edda; border-left: 4px solid #28a745; }
+        .notification-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .notification-title.info { color: #0c5460; }
+        .notification-title.warning { color: #856404; }
+        .notification-title.error { color: #721c24; }
+        .notification-title.success { color: #155724; }
+        .priority-high { background: #dc3545; color: white; padding: 5px 10px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .priority-medium { background: #ffc107; color: #212529; padding: 5px 10px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .priority-low { background: #6c757d; color: white; padding: 5px 10px; border-radius: 3px; font-size: 12px; font-weight: bold; }
+        .action-button { display: inline-block; background: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin: 15px 0; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .details-table th, .details-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .details-table th { background: #f8f9fa; font-weight: bold; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header {{priority}}">
+            <div class="logo {{priority}}">
+                {{#eq priority "info"}}ℹ️{{/eq}}
+                {{#eq priority "warning"}}⚠️{{/eq}}
+                {{#eq priority "error"}}🚨{{/eq}}
+                {{#eq priority "success"}}✅{{/eq}}
+                RMS System
+            </div>
+        </div>
+        
+        <h2 style="color: #333;">System Notification</h2>
+        
+        <div style="text-align: right; margin-bottom: 20px;">
+            <span class="priority-{{priority}}">{{priorityLabel}} PRIORITY</span>
+        </div>
+        
+        <div class="notification-card {{priority}}">
+            <div class="notification-title {{priority}}">{{title}}</div>
+            <p>{{message}}</p>
+            
+            {{#if description}}
+            <p><strong>Details:</strong> {{description}}</p>
+            {{/if}}
+        </div>
+        
+        {{#if systemDetails}}
+        <h3>System Information</h3>
+        <table class="details-table">
+            {{#each systemDetails}}
+            <tr>
+                <th>{{@key}}</th>
+                <td>{{this}}</td>
+            </tr>
+            {{/each}}
+        </table>
+        {{/if}}
+        
+        {{#if affectedServices}}
+        <h3>Affected Services</h3>
+        <ul>
+            {{#each affectedServices}}
+            <li><strong>{{this.name}}</strong> - {{this.status}} {{#if this.impact}}({{this.impact}}){{/if}}</li>
+            {{/each}}
+        </ul>
+        {{/if}}
+        
+        {{#if errorDetails}}
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; font-family: monospace; font-size: 14px;">
+            <strong>Error Details:</strong><br>
+            {{errorDetails}}
+        </div>
+        {{/if}}
+        
+        {{#if recommendedActions}}
+        <h3>Recommended Actions</h3>
+        <ol>
+            {{#each recommendedActions}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ol>
+        {{/if}}
+        
+        {{#if actionUrl}}
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{actionUrl}}" class="action-button">{{actionText}}</a>
+        </div>
+        {{/if}}
+        
+        {{#if metrics}}
+        <h3>System Metrics</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0;">
+            {{#each metrics}}
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 5px;">{{this.value}}</div>
+                <div style="font-size: 12px; color: #666;">{{this.label}}</div>
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+        
+        {{#if timeline}}
+        <h3>Timeline</h3>
+        <div style="border-left: 3px solid #dee2e6; padding-left: 20px; margin: 20px 0;">
+            {{#each timeline}}
+            <div style="margin-bottom: 15px;">
+                <div style="font-weight: bold; color: #495057;">{{this.time}}</div>
+                <div style="color: #6c757d; font-size: 14px;">{{this.event}}</div>
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+        
+        <div class="footer">
+            <p><strong>RMS System Operations</strong><br />
+            Generated: {{timestamp}}</p>
+            
+            {{#if contactInfo}}
+            <p>Questions? Contact: {{contactInfo}}</p>
+            {{/if}}
+            
+            <p style="font-size: 12px; color: #999; margin-top: 20px;">
+                This is an automated system notification.<br />
+                {{#if unsubscribeUrl}}
+                <a href="{{unsubscribeUrl}}" style="color: #999;">Manage notification preferences</a>
+                {{/if}}
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+
+<!-- Handlebars helper for equality check -->
+<script>
+// This would be registered in the HandlebarsAdapter configuration
+Handlebars.registerHelper('eq', function(a, b) {
+    return a === b;
+});
+</script>

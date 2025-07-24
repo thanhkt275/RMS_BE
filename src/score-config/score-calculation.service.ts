@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ConditionEvaluatorFactory } from './strategies/condition-evaluator.factory';
 import { Condition } from './interfaces/condition.interface';
+import { FormulaEvaluatorService } from './formula-evaluator.service';
 
 @Injectable()
 export class ScoreCalculationService {
   constructor(
     private prisma: PrismaService,
     private conditionEvaluatorFactory: ConditionEvaluatorFactory,
+    private formulaEvaluator: FormulaEvaluatorService,
   ) {}
 
   private isValidCondition(condition: any): condition is Condition {
@@ -59,6 +61,13 @@ export class ScoreCalculationService {
         scoreElements: true,
         bonusConditions: true,
         penaltyConditions: true,
+        scoreSections: {
+          include: {
+            scoreElements: true,
+            bonusConditions: true,
+            penaltyConditions: true,
+          },
+        },
       },
     });
 
@@ -188,5 +197,244 @@ export class ScoreCalculationService {
     }
 
     return categoryScore;
+  }
+
+  /**
+   * New section-based score calculation that supports custom formulas
+   */
+  async calculateMatchScoreWithSections(
+    matchId: string,
+    allianceId: string,
+    elementScores: Record<string, number>,
+    scoreConfigId?: string
+  ) {
+    // 1. Get the match and alliance to verify they exist
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+      include: { 
+        stage: { 
+          include: { tournament: true } 
+        } 
+      },
+    });
+    
+    if (!match) {
+      throw new NotFoundException(`Match with ID ${matchId} not found`);
+    }
+    
+    const alliance = await this.prisma.alliance.findUnique({
+      where: { id: allianceId },
+    });
+    
+    if (!alliance) {
+      throw new NotFoundException(`Alliance with ID ${allianceId} not found`);
+    }
+    
+    // 2. Get the score config with sections
+    const configId = scoreConfigId || 
+      (await this.prisma.scoreConfig.findFirst({
+        where: { tournamentId: match.stage.tournament.id },
+        orderBy: { createdAt: 'desc' },
+      }))?.id;
+    
+    if (!configId) {
+      throw new NotFoundException(`No score configuration found for this match`);
+    }
+    
+    const scoreConfig = await this.prisma.scoreConfig.findUnique({
+      where: { id: configId },
+      include: {
+        scoreElements: true,
+        bonusConditions: true,
+        penaltyConditions: true,
+        scoreSections: {
+          orderBy: { displayOrder: 'asc' },
+          include: {
+            scoreElements: { orderBy: { displayOrder: 'asc' } },
+            bonusConditions: { orderBy: { displayOrder: 'asc' } },
+            penaltyConditions: { orderBy: { displayOrder: 'asc' } },
+          },
+        },
+      },
+    });
+
+    if (!scoreConfig) {
+      throw new NotFoundException(`Score config with ID ${configId} not found`);
+    }
+
+    const calculationLog: any = {
+      sections: [],
+      legacyElements: [],
+      legacyBonuses: [],
+      legacyPenalties: [],
+      sectionScores: {},
+      totalScore: 0,
+    };
+
+    // 3. Calculate section scores if sections exist
+    if (scoreConfig.scoreSections && scoreConfig.scoreSections.length > 0) {
+      for (const section of scoreConfig.scoreSections) {
+        const sectionResult = this.calculateSectionScore(section, elementScores);
+        calculationLog.sections.push(sectionResult);
+        calculationLog.sectionScores[section.code] = sectionResult.totalScore;
+      }
+
+      // 4. Apply formula to calculate total score
+      if (scoreConfig.totalScoreFormula) {
+        calculationLog.totalScore = this.formulaEvaluator.evaluateFormula(
+          scoreConfig.totalScoreFormula,
+          calculationLog.sectionScores
+        );
+      } else {
+        // If no formula, sum all section scores
+        calculationLog.totalScore = Object.values(calculationLog.sectionScores)
+          .reduce((sum: number, score: number) => sum + score, 0);
+      }
+    }
+
+    // 5. Handle legacy elements, bonuses, and penalties (for backward compatibility)
+    let legacyScore = 0;
+
+    // Process legacy elements
+    for (const element of scoreConfig.scoreElements || []) {
+      const value = elementScores[element.code] || 0;
+      const elementScore = value * element.pointsPerUnit;
+      legacyScore += elementScore;
+      
+      calculationLog.legacyElements.push({
+        elementCode: element.code,
+        elementName: element.name,
+        value,
+        pointsPerUnit: element.pointsPerUnit,
+        totalPoints: elementScore,
+      });
+    }
+
+    // Process legacy bonuses
+    const bonusesEarned: string[] = [];
+    for (const bonus of scoreConfig.bonusConditions || []) {
+      if (!this.isValidCondition(bonus.condition)) continue;
+      
+      const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(bonus.condition);
+      const conditionMet = conditionEvaluator.evaluate(elementScores);
+      
+      if (conditionMet) {
+        legacyScore += bonus.bonusPoints;
+        bonusesEarned.push(bonus.id);
+        
+        calculationLog.legacyBonuses.push({
+          bonusCode: bonus.code,
+          bonusName: bonus.name,
+          bonusPoints: bonus.bonusPoints,
+        });
+      }
+    }
+
+    // Process legacy penalties
+    const penaltiesIncurred: string[] = [];
+    for (const penalty of scoreConfig.penaltyConditions || []) {
+      if (!this.isValidCondition(penalty.condition)) continue;
+      
+      const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(penalty.condition);
+      const conditionMet = conditionEvaluator.evaluate(elementScores);
+      
+      if (conditionMet) {
+        legacyScore += penalty.penaltyPoints;
+        penaltiesIncurred.push(penalty.id);
+        
+        calculationLog.legacyPenalties.push({
+          penaltyCode: penalty.code,
+          penaltyName: penalty.name,
+          penaltyPoints: penalty.penaltyPoints,
+        });
+      }
+    }
+
+    // Add legacy score to total if no sections exist
+    if (!scoreConfig.scoreSections || scoreConfig.scoreSections.length === 0) {
+      calculationLog.totalScore = legacyScore;
+    }
+
+    return {
+      matchId,
+      allianceId,
+      elementScores,
+      bonusesEarned,
+      penaltiesIncurred,
+      totalScore: calculationLog.totalScore,
+      calculationLog,
+      usingSections: scoreConfig.scoreSections && scoreConfig.scoreSections.length > 0,
+      formula: scoreConfig.totalScoreFormula,
+    };
+  }
+
+  /**
+   * Calculate score for a single section
+   */
+  private calculateSectionScore(section: any, elementScores: Record<string, number>) {
+    const sectionLog: any = {
+      sectionCode: section.code,
+      sectionName: section.name,
+      elements: [],
+      bonuses: [],
+      penalties: [],
+      totalScore: 0,
+    };
+
+    let sectionScore = 0;
+
+    // Process section elements
+    for (const element of section.scoreElements || []) {
+      const value = elementScores[element.code] || 0;
+      const elementScore = value * element.pointsPerUnit;
+      sectionScore += elementScore;
+      
+      sectionLog.elements.push({
+        elementCode: element.code,
+        elementName: element.name,
+        value,
+        pointsPerUnit: element.pointsPerUnit,
+        totalPoints: elementScore,
+      });
+    }
+
+    // Process section bonuses
+    for (const bonus of section.bonusConditions || []) {
+      if (!this.isValidCondition(bonus.condition)) continue;
+      
+      const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(bonus.condition);
+      const conditionMet = conditionEvaluator.evaluate(elementScores);
+      
+      if (conditionMet) {
+        sectionScore += bonus.bonusPoints;
+        
+        sectionLog.bonuses.push({
+          bonusCode: bonus.code,
+          bonusName: bonus.name,
+          bonusPoints: bonus.bonusPoints,
+        });
+      }
+    }
+
+    // Process section penalties
+    for (const penalty of section.penaltyConditions || []) {
+      if (!this.isValidCondition(penalty.condition)) continue;
+      
+      const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(penalty.condition);
+      const conditionMet = conditionEvaluator.evaluate(elementScores);
+      
+      if (conditionMet) {
+        sectionScore += penalty.penaltyPoints;
+        
+        sectionLog.penalties.push({
+          penaltyCode: penalty.code,
+          penaltyName: penalty.name,
+          penaltyPoints: penalty.penaltyPoints,
+        });
+      }
+    }
+
+    sectionLog.totalScore = sectionScore;
+    return sectionLog;
   }
 }

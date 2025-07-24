@@ -296,19 +296,40 @@ model ScoreConfig {
   tournamentId      String?
   name              String
   description       String?
+  totalScoreFormula String?            // Formula to calculate total score from sections
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   bonusConditions   BonusCondition[]
   penaltyConditions PenaltyCondition[]
   tournament        Tournament?        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   scoreElements     ScoreElement[]
+  scoreSections     ScoreSection[]     // New relation to sections
 
   @@index([tournamentId])
 }
 
+model ScoreSection {
+  id                String             @id @default(uuid())
+  scoreConfigId     String
+  name              String             // e.g., "auto", "teleop"
+  code              String             // Unique code within config
+  description       String?
+  displayOrder      Int
+  scoreConfig       ScoreConfig        @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+  scoreElements     ScoreElement[]
+  bonusConditions   BonusCondition[]
+  penaltyConditions PenaltyCondition[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@unique([scoreConfigId, code])
+  @@index([scoreConfigId])
+}
+
 model ScoreElement {
   id            String       @id @default(uuid())
-  scoreConfigId String
+  scoreConfigId String?
+  scoreSectionId String?     // New optional relation to section
   name          String
   code          String
   description   String?
@@ -319,40 +340,51 @@ model ScoreElement {
   icon          String?
   color         String?
   matchScores   MatchScore[]
-  scoreConfig   ScoreConfig  @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+  scoreConfig   ScoreConfig? @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+  scoreSection  ScoreSection? @relation(fields: [scoreSectionId], references: [id], onDelete: Cascade)
 
   @@unique([scoreConfigId, code])
+  @@unique([scoreSectionId, code])
   @@index([scoreConfigId])
+  @@index([scoreSectionId])
 }
 
 model BonusCondition {
-  id            String      @id @default(uuid())
-  scoreConfigId String
+  id            String        @id @default(uuid())
+  scoreConfigId String?
+  scoreSectionId String?      // New optional relation to section
   name          String
   code          String
   description   String?
   bonusPoints   Int
   condition     Json
   displayOrder  Int
-  scoreConfig   ScoreConfig @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+  scoreConfig   ScoreConfig?  @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+  scoreSection  ScoreSection? @relation(fields: [scoreSectionId], references: [id], onDelete: Cascade)
 
   @@unique([scoreConfigId, code])
+  @@unique([scoreSectionId, code])
   @@index([scoreConfigId])
+  @@index([scoreSectionId])
 }
 
 model PenaltyCondition {
-  id            String      @id @default(uuid())
-  scoreConfigId String
+  id            String        @id @default(uuid())
+  scoreConfigId String?
+  scoreSectionId String?      // New optional relation to section
   name          String
   code          String
   description   String?
   penaltyPoints Int
   condition     Json
   displayOrder  Int
-  scoreConfig   ScoreConfig @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+  scoreConfig   ScoreConfig?  @relation(fields: [scoreConfigId], references: [id], onDelete: Cascade)
+  scoreSection  ScoreSection? @relation(fields: [scoreSectionId], references: [id], onDelete: Cascade)
 
   @@unique([scoreConfigId, code])
+  @@unique([scoreSectionId, code])
   @@index([scoreConfigId])
+  @@index([scoreSectionId])
 }
 
 model MatchScore {

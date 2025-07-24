@@ -38,6 +38,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/generated ./generated
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Copy email templates
+COPY --from=builder /app/src/emails/templates ./dist/emails/templates
 
 
 # Create non-root user

@@ -2,7 +2,27 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import { EmailsService } from './emails.service';
+
+// Determine the correct template path
+const getTemplatePath = () => {
+  // Try different possible paths
+  const paths = [
+    join(__dirname, 'templates'), // For compiled code: dist/emails/templates
+    join(process.cwd(), 'dist', 'emails', 'templates'), // For project root
+    join(__dirname, '..', 'emails', 'templates'), // Fallback
+  ];
+  
+  for (const path of paths) {
+    if (existsSync(path)) {
+      return path;
+    }
+  }
+  
+  // Default fallback
+  return join(__dirname, 'templates');
+};
 
 @Module({
   imports: [
@@ -23,7 +43,7 @@ import { EmailsService } from './emails.service';
         from: 'Support Team',
       },
       template: {
-        dir: join(__dirname, '../emails/templates'),
+        dir: getTemplatePath(),
         adapter: new HandlebarsAdapter(),
         options: {
           strict: true,
