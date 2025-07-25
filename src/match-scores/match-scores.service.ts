@@ -1,19 +1,23 @@
-import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, Logger } from '@nestjs/common';
 import { CreateMatchScoresDto, UpdateMatchScoresDto } from './dto';
 import { ScoreCalculationService } from './services/score-calculation.service';
 import { AllianceRepository } from './services/alliance.repository';
 import { MatchResultService } from './services/match-result.service';
 import { ITeamStatsService } from './interfaces/team-stats.interface';
 import { ScoreDataDto } from './dto/score-data.dto';
+import { RankingUpdateService } from './ranking-update.service';
 
 
 @Injectable()
 export class MatchScoresService {
+  private readonly logger = new Logger(MatchScoresService.name);
+
   constructor(
     private readonly scoreCalculationService: ScoreCalculationService,
     private readonly allianceRepository: AllianceRepository,
     private readonly matchResultService: MatchResultService,
-    @Inject('ITeamStatsService') private readonly teamStatsService: ITeamStatsService
+    @Inject('ITeamStatsService') private readonly teamStatsService: ITeamStatsService,
+    private readonly rankingUpdateService: RankingUpdateService
   ) {}
   /**
    * @param createMatchScoresDto - DTO with match score data
@@ -26,7 +30,7 @@ export class MatchScoresService {
       scoreData.validate();
 
       // Step 2: Validate match has required alliances
-      const { red: redAlliance, blue: blueAlliance } = 
+      const { red: redAlliance, blue: blueAlliance } =
         await this.allianceRepository.validateMatchAlliances(scoreData.matchId);
 
       // Step 3: Calculate scores and determine winner (with penalties)
@@ -56,7 +60,10 @@ export class MatchScoresService {
       // Step 6: Update team statistics
       await this.updateTeamStatistics(scoreData.matchId);
 
-      // Step 7: Return legacy format for backward compatibility
+      // Step 7: Trigger ranking update (async, don't wait)
+      this.triggerRankingUpdate(scoreData.matchId);
+
+      // Step 8: Return legacy format for backward compatibility
       return {
         id: scoreData.matchId,
         matchId: scoreData.matchId,
@@ -84,10 +91,63 @@ export class MatchScoresService {
    */
   private async updateTeamStatistics(matchId: string): Promise<void> {
     const matchWithDetails = await this.matchResultService.getMatchWithDetails(matchId);
-    
+
     if (matchWithDetails) {
       const teamIds = this.matchResultService.extractTeamIds(matchWithDetails);
       await this.teamStatsService.recalculateTeamStats(matchWithDetails, teamIds);
+    }
+  }
+
+  /**
+   * Triggers ranking update after score changes (async, non-blocking)
+   */
+  private async triggerRankingUpdate(matchId: string): Promise<void> {
+    const context = { matchId, service: 'MatchScoresService' };
+
+    try {
+      this.logger.debug(`🔄 Triggering ranking update for match ${matchId}`, context);
+
+      const matchWithDetails = await this.matchResultService.getMatchWithDetails(matchId);
+
+      if (!matchWithDetails) {
+        this.logger.warn(`⚠️ Match not found for ranking update: ${matchId}`, context);
+        return;
+      }
+
+      if (!matchWithDetails.stage?.tournament) {
+        this.logger.warn(`⚠️ Match ${matchId} has no tournament/stage info for ranking update`, context);
+        return;
+      }
+
+      const tournamentId = matchWithDetails.stage.tournament.id;
+      const stageId = matchWithDetails.stage.id;
+
+      this.logger.debug(`📊 Initiating ranking update for tournament ${tournamentId}, stage ${stageId}`, {
+        ...context,
+        tournamentId,
+        stageId
+      });
+
+      // Trigger ranking update asynchronously (don't await to avoid blocking score submission)
+      this.rankingUpdateService.triggerRankingUpdate(tournamentId, stageId, matchId)
+        .catch(error => {
+          // Log error but don't throw - ranking update failure shouldn't break score submission
+          this.logger.error(`❌ Failed to trigger ranking update for match ${matchId}:`, {
+            ...context,
+            error: error.message,
+            tournamentId,
+            stageId
+          });
+        });
+
+      this.logger.debug(`✅ Ranking update initiated successfully for match ${matchId}`, context);
+    } catch (error) {
+      // Log error but don't throw - ranking update failure shouldn't break score submission
+      this.logger.error(`❌ Failed to get match details for ranking update (match ${matchId}):`, {
+        ...context,
+        error: error.message,
+        stack: error.stack
+      });
     }
   }  /**
    * Finds match scores by match ID
@@ -106,8 +166,8 @@ export class MatchScoresService {
   async findAll() {
     try {
       const matchesWithAlliances = await this.allianceRepository.getAllMatchesWithAlliances();
-      
-      return matchesWithAlliances.map(({ matchId, alliances }) => 
+
+      return matchesWithAlliances.map(({ matchId, alliances }) =>
         this.convertAlliancesToLegacyFormat(matchId, alliances)
       );
     } catch (error) {
