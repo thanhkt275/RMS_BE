@@ -6,8 +6,10 @@ import { FormulaEvaluatorService } from './formula-evaluator.service';
 import { ConditionEvaluatorFactory } from './strategies/condition-evaluator.factory';
 import { ScoreConfigResolutionService } from './score-config-resolution.service';
 import { PrismaService } from '../prisma.service';
+import { MatchScoresModule } from '../match-scores/match-scores.module';
 
 @Module({
+  imports: [MatchScoresModule],
   controllers: [ScoreConfigController],
   providers: [
     ScoreConfigService,
