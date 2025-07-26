@@ -1,10 +1,10 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
   UseGuards,
   HttpStatus,
   NotFoundException,
@@ -100,7 +100,7 @@ export class ScoreConfigController {
     @Param('allianceId') allianceId: string,
     @Body() scoreData: SubmitScoreDto,
   ) {
-    return this.scoreCalculationService.calculateMatchScore(
+    return this.scoreCalculationService.calculateAndPersistMatchScore(
       matchId,
       allianceId,
       scoreData.elementScores,
