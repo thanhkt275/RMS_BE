@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { RankingUpdateService } from '../match-scores/ranking-update.service';
 import { ConditionEvaluatorFactory } from './strategies/condition-evaluator.factory';
 import { Condition } from './interfaces/condition.interface';
 
@@ -8,6 +9,7 @@ export class ScoreCalculationService {
   constructor(
     private prisma: PrismaService,
     private conditionEvaluatorFactory: ConditionEvaluatorFactory,
+    private rankingUpdateService: RankingUpdateService,
   ) {}
 
   private isValidCondition(condition: any): condition is Condition {
@@ -15,44 +17,44 @@ export class ScoreCalculationService {
   }
 
   async calculateMatchScore(
-    matchId: string, 
-    allianceId: string, 
+    matchId: string,
+    allianceId: string,
     elementScores: Record<string, number>,
     scoreConfigId?: string
   ) {
     // 1. Get the match and alliance to verify they exist
     const match = await this.prisma.match.findUnique({
       where: { id: matchId },
-      include: { 
-        stage: { 
-          include: { tournament: true } 
-        } 
+      include: {
+        stage: {
+          include: { tournament: true }
+        }
       },
     });
-    
+
     if (!match) {
       throw new NotFoundException(`Match with ID ${matchId} not found`);
     }
-    
+
     const alliance = await this.prisma.alliance.findUnique({
       where: { id: allianceId },
     });
-    
+
     if (!alliance) {
       throw new NotFoundException(`Alliance with ID ${allianceId} not found`);
     }
-    
+
     // 2. Get the score config (either provided or from tournament)
-    const configId = scoreConfigId || 
+    const configId = scoreConfigId ||
       (await this.prisma.scoreConfig.findFirst({
         where: { tournamentId: match.stage.tournament.id },
         orderBy: { createdAt: 'desc' },
       }))?.id;
-    
+
     if (!configId) {
       throw new NotFoundException(`No score configuration found for this match`);
     }
-    
+
     const scoreConfig = await this.prisma.scoreConfig.findUnique({
       where: { id: configId },
       include: {
@@ -65,17 +67,17 @@ export class ScoreCalculationService {
     if (!scoreConfig) {
       throw new NotFoundException(`Score config with ID ${configId} not found`);
     }
-    
+
     // 3. Calculate base scores from elementScores
     let totalScore = 0;
     const calculationLog: any = { elements: [], bonuses: [], penalties: [] };
-    
+
     // Process each score element
     for (const element of scoreConfig.scoreElements) {
       const value = elementScores[element.code] || 0;
       const elementScore = value * element.pointsPerUnit;
       totalScore += elementScore;
-      
+
       calculationLog.elements.push({
         elementCode: element.code,
         elementName: element.name,
@@ -85,17 +87,17 @@ export class ScoreCalculationService {
       });
     }    // 4. Evaluate bonus conditions
     const bonusesEarned: string[] = [];
-    
+
     for (const bonus of scoreConfig.bonusConditions) {
       if (!this.isValidCondition(bonus.condition)) continue; // Skip if condition is null or invalid
-      
+
       const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(bonus.condition);
       const conditionMet = conditionEvaluator.evaluate(elementScores);
-      
+
       if (conditionMet) {
         totalScore += bonus.bonusPoints;
         bonusesEarned.push(bonus.id);
-        
+
         calculationLog.bonuses.push({
           bonusCode: bonus.code,
           bonusName: bonus.name,
@@ -103,20 +105,20 @@ export class ScoreCalculationService {
         });
       }
     }
-    
+
     // 5. Evaluate penalty conditions
     const penaltiesIncurred: string[] = [];
-    
+
     for (const penalty of scoreConfig.penaltyConditions) {
       if (!this.isValidCondition(penalty.condition)) continue; // Skip if condition is null or invalid
-      
+
       const conditionEvaluator = this.conditionEvaluatorFactory.createEvaluator(penalty.condition);
       const conditionMet = conditionEvaluator.evaluate(elementScores);
-      
+
       if (conditionMet) {
         totalScore += penalty.penaltyPoints; // Note: penalty points are already negative
         penaltiesIncurred.push(penalty.id);
-        
+
         calculationLog.penalties.push({
           penaltyCode: penalty.code,
           penaltyName: penalty.name,
@@ -124,7 +126,7 @@ export class ScoreCalculationService {
         });
       }
     }
-    
+
     calculationLog.totalScore = totalScore;
       // 6. Save and return simple result
     // Note: This service needs to be redesigned to work with the current MatchScore schema
@@ -169,8 +171,45 @@ export class ScoreCalculationService {
       },
     });
 
-    // 4. Return the full calculation result
+    // 4. Trigger ranking update (async, non-blocking)
+    this.triggerRankingUpdateForScoreConfig(matchId);
+
+    // 5. Return the full calculation result
     return calculationResult;
+  }
+
+  /**
+   * Triggers ranking update after score config calculation (async, non-blocking)
+   */
+  private async triggerRankingUpdateForScoreConfig(matchId: string): Promise<void> {
+    try {
+      // Get match details to extract tournament and stage info
+      const match = await this.prisma.match.findUnique({
+        where: { id: matchId },
+        include: {
+          stage: {
+            include: {
+              tournament: true
+            }
+          }
+        }
+      });
+
+      if (match?.stage?.tournament) {
+        const tournamentId = match.stage.tournament.id;
+        const stageId = match.stage.id;
+
+        // Trigger ranking update asynchronously (don't await to avoid blocking score calculation)
+        this.rankingUpdateService.triggerRankingUpdate(tournamentId, stageId, matchId)
+          .catch(error => {
+            // Log error but don't throw - ranking update failure shouldn't break score calculation
+            console.error(`Failed to trigger ranking update for score config (match ${matchId}):`, error);
+          });
+      }
+    } catch (error) {
+      // Log error but don't throw - ranking update failure shouldn't break score calculation
+      console.error(`Failed to get match details for ranking update (score config, match ${matchId}):`, error);
+    }
   }
 
   // Helper to extract scores based on element categories
