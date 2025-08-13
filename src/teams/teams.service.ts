@@ -171,8 +171,12 @@ export class TeamsService {
         },
       });
 
+      const incomingMembers = Array.isArray(createTeamDto.teamMembers)
+        ? createTeamDto.teamMembers
+        : [];
+
       const createdMembers = await Promise.all(
-        createTeamDto.teamMembers.map((memberDto) =>
+        incomingMembers.map((memberDto) =>
           this.createTeamMember(
             {
               ...memberDto,
@@ -232,7 +236,16 @@ export class TeamsService {
     if (!team) {
       throw new NotFoundException(`Team with ID ${id} not found`);
     }
-    return team;
+    // Directly query TeamMember table for this team
+    const teamMembers = await this.prisma.teamMember.findMany({
+      where: { teamId: id },
+    });
+    const teamMemberCount = teamMembers.length;
+    return {
+      ...team,
+      teamMembers,
+      teamMemberCount,
+    };
   }
 
   async update(updateTeamDto: UpdateTeamDto) {

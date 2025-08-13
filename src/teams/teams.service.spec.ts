@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import { EmailsService } from '../emails/emails.service';
+import { Gender } from '../../generated/prisma';
 
 describe('TeamsService', () => {
   let service: TeamsService;
@@ -131,9 +132,45 @@ describe('TeamsService', () => {
   describe('findOne', () => {
     it('should return a team by id', async () => {
       const team = createMockTeam();
+      const teamMembers = [
+        {
+          id: 'member1',
+          name: 'Member 1',
+          teamId: 'team1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          email: 'member1@example.com',
+          phoneNumber: '1234567890',
+          gender: 'MALE' as Gender,
+          province: 'Province 1',
+          ward: 'Ward 1',
+          organization: 'Org 1',
+          organizationAddress: 'Address 1',
+        },
+        {
+          id: 'member2',
+          name: 'Member 2',
+          teamId: 'team1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          email: 'member2@example.com',
+          phoneNumber: '0987654321',
+          gender: 'FEMALE' as Gender,
+          province: 'Province 2',
+          ward: 'Ward 2',
+          organization: 'Org 2',
+          organizationAddress: 'Address 2',
+        },
+      ];
+
       prisma.team.findUnique.mockResolvedValue(team as any);
+      prisma.teamMember.findMany.mockResolvedValue(teamMembers);
+
       const result = await service.findOne('team1');
+
       expect(result).toHaveProperty('id', 'team1');
+      expect(result).toHaveProperty('teamMembers', teamMembers);
+      expect(result).toHaveProperty('teamMemberCount', teamMembers.length);
     });
 
     it('should throw NotFoundException if not found', async () => {
