@@ -18,10 +18,7 @@ import {
   ScoreUpdateDto,
   PersistScoresDto,
   PersistenceResultDto,
-  RankingSubscriptionDto,
-  RankingUnsubscriptionDto,
 } from './dto';
-import { setGlobalEventsGateway } from '../match-scores/ranking-update.service';
 
 interface TimerData {
   duration: number;
@@ -29,6 +26,7 @@ interface TimerData {
   isRunning: boolean;
   startedAt?: number;
   pausedAt?: number;
+  period?: string;
   tournamentId: string;
   fieldId?: string;
 }
@@ -98,10 +96,10 @@ export class EventsGateway
 {
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('EventsGateway');
-
+  
   // Store audience display settings per tournament
   private audienceDisplaySettings: Map<string, AudienceDisplaySettings> = new Map();
-
+  
   // Store active timers per tournament
   private activeTimers: Map<string, NodeJS.Timeout> = new Map();
   constructor(
@@ -111,7 +109,7 @@ export class EventsGateway
   // Helper method to convert Record<string, number> to GameElementDto[]
   private convertGameElementsToDto(gameElements?: Record<string, number>): GameElementDto[] {
     if (!gameElements) return [];
-
+    
     return Object.entries(gameElements).map(([element, count]) => ({
       element,
       count,
@@ -124,7 +122,7 @@ export class EventsGateway
   // Helper method to convert GameElementDto[] to Record<string, number> (if needed)
   private convertDtoToGameElements(gameElements?: GameElementDto[]): Record<string, number> {
     if (!gameElements) return {};
-
+    
     return gameElements.reduce((acc, item) => {
       acc[item.element] = item.count;
       return acc;
@@ -133,9 +131,6 @@ export class EventsGateway
 
   afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
-    // Set global reference for RankingUpdateService
-    setGlobalEventsGateway(this);
-    this.logger.log('Global EventsGateway reference set for ranking updates');
   }
 
   handleConnection(client: Socket, ...args: any[]) {
@@ -145,7 +140,7 @@ export class EventsGateway
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
   }
-
+  
   // Join a tournament room
   @SubscribeMessage('join_tournament')
   handleJoinRoom(
@@ -155,7 +150,7 @@ export class EventsGateway
     const { tournamentId } = data;
     client.join(tournamentId);
     this.logger.log(`Client ${client.id} joined room: ${tournamentId}`);
-
+    
     // Send current audience display settings to the newly joined client
     const currentSettings = this.audienceDisplaySettings.get(tournamentId);
     if (currentSettings) {
@@ -173,48 +168,6 @@ export class EventsGateway
     client.leave(tournamentId);
     this.logger.log(`Client ${client.id} left room: ${tournamentId}`);
   }
-
-  // Subscribe to ranking updates for a tournament
-  @SubscribeMessage('subscribe_rankings')
-  handleSubscribeRankings(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: RankingSubscriptionDto
-  ): void {
-    const { tournamentId, stageId } = data;
-    const roomName = `tournament_${tournamentId}`;
-
-    // Join tournament room if not already joined
-    client.join(roomName);
-
-    this.logger.log(`Client ${client.id} subscribed to rankings for tournament: ${tournamentId}${stageId ? `, stage: ${stageId}` : ''}`);
-
-    // Send acknowledgment
-    client.emit('ranking_subscription_confirmed', {
-      tournamentId,
-      stageId,
-      timestamp: Date.now()
-    });
-  }
-
-  // Unsubscribe from ranking updates
-  @SubscribeMessage('unsubscribe_rankings')
-  handleUnsubscribeRankings(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: RankingUnsubscriptionDto
-  ): void {
-    const { tournamentId } = data;
-    const roomName = `tournament_${tournamentId}`;
-
-    client.leave(roomName);
-
-    this.logger.log(`Client ${client.id} unsubscribed from rankings for tournament: ${tournamentId}`);
-
-    // Send acknowledgment
-    client.emit('ranking_unsubscription_confirmed', {
-      tournamentId,
-      timestamp: Date.now()
-    });
-  }
   // Handle match updates (control panel -> audience display)
   @SubscribeMessage('match_update')
   handleMatchUpdate(
@@ -225,7 +178,7 @@ export class EventsGateway
     if (payload.fieldId) {
       // Use emitToField for field-specific updates
       this.emitToField(payload.fieldId, 'match_update', payload);
-
+      
       // Also emit to tournament for history/archiving
       if (payload.tournamentId) {
         this.server.to(payload.tournamentId).emit('match_update', payload);
@@ -245,7 +198,7 @@ export class EventsGateway
       // Use emitToField for field-specific updates
       this.logger.log(`Emitting score update to field: ${payload.fieldId}`);
       this.emitToField(payload.fieldId, 'score_update', payload);
-
+      
       // Also emit to tournament for history/archiving
       if (payload.tournamentId) {
         this.logger.log(`Emitting score update to tournament: ${payload.tournamentId}`);
@@ -282,7 +235,7 @@ export class EventsGateway
       // Field-specific broadcast - use emitToField for consistent field room naming
       this.emitToField(payload.fieldId, 'scoreUpdateRealtime', eventData);
       this.logger.log(`Broadcasted scoreUpdateRealtime to field room: field:${payload.fieldId}`);
-
+      
       // Also broadcast to tournament room for general monitoring
       if (payload.tournamentId) {
         this.server.to(payload.tournamentId).emit('scoreUpdateRealtime', eventData);
@@ -343,9 +296,9 @@ export class EventsGateway
         data: result,
         timestamp: Date.now(),
       };
-
+      
       this.logger.log(`Scores persisted successfully for match: ${payload.matchId}`);
-
+      
       // Broadcast persistence success to all connected clients (except sender)
       const persistenceEvent = {
         ...payload,
@@ -353,7 +306,7 @@ export class EventsGateway
         persistedBy: payload.submittedBy,
         success: true,
       };
-
+      
       if (payload.fieldId) {
         this.emitToField(payload.fieldId, 'scoresPersisted', persistenceEvent);
         if (payload.tournamentId) {
@@ -364,13 +317,13 @@ export class EventsGateway
       } else {
         this.server.emit('scoresPersisted', persistenceEvent);
       }
-
+      
       // Return success response directly to the requesting client
       return { event: 'persistenceResult', data: successResponse };
-
+      
     } catch (error: any) {
       this.logger.error(`Failed to persist scores for match ${payload.matchId}:`, error);
-
+      
       // Prepare error response
       const errorResponse: PersistenceResultDto = {
         matchId: payload.matchId,
@@ -378,7 +331,7 @@ export class EventsGateway
         error: error.message || 'Failed to persist scores',
         timestamp: Date.now(),
       };
-
+      
       // Optionally broadcast persistence failure
       const failureEvent = {
         ...payload,
@@ -387,7 +340,7 @@ export class EventsGateway
         success: false,
         error: error.message || 'Failed to persist scores',
       };
-
+      
       if (payload.fieldId) {
         this.emitToField(payload.fieldId, 'scoresPersistenceFailed', failureEvent);
         if (payload.tournamentId) {
@@ -396,7 +349,7 @@ export class EventsGateway
       } else if (payload.tournamentId) {
         this.server.to(payload.tournamentId).emit('scoresPersistenceFailed', failureEvent);
       }
-
+      
       // Return error response directly to the requesting client
       return { event: 'persistenceResult', data: errorResponse };
     }
@@ -408,17 +361,23 @@ export class EventsGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any
   ): void {
-    this.logger.log(`Timer update received: ${JSON.stringify(payload)}`);
+    this.logger.log(`Timer update received - Duration: ${payload.duration}ms, Remaining: ${payload.remaining}ms, Running: ${payload.isRunning}, Period: ${payload.period}, Tournament: ${payload.tournamentId}, Field: ${payload.fieldId}`);
+
     if (payload.fieldId) {
       // Use emitToField for field-specific updates
       this.emitToField(payload.fieldId, 'timer_update', payload);
+      this.logger.log(`Timer update broadcast to field ${payload.fieldId} and tournament ${payload.tournamentId}`);
 
       // Also emit to tournament for history/archiving
       if (payload.tournamentId) {
         this.server.to(payload.tournamentId).emit('timer_update', payload);
       }
     } else if (payload.tournamentId) {
-      client.to(payload.tournamentId).emit('timer_update', payload);
+      // Fixed: Use this.server.to() instead of client.to() for proper broadcasting
+      this.server.to(payload.tournamentId).emit('timer_update', payload);
+      this.logger.log(`Timer update broadcast to tournament ${payload.tournamentId} (no field specified)`);
+    } else {
+      this.logger.warn(`Timer update received without tournamentId or fieldId: ${JSON.stringify(payload)}`);
     }
   }
   // Handle match state changes (control panel -> audience display)
@@ -431,7 +390,7 @@ export class EventsGateway
     if (payload.fieldId) {
       // Use emitToField for field-specific updates
       this.emitToField(payload.fieldId, 'match_state_change', payload);
-
+      
       // Also emit to tournament for history/archiving
       if (payload.tournamentId) {
         this.server.to(payload.tournamentId).emit('match_state_change', payload);
@@ -440,7 +399,7 @@ export class EventsGateway
       client.to(payload.tournamentId).emit('match_state_change', payload);
     }
   }
-
+  
   // Handle display mode changes (control panel -> audience display)
   @SubscribeMessage('display_mode_change')
   handleDisplayModeChange(
@@ -468,17 +427,17 @@ export class EventsGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: AnnouncementData  ): void {
     this.logger.log(`Announcement received: ${JSON.stringify(payload)}`);
-
+    
     // If fieldId is provided, emit to that specific field, otherwise broadcast to tournament
     if (payload.fieldId) {
       // Create a unique room ID for this field
       const fieldRoomId = `field:${payload.fieldId}`;
       this.logger.log(`Sending field-specific announcement to ${fieldRoomId}`);
       this.logger.log(`Number of clients in ${fieldRoomId}: ${this.server.sockets.adapter.rooms.get(fieldRoomId)?.size || 0}`);
-
+      
       // Emit to field-specific room
       this.server.to(fieldRoomId).emit('announcement', payload);
-
+      
       // Also emit to tournament for archiving/history purposes
       this.logger.log(`Also sending to tournament room: ${payload.tournamentId}`);
       this.logger.log(`Number of clients in tournament ${payload.tournamentId}: ${this.server.sockets.adapter.rooms.get(payload.tournamentId)?.size || 0}`);
@@ -496,16 +455,19 @@ export class EventsGateway
     }
   }
     // Start a timer for a match (control panel)
-  @SubscribeMessage('start_timer')
+  @SubscribeMessage('timer_start')
   handleStartTimer(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: TimerData
   ): void {
     const { tournamentId, fieldId } = payload;
 
+    this.logger.log(`Timer start received - Duration: ${payload.duration}ms, Remaining: ${payload.remaining}ms, Period: ${payload.period}, Tournament: ${tournamentId}, Field: ${fieldId}`);
+
     // Clear any existing timer for this tournament
     if (this.activeTimers.has(tournamentId)) {
       clearInterval(this.activeTimers.get(tournamentId));
+      this.logger.log(`Cleared existing timer for tournament: ${tournamentId}`);
     }
 
     // Calculate the correct start time based on remaining time
@@ -518,38 +480,19 @@ export class EventsGateway
     // Store the adjusted startTime in the payload for interval calculation
     payload.startedAt = startTime;
 
-    // Create a new timer that emits updates every second
-    const timer = setInterval(() => {
-      const now = Date.now();
-      const elapsed = Math.floor((now - startTime) / 1000) * 1000;
-      const remaining = Math.max(0, payload.duration - elapsed);
-
-      const timerUpdate: TimerData = {
-        ...payload,
-        remaining,
-        isRunning: remaining > 0
-      };
-
-      // Broadcast timer update - if fieldId is provided, use field-specific broadcasting
-      if (fieldId) {
-        this.emitToField(fieldId, 'timer_update', timerUpdate);
-        // Also broadcast to tournament room for general monitoring
-        this.server.to(tournamentId).emit('timer_update', timerUpdate);
-      } else {
-        // Fallback to tournament-only broadcasting
-        this.server.to(tournamentId).emit('timer_update', timerUpdate);
-      }
-
-      // Stop the timer when it reaches zero
-      if (remaining <= 0) {
-        clearInterval(timer);
-        this.activeTimers.delete(tournamentId);
-      }
-    }, 1000);
-
-    this.activeTimers.set(tournamentId, timer);
+    // Store timer metadata for tracking (but don't create competing interval)
+    // The frontend will handle real-time updates and period transitions
+    const timerMetadata = {
+      tournamentId,
+      fieldId,
+      startedAt: startTime,
+      duration: payload.duration,
+      startTime: startTime
+    };
+    
+    this.activeTimers.set(tournamentId, timerMetadata as any);
     this.logger.log(`Timer started for tournament: ${tournamentId}, field: ${fieldId || 'none'}`);
-
+    
     // Initial broadcast - same logic as interval broadcast
     const initialUpdate = {
       ...payload,
@@ -559,54 +502,62 @@ export class EventsGateway
     if (fieldId) {
       this.emitToField(fieldId, 'timer_update', initialUpdate);
       this.server.to(tournamentId).emit('timer_update', initialUpdate);
+      this.logger.log(`Timer start initial broadcast - Duration: ${initialUpdate.duration}ms, Remaining: ${initialUpdate.remaining}ms, Period: ${initialUpdate.period}, Field: ${fieldId}, Tournament: ${tournamentId}`);
     } else {
       this.server.to(tournamentId).emit('timer_update', initialUpdate);
+      this.logger.log(`Timer start initial broadcast - Duration: ${initialUpdate.duration}ms, Remaining: ${initialUpdate.remaining}ms, Period: ${initialUpdate.period}, Tournament: ${tournamentId} (no field)`);
     }
   }
     // Pause a timer for a match (control panel)
-  @SubscribeMessage('pause_timer')
+  @SubscribeMessage('timer_pause')
   handlePauseTimer(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: TimerData
   ): void {
     const { tournamentId, fieldId } = payload;
 
+    this.logger.log(`Timer pause received - Duration: ${payload.duration}ms, Remaining: ${payload.remaining}ms, Period: ${payload.period}, Tournament: ${tournamentId}, Field: ${fieldId}`);
+
     // Clear the active timer for this tournament
     if (this.activeTimers.has(tournamentId)) {
       clearInterval(this.activeTimers.get(tournamentId));
       this.activeTimers.delete(tournamentId);
+      this.logger.log(`Cleared active timer for tournament: ${tournamentId}`);
     }
-
+    
     // Broadcast the paused timer state
     const pausedUpdate = {
       ...payload,
       isRunning: false,
       pausedAt: Date.now()
     };
-
+    
     if (fieldId) {
       this.emitToField(fieldId, 'timer_update', pausedUpdate);
       this.server.to(tournamentId).emit('timer_update', pausedUpdate);
+      this.logger.log(`Timer pause broadcast - Duration: ${pausedUpdate.duration}ms, Remaining: ${pausedUpdate.remaining}ms, Period: ${pausedUpdate.period}, Field: ${fieldId}, Tournament: ${tournamentId}`);
     } else {
       this.server.to(tournamentId).emit('timer_update', pausedUpdate);
+      this.logger.log(`Timer pause broadcast - Duration: ${pausedUpdate.duration}ms, Remaining: ${pausedUpdate.remaining}ms, Period: ${pausedUpdate.period}, Tournament: ${tournamentId} (no field)`);
     }
-
-    this.logger.log(`Timer paused for tournament: ${tournamentId}, field: ${fieldId || 'none'}`);
   }
     // Reset a timer for a match (control panel)
-  @SubscribeMessage('reset_timer')
+  @SubscribeMessage('timer_reset')
   handleResetTimer(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: TimerData
   ): void {
     const { tournamentId, fieldId } = payload;
 
+    this.logger.log(`Timer reset received - Duration: ${payload.duration}ms, Period: ${payload.period}, Tournament: ${tournamentId}, Field: ${fieldId}`);
+
     // Clear the active timer for this tournament
     if (this.activeTimers.has(tournamentId)) {
       clearInterval(this.activeTimers.get(tournamentId));
       this.activeTimers.delete(tournamentId);
+      this.logger.log(`Cleared active timer for tournament: ${tournamentId}`);
     }
-
+    
     // Broadcast the reset timer state
     const resetUpdate = {
       ...payload,
@@ -615,16 +566,18 @@ export class EventsGateway
       startedAt: undefined,
       pausedAt: undefined
     };
-
+    
     if (fieldId) {
       this.emitToField(fieldId, 'timer_update', resetUpdate);
       this.server.to(tournamentId).emit('timer_update', resetUpdate);
+      this.logger.log(`Timer reset broadcast - Duration: ${resetUpdate.duration}ms, Remaining: ${resetUpdate.remaining}ms, Period: ${resetUpdate.period}, Field: ${fieldId}, Tournament: ${tournamentId}`);
     } else {
       this.server.to(tournamentId).emit('timer_update', resetUpdate);
+      this.logger.log(`Timer reset broadcast - Duration: ${resetUpdate.duration}ms, Remaining: ${resetUpdate.remaining}ms, Period: ${resetUpdate.period}, Tournament: ${tournamentId} (no field)`);
     }
-
-    this.logger.log(`Timer reset for tournament: ${tournamentId}, field: ${fieldId || 'none'}`);
   }
+
+
 
   // Broadcast a message to all connected clients in a specific tournament
   public broadcastToTournament(tournamentId: string, event: string, payload: any): void {

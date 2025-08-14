@@ -171,12 +171,8 @@ export class TeamsService {
         },
       });
 
-      const incomingMembers = Array.isArray(createTeamDto.teamMembers)
-        ? createTeamDto.teamMembers
-        : [];
-
       const createdMembers = await Promise.all(
-        incomingMembers.map((memberDto) =>
+        createTeamDto.teamMembers.map((memberDto) =>
           this.createTeamMember(
             {
               ...memberDto,
@@ -197,18 +193,52 @@ export class TeamsService {
     }
   }
 
-  findAll(tournamentId?: string) {
+  async findAll(tournamentId?: string) {
     const where = tournamentId ? { tournamentId } : {};
 
-    return this.prisma.team.findMany({
+    const teams = await this.prisma.team.findMany({
       where,
       include: {
         tournament: true,
+        teamMembers: true,
       },
       orderBy: {
         teamNumber: 'asc',
       },
     });
+
+    // Add team member count for frontend compatibility
+    return teams.map(team => ({
+      ...team,
+      teamMemberCount: team.teamMembers?.length || 0,
+    }));
+  }
+
+  /**
+   * Find all teams where the user is the owner/creator
+   * This method supports the current single-owner model
+   * TODO: Extend to support multi-team membership when schema is updated
+   */
+  async findTeamsByUserId(userId: string) {
+    const teams = await this.prisma.team.findMany({
+      where: {
+        userId: userId,
+      },
+      include: {
+        tournament: true,
+        teamMembers: true,
+      },
+      orderBy: [
+        { tournament: { startDate: 'desc' } },
+        { teamNumber: 'asc' },
+      ],
+    });
+
+    // Add team member count for frontend compatibility
+    return teams.map(team => ({
+      ...team,
+      teamMemberCount: team.teamMembers?.length || 0,
+    }));
   }
 
   async findOne(id: string) {
@@ -216,6 +246,7 @@ export class TeamsService {
       where: { id },
       include: {
         tournament: true,
+        teamMembers: true,
         teamAlliances: {
           include: {
             alliance: {
@@ -236,15 +267,11 @@ export class TeamsService {
     if (!team) {
       throw new NotFoundException(`Team with ID ${id} not found`);
     }
-    // Directly query TeamMember table for this team
-    const teamMembers = await this.prisma.teamMember.findMany({
-      where: { teamId: id },
-    });
-    const teamMemberCount = teamMembers.length;
+
+    // Add team member count for frontend compatibility
     return {
       ...team,
-      teamMembers,
-      teamMemberCount,
+      teamMemberCount: team.teamMembers?.length || 0,
     };
   }
 

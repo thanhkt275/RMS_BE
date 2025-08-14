@@ -1,19 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateMatchDto, CreateAllianceDto } from './dto/create-match.dto';
 import { UpdateMatchDto, UpdateAllianceDto } from './dto/update-match.dto';
 import { MatchScoresService } from '../match-scores/match-scores.service';
+import { MatchChangeDetectionService } from './match-change-detection.service';
 import { MatchState, MatchType } from '../utils/prisma-types';
-import { RankingUpdateService } from '../match-scores/ranking-update.service';
 
 @Injectable()
 export class MatchesService {
-  private readonly logger = new Logger(MatchesService.name);
-
   constructor(
     private prisma: PrismaService,
     private matchScoresService: MatchScoresService,
-    private rankingUpdateService: RankingUpdateService
+    private matchChangeDetectionService: MatchChangeDetectionService
   ) {}
 
   async create(createMatchDto: CreateMatchDto) {
@@ -126,29 +124,33 @@ export class MatchesService {
   async update(id: string, updateMatchDto: UpdateMatchDto & { fieldId?: string; fieldNumber?: number }) {
     const data: any = {};
 
-    // Track if status is being changed to COMPLETED for ranking update
-    const isBeingCompleted = updateMatchDto.status === MatchState.COMPLETED;
+    // Get current match status for change detection
+    let previousStatus: MatchState | undefined;
+    if (updateMatchDto.status !== undefined) {
+      const currentMatch = await this.prisma.match.findUnique({
+        where: { id },
+        select: { status: true },
+      });
+      previousStatus = currentMatch?.status;
+      data.status = updateMatchDto.status;
+    }
 
     if (updateMatchDto.matchNumber !== undefined) {
       data.matchNumber = updateMatchDto.matchNumber;
     }
-
-    if (updateMatchDto.status !== undefined) {
-      data.status = updateMatchDto.status;
-    }
-
+    
     if (updateMatchDto.startTime) {
-      data.startTime = updateMatchDto.startTime instanceof Date
-        ? updateMatchDto.startTime
+      data.startTime = updateMatchDto.startTime instanceof Date 
+        ? updateMatchDto.startTime 
         : new Date(updateMatchDto.startTime);
     }
-
+    
     if (updateMatchDto.endTime) {
-      data.endTime = updateMatchDto.endTime instanceof Date
-        ? updateMatchDto.endTime
+      data.endTime = updateMatchDto.endTime instanceof Date 
+        ? updateMatchDto.endTime 
         : new Date(updateMatchDto.endTime);
     }
-
+    
     if (updateMatchDto.scoredById) {
       data.scoredById = updateMatchDto.scoredById;
     }
@@ -160,16 +162,16 @@ export class MatchesService {
     // Handle fieldId and fieldNumber with auto-assignment
     if (updateMatchDto.fieldId) {
       data.fieldId = updateMatchDto.fieldId;
-
+      
       // Fetch the field and auto-assign head referee
       const field = await this.prisma.field.findUnique({
         where: { id: updateMatchDto.fieldId },
         select: { number: true },
       });
-
+      
       if (!field) throw new Error('Field not found');
       data.fieldNumber = field.number;
-
+      
       // Auto-assign head referee if not already assigned and no explicit scoredById
       if (!updateMatchDto.scoredById && !data.scoredById) {
         const headReferee = await this.prisma.fieldReferee.findFirst({
@@ -178,13 +180,13 @@ export class MatchesService {
             isHeadRef: true,
           },
         });
-
+        
         if (headReferee) {
           data.scoredById = headReferee.userId;
         }
       }
-
-      return this.prisma.match.update({
+      
+      const updatedMatch = await this.prisma.match.update({
         where: { id },
         data,
         include: {
@@ -213,8 +215,22 @@ export class MatchesService {
           }
         },
       });
-    }
 
+      // Trigger change detection if status was updated
+      if (updateMatchDto.status !== undefined && previousStatus !== undefined) {
+        // Call change detection service asynchronously to avoid blocking the response
+        this.matchChangeDetectionService.recordMatchChange(
+          id,
+          previousStatus,
+          updateMatchDto.status
+        ).catch(error => {
+          console.error(`Failed to record match change for ${id}:`, error);
+        });
+      }
+
+      return updatedMatch;
+    }
+    
     // Allow direct fieldNumber update (if provided, but not recommended)
     if (updateMatchDto.fieldNumber !== undefined) {
       data.fieldNumber = updateMatchDto.fieldNumber;
@@ -225,77 +241,35 @@ export class MatchesService {
       data,
       include: {
         alliances: true,
-        stage: {
-          include: {
-            tournament: true
-          }
-        }
       },
     });
 
-    // Trigger ranking update if match was completed
-    if (isBeingCompleted && updatedMatch.stage?.tournament) {
-      this.triggerRankingUpdateForMatchCompletion(
-        updatedMatch.id,
-        updatedMatch.stage.tournament.id,
-        updatedMatch.stage.id
-      );
+    // Trigger change detection if status was updated
+    if (updateMatchDto.status !== undefined && previousStatus !== undefined) {
+      // Call change detection service asynchronously to avoid blocking the response
+      this.matchChangeDetectionService.recordMatchChange(
+        id,
+        previousStatus,
+        updateMatchDto.status
+      ).catch(error => {
+        console.error(`Failed to record match change for ${id}:`, error);
+      });
     }
 
     return updatedMatch;
   }
 
-  /**
-   * Triggers ranking update when a match is completed (async, non-blocking)
-   */
-  private async triggerRankingUpdateForMatchCompletion(
-    matchId: string,
-    tournamentId: string,
-    stageId: string
-  ): Promise<void> {
-    const context = {
-      matchId,
-      tournamentId,
-      stageId,
-      service: 'MatchesService',
-      action: 'match_completion'
-    };
-
-    try {
-      this.logger.log(`🏁 Match completed, triggering ranking update`, context);
-
-      // Trigger ranking update asynchronously (don't await to avoid blocking match update)
-      this.rankingUpdateService.triggerRankingUpdate(tournamentId, stageId, matchId)
-        .catch(error => {
-          // Log error but don't throw - ranking update failure shouldn't break match update
-          this.logger.error(`❌ Failed to trigger ranking update for completed match:`, {
-            ...context,
-            error: error.message
-          });
-        });
-
-      this.logger.debug(`✅ Ranking update initiated for completed match`, context);
-    } catch (error) {
-      // Log error but don't throw - ranking update failure shouldn't break match update
-      this.logger.error(`❌ Failed to trigger ranking update for completed match:`, {
-        ...context,
-        error: error.message,
-        stack: error.stack
-      });
-    }
-  }
-
   async updateAlliance(id: string, updateAllianceDto: UpdateAllianceDto) {
     const data: any = {};
-
+    
     if (updateAllianceDto.score !== undefined) {
       data.score = updateAllianceDto.score;
     }
-
+    
     if (updateAllianceDto.color) {
       data.color = updateAllianceDto.color;
     }
-
+    
     return this.prisma.alliance.update({
       where: { id },
       data,
