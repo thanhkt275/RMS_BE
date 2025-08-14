@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { CreateMatchDto, CreateAllianceDto } from './dto/create-match.dto';
 import { UpdateMatchDto, UpdateAllianceDto } from './dto/update-match.dto';
 import { MatchScoresService } from '../match-scores/match-scores.service';
-import { MatchChangeDetectionService } from '../services/match-change-detection.service';
+import { MatchChangeDetectionService } from './match-change-detection.service';
 import { MatchState, MatchType } from '../utils/prisma-types';
 
 @Injectable()

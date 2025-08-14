@@ -116,7 +116,7 @@ export class TournamentsController {
   ) {
     // This will use the MatchesService method that auto-assigns head referee
     const MatchesService = await import('../matches/matches.service');
-    const MatchChangeDetectionService = await import('../services/match-change-detection.service');
+    const MatchChangeDetectionService = await import('../matches/match-change-detection.service');
     const matchesService = new MatchesService.MatchesService(
       this.tournamentsService['prisma'],
       null as any, // matchScoresService not needed for this operation

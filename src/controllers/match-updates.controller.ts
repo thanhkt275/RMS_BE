@@ -6,7 +6,7 @@
  */
 
 import { Controller, Get, Post, Query, Body, Logger } from '@nestjs/common';
-import { MatchChangeDetectionService } from '../services/match-change-detection.service';
+import { MatchChangeDetectionService } from '../matches/match-change-detection.service';
 
 export interface RecentUpdatesQuery {
   tournamentId: string;

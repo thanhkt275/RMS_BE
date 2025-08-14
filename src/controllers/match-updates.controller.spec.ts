@@ -6,7 +6,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { MatchUpdatesController } from './match-updates.controller';
-import { MatchChangeDetectionService } from '../services/match-change-detection.service';
+import { MatchChangeDetectionService } from '../matches/match-change-detection.service';
 import { MatchState } from '../utils/prisma-types';
 
 describe('MatchUpdatesController', () => {

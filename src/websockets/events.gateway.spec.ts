@@ -42,6 +42,8 @@ describe('EventsGateway', () => {
     gateway.server = mockServer;
     jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
+    jest.spyOn(gateway, 'emitToField').mockImplementation(() => {});
   });
 
   it('should handle client connection and disconnection', () => {
@@ -478,6 +480,181 @@ describe('EventsGateway', () => {
       it('should return empty object when gameElements array is empty', () => {
         const result = (gateway as any).convertDtoToGameElements([]);
         expect(result).toEqual({});
+      });
+    });
+  });
+
+  describe('Timer Synchronization', () => {
+    const mockTimerData = {
+      duration: 150000, // 2:30 in ms
+      remaining: 150000,
+      isRunning: false,
+      period: 'auto',
+      tournamentId: 'test-tournament',
+      fieldId: 'test-field'
+    };
+
+    beforeEach(() => {
+      // Clear any existing timers
+      (gateway as any).activeTimers.clear();
+      jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      // Clean up any active timers
+      (gateway as any).activeTimers.forEach((timer: any) => clearInterval(timer));
+      (gateway as any).activeTimers.clear();
+    });
+
+    describe('timer_start', () => {
+      it('should handle timer start and broadcast initial update with correct data', () => {
+        gateway.handleStartTimer(mockClient, mockTimerData);
+
+        // Verify field-specific broadcast
+        expect(gateway.emitToField).toHaveBeenCalledWith('test-field', 'timer_update', expect.objectContaining({
+          duration: 150000,
+          remaining: 150000,
+          isRunning: true,
+          period: 'auto',
+          tournamentId: 'test-tournament',
+          fieldId: 'test-field'
+        }));
+
+        // Verify tournament broadcast
+        expect(mockServer.to).toHaveBeenCalledWith('test-tournament');
+        expect(mockServer.emit).toHaveBeenCalledWith('timer_update', expect.objectContaining({
+          duration: 150000,
+          remaining: 150000,
+          isRunning: true,
+          period: 'auto'
+        }));
+
+        // Verify timer is stored
+        expect((gateway as any).activeTimers.has('test-tournament')).toBe(true);
+      });
+
+      it('should handle timer start without fieldId', () => {
+        const timerDataNoField = { ...mockTimerData, fieldId: undefined };
+        gateway.handleStartTimer(mockClient, timerDataNoField);
+
+        // Should only broadcast to tournament
+        expect(mockServer.to).toHaveBeenCalledWith('test-tournament');
+        expect(mockServer.emit).toHaveBeenCalledWith('timer_update', expect.objectContaining({
+          duration: 150000,
+          remaining: 150000,
+          isRunning: true,
+          period: 'auto'
+        }));
+      });
+
+      it('should clear existing timer before starting new one', () => {
+        // Start first timer
+        gateway.handleStartTimer(mockClient, mockTimerData);
+        const firstTimer = (gateway as any).activeTimers.get('test-tournament');
+
+        // Start second timer
+        gateway.handleStartTimer(mockClient, mockTimerData);
+        const secondTimer = (gateway as any).activeTimers.get('test-tournament');
+
+        // Should be different timer instances
+        expect(firstTimer).not.toBe(secondTimer);
+      });
+    });
+
+    describe('timer_pause', () => {
+      it('should handle timer pause and broadcast pause update with correct data', () => {
+        const pauseData = { ...mockTimerData, remaining: 120000 }; // 2:00 remaining
+        gateway.handlePauseTimer(mockClient, pauseData);
+
+        // Verify field-specific broadcast
+        expect(gateway.emitToField).toHaveBeenCalledWith('test-field', 'timer_update', expect.objectContaining({
+          duration: 150000,
+          remaining: 120000,
+          isRunning: false,
+          period: 'auto',
+          pausedAt: expect.any(Number)
+        }));
+
+        // Verify tournament broadcast
+        expect(mockServer.to).toHaveBeenCalledWith('test-tournament');
+        expect(mockServer.emit).toHaveBeenCalledWith('timer_update', expect.objectContaining({
+          duration: 150000,
+          remaining: 120000,
+          isRunning: false,
+          period: 'auto'
+        }));
+      });
+    });
+
+    describe('timer_reset', () => {
+      it('should handle timer reset and broadcast reset update with correct data', () => {
+        gateway.handleResetTimer(mockClient, mockTimerData);
+
+        // Verify field-specific broadcast
+        expect(gateway.emitToField).toHaveBeenCalledWith('test-field', 'timer_update', expect.objectContaining({
+          duration: 150000,
+          remaining: 150000, // Reset to full duration
+          isRunning: false,
+          period: 'auto',
+          startedAt: undefined,
+          pausedAt: undefined
+        }));
+
+        // Verify tournament broadcast
+        expect(mockServer.to).toHaveBeenCalledWith('test-tournament');
+        expect(mockServer.emit).toHaveBeenCalledWith('timer_update', expect.objectContaining({
+          duration: 150000,
+          remaining: 150000,
+          isRunning: false,
+          period: 'auto'
+        }));
+      });
+    });
+
+    describe('timer_update', () => {
+      it('should handle timer update and broadcast with correct data', () => {
+        const updateData = { ...mockTimerData, remaining: 90000, isRunning: true, period: 'teleop' };
+        gateway.handleTimerUpdate(mockClient, updateData);
+
+        // Verify field-specific broadcast
+        expect(gateway.emitToField).toHaveBeenCalledWith('test-field', 'timer_update', updateData);
+
+        // Verify tournament broadcast
+        expect(mockServer.to).toHaveBeenCalledWith('test-tournament');
+        expect(mockServer.emit).toHaveBeenCalledWith('timer_update', updateData);
+      });
+
+      it('should handle timer update without fieldId using server broadcast', () => {
+        const updateData = { ...mockTimerData, fieldId: undefined, remaining: 90000, isRunning: true };
+        gateway.handleTimerUpdate(mockClient, updateData);
+
+        // Should use server.to() not client.to()
+        expect(mockServer.to).toHaveBeenCalledWith('test-tournament');
+        expect(mockServer.emit).toHaveBeenCalledWith('timer_update', updateData);
+      });
+
+      it('should preserve all timer data fields in updates', () => {
+        const completeTimerData = {
+          duration: 150000,
+          remaining: 75000,
+          isRunning: true,
+          startedAt: Date.now() - 75000,
+          period: 'endgame',
+          tournamentId: 'test-tournament',
+          fieldId: 'test-field'
+        };
+
+        gateway.handleTimerUpdate(mockClient, completeTimerData);
+
+        expect(gateway.emitToField).toHaveBeenCalledWith('test-field', 'timer_update', expect.objectContaining({
+          duration: 150000,
+          remaining: 75000,
+          isRunning: true,
+          startedAt: expect.any(Number),
+          period: 'endgame',
+          tournamentId: 'test-tournament',
+          fieldId: 'test-field'
+        }));
       });
     });
   });
