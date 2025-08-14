@@ -193,18 +193,52 @@ export class TeamsService {
     }
   }
 
-  findAll(tournamentId?: string) {
+  async findAll(tournamentId?: string) {
     const where = tournamentId ? { tournamentId } : {};
 
-    return this.prisma.team.findMany({
+    const teams = await this.prisma.team.findMany({
       where,
       include: {
         tournament: true,
+        teamMembers: true,
       },
       orderBy: {
         teamNumber: 'asc',
       },
     });
+
+    // Add team member count for frontend compatibility
+    return teams.map(team => ({
+      ...team,
+      teamMemberCount: team.teamMembers?.length || 0,
+    }));
+  }
+
+  /**
+   * Find all teams where the user is the owner/creator
+   * This method supports the current single-owner model
+   * TODO: Extend to support multi-team membership when schema is updated
+   */
+  async findTeamsByUserId(userId: string) {
+    const teams = await this.prisma.team.findMany({
+      where: {
+        userId: userId,
+      },
+      include: {
+        tournament: true,
+        teamMembers: true,
+      },
+      orderBy: [
+        { tournament: { startDate: 'desc' } },
+        { teamNumber: 'asc' },
+      ],
+    });
+
+    // Add team member count for frontend compatibility
+    return teams.map(team => ({
+      ...team,
+      teamMemberCount: team.teamMembers?.length || 0,
+    }));
   }
 
   async findOne(id: string) {
@@ -212,6 +246,7 @@ export class TeamsService {
       where: { id },
       include: {
         tournament: true,
+        teamMembers: true,
         teamAlliances: {
           include: {
             alliance: {
@@ -232,7 +267,12 @@ export class TeamsService {
     if (!team) {
       throw new NotFoundException(`Team with ID ${id} not found`);
     }
-    return team;
+
+    // Add team member count for frontend compatibility
+    return {
+      ...team,
+      teamMemberCount: team.teamMembers?.length || 0,
+    };
   }
 
   async update(updateTeamDto: UpdateTeamDto) {
