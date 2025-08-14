@@ -3,13 +3,15 @@ import { PrismaService } from '../prisma.service';
 import { CreateMatchDto, CreateAllianceDto } from './dto/create-match.dto';
 import { UpdateMatchDto, UpdateAllianceDto } from './dto/update-match.dto';
 import { MatchScoresService } from '../match-scores/match-scores.service';
+import { MatchChangeDetectionService } from '../services/match-change-detection.service';
 import { MatchState, MatchType } from '../utils/prisma-types';
 
 @Injectable()
 export class MatchesService {
   constructor(
     private prisma: PrismaService,
-    private matchScoresService: MatchScoresService
+    private matchScoresService: MatchScoresService,
+    private matchChangeDetectionService: MatchChangeDetectionService
   ) {}
 
   async create(createMatchDto: CreateMatchDto) {
@@ -121,13 +123,20 @@ export class MatchesService {
 
   async update(id: string, updateMatchDto: UpdateMatchDto & { fieldId?: string; fieldNumber?: number }) {
     const data: any = {};
-    
+
+    // Get current match status for change detection
+    let previousStatus: MatchState | undefined;
+    if (updateMatchDto.status !== undefined) {
+      const currentMatch = await this.prisma.match.findUnique({
+        where: { id },
+        select: { status: true },
+      });
+      previousStatus = currentMatch?.status;
+      data.status = updateMatchDto.status;
+    }
+
     if (updateMatchDto.matchNumber !== undefined) {
       data.matchNumber = updateMatchDto.matchNumber;
-    }
-    
-    if (updateMatchDto.status !== undefined) {
-      data.status = updateMatchDto.status;
     }
     
     if (updateMatchDto.startTime) {
@@ -177,7 +186,7 @@ export class MatchesService {
         }
       }
       
-      return this.prisma.match.update({
+      const updatedMatch = await this.prisma.match.update({
         where: { id },
         data,
         include: {
@@ -206,6 +215,20 @@ export class MatchesService {
           }
         },
       });
+
+      // Trigger change detection if status was updated
+      if (updateMatchDto.status !== undefined && previousStatus !== undefined) {
+        // Call change detection service asynchronously to avoid blocking the response
+        this.matchChangeDetectionService.recordMatchChange(
+          id,
+          previousStatus,
+          updateMatchDto.status
+        ).catch(error => {
+          console.error(`Failed to record match change for ${id}:`, error);
+        });
+      }
+
+      return updatedMatch;
     }
     
     // Allow direct fieldNumber update (if provided, but not recommended)
@@ -213,13 +236,27 @@ export class MatchesService {
       data.fieldNumber = updateMatchDto.fieldNumber;
     }
 
-    return this.prisma.match.update({
+    const updatedMatch = await this.prisma.match.update({
       where: { id },
       data,
       include: {
         alliances: true,
       },
     });
+
+    // Trigger change detection if status was updated
+    if (updateMatchDto.status !== undefined && previousStatus !== undefined) {
+      // Call change detection service asynchronously to avoid blocking the response
+      this.matchChangeDetectionService.recordMatchChange(
+        id,
+        previousStatus,
+        updateMatchDto.status
+      ).catch(error => {
+        console.error(`Failed to record match change for ${id}:`, error);
+      });
+    }
+
+    return updatedMatch;
   }
 
   async updateAlliance(id: string, updateAllianceDto: UpdateAllianceDto) {
