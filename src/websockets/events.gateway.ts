@@ -70,6 +70,7 @@ interface AudienceDisplaySettings {
   showTeams?: boolean;
   message?: string;
   tournamentId: string;
+  fieldId?: string | null;
   updatedAt: number;
 }
 
@@ -456,13 +457,24 @@ export class EventsGateway
     this.logger.log(`Display mode change received: ${JSON.stringify(payload)}`);
     // Store the latest settings for this tournament
     this.audienceDisplaySettings.set(payload.tournamentId, payload);
+
     if (payload.tournamentId === "all") {
       // Special case: broadcast to ALL connected clients when tournamentId is "all"
       this.logger.log(`Broadcasting display mode change to ALL clients (tournamentId: "all")`);
       this.logger.log(`Total connected clients: ${this.server.sockets.sockets.size}`);
       this.server.emit('display_mode_change', payload);
+    } else if (payload.fieldId) {
+      // Field-specific broadcast - use emitToField for consistent field room naming
+      this.emitToField(payload.fieldId, 'display_mode_change', payload);
+      this.logger.log(`Broadcasted display_mode_change to field room: field:${payload.fieldId}`);
+
+      // Also broadcast to tournament room for general monitoring
+      if (payload.tournamentId) {
+        this.server.to(payload.tournamentId).emit('display_mode_change', payload);
+        this.logger.log(`Broadcasted display_mode_change to tournament room: ${payload.tournamentId}`);
+      }
     } else {
-      // Broadcast to all clients in the tournament room including the sender
+      // Tournament-wide broadcast (no specific field)
       this.logger.log(`Sending display mode change to tournament room: ${payload.tournamentId}`);
       this.logger.log(`Number of clients in tournament ${payload.tournamentId}: ${this.server.sockets.adapter.rooms.get(payload.tournamentId)?.size || 0}`);
       this.server.to(payload.tournamentId).emit('display_mode_change', payload);
