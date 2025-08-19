@@ -41,9 +41,6 @@ export class AuthController {
   async register(@Body(ValidationPipe) createUserDto: CreateUserDto) {
     return await this.usersService.create(createUserDto);
   }
-  /*async register(@Body(ValidationPipe) registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
-  }*/
 
   @Post('verify')
   @Throttle({ default: { limit: 3, ttl: 60000 } })

@@ -17,6 +17,8 @@ export class TournamentsService {
         endDate: new Date(createTournamentDto.endDate),
         adminId: createTournamentDto.adminId,
         numberOfFields: createTournamentDto.numberOfFields,
+        maxTeamMembers: createTournamentDto.maxTeamMembers,
+        maxTeams: createTournamentDto.maxTeams,
       },
     });
 
@@ -125,6 +127,12 @@ export class TournamentsService {
       data.numberOfFields = updateTournamentDto.numberOfFields;
       numberOfFieldsChanged = true;
       newNumberOfFields = updateTournamentDto.numberOfFields;
+    }
+    if (updateTournamentDto.maxTeamMembers !== undefined) {
+      data.maxTeamMembers = updateTournamentDto.maxTeamMembers;
+    }
+    if (updateTournamentDto.maxTeams !== undefined) {
+      data.maxTeams = updateTournamentDto.maxTeams;
     }
 
     // Update tournament first
