@@ -9,6 +9,8 @@ export const CreateTournamentSchema = z.object({
   endDate: z.coerce.date(),
   adminId: z.string().uuid('Admin ID must be a valid UUID'),
   numberOfFields: z.coerce.number().int().min(1).max(20).default(1),
+  maxTeamMembers: z.coerce.number().int().optional().nullable(),
+  maxTeams: z.coerce.number().int().optional().nullable(),
 }).refine(data => data.startDate <= data.endDate, {
   message: 'End date must be after start date',
   path: ['endDate'],

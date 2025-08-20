@@ -118,6 +118,7 @@ export class TeamsService {
           ward: createTeamMemberDto.ward,
           organization: createTeamMemberDto.organization,
           organizationAddress: createTeamMemberDto.organizationAddress,
+          dateOfBirth: new Date(createTeamMemberDto.dateOfBirth),
           team: {
             connect: { id: createTeamMemberDto.teamId },
           },
@@ -274,8 +275,16 @@ export class TeamsService {
       const { id, ...fields } = member;
 
       const data = Object.fromEntries(
-        Object.entries(fields).filter(([_, v]) => v !== undefined),
+        Object.entries(fields)
+          .filter(([_, v]) => v !== undefined)
+          .map(([k, v]) => {
+            if (k === "dateOfBirth" && typeof v === "string") {
+              return [k, new Date(v)];
+            }
+            return [k, v];
+          }),
       );
+      console.log('hell', data);
 
       if (id) {
         if (Object.keys(data).length > 0) {
@@ -295,6 +304,7 @@ export class TeamsService {
             organization: data.organization!,
             organizationAddress: data.organizationAddress!,
             teamId: updateTeamDto.id,
+            dateOfBirth: data.dateOfBirth!,
           },
           team.name,
           team.tournament.name,

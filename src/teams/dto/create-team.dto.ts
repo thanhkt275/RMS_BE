@@ -17,6 +17,26 @@ export const CreateTeamMemberSchema = z.object({
   organization: z.string().optional(),
   organizationAddress: z.string().optional(),
   teamId: z.string().uuid('Team ID must be a valid UUID').optional(),
+  dateOfBirth: z
+    .string()
+    .refine((val) => {
+      const dob = new Date(val);
+      if (isNaN(dob.getTime())) return false;
+
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const hasHadBirthdayThisYear =
+        today.getMonth() > dob.getMonth() ||
+        (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
+
+      if (!hasHadBirthdayThisYear) {
+        age -= 1;
+      }
+
+      return age >= 10 && age <= 18;
+    }, {
+      message: "Age must be between 10 and 18 years",
+    }),
 });
 
 export const CreateTeamSchema = z.object({

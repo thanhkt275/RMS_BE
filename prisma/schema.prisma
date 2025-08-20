@@ -179,6 +179,7 @@ model TeamMember {
   gender              Gender?
   phoneNumber         String?
   email               String?
+  dateOfBirth         DateTime?
   province            String
   ward                String
   organization        String?

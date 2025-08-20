@@ -49,21 +49,26 @@ export class UsersService {
         userData.createdBy = { connect: { id: createUserDto.createdById } };
       }
 
-      const newUser = await this.prisma.user.create({
-        data: userData,
-        select: this.getUserSelectFields(),
+      const result = await this.prisma.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: userData,
+          select: this.getUserSelectFields(),
+        });
+
+        const activationToken = await this.jwtService.signAsync(
+          { email: createUserDto.email },
+          { expiresIn: '7d' },
+        );
+
+        await this.emailsService.sendAccountActivationInvite(
+          createUserDto.email,
+          `${process.env.FRONTEND_URL}/verify?token=${activationToken}`,
+        );
+
+        return newUser;
       });
 
-      const activationToken = await this.jwtService.signAsync(
-        { email: createUserDto.email },
-        { expiresIn: '7d' },
-      );
-      await this.emailsService.sendAccountActivationInvite(
-        createUserDto.email,
-        `${process.env.FRONTEND_URL}/verify?token=${activationToken}`,
-      );
-
-      return newUser;
+      return result;
     } catch (error) {
       this.handlePrismaError(error);
     }
