@@ -1,32 +1,57 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateMatchDto, CreateAllianceDto } from './dto/create-match.dto';
 import { UpdateMatchDto, UpdateAllianceDto } from './dto/update-match.dto';
 import { MatchScoresService } from '../match-scores/match-scores.service';
 import { MatchChangeDetectionService } from './match-change-detection.service';
 import { MatchState, MatchType } from '../utils/prisma-types';
+import { DateValidationService } from '../common/services/date-validation.service';
 
 @Injectable()
 export class MatchesService {
   constructor(
     private prisma: PrismaService,
     private matchScoresService: MatchScoresService,
-    private matchChangeDetectionService: MatchChangeDetectionService
+    private matchChangeDetectionService: MatchChangeDetectionService,
+    private dateValidationService: DateValidationService,
   ) {}
 
   async create(createMatchDto: CreateMatchDto) {
     const { alliances = [], matchType, ...matchData } = createMatchDto;
 
+    // Validate match dates against stage boundaries if times are provided
+    if (matchData.startTime && matchData.endTime) {
+      const matchRange = {
+        startDate: new Date(matchData.startTime),
+        endDate: new Date(matchData.endTime)
+      };
+
+      const dateValidation = await this.dateValidationService.validateMatchDateRange(
+        matchRange,
+        createMatchDto.stageId
+      );
+
+      if (!dateValidation.isValid) {
+        throw new BadRequestException(
+          `Cannot schedule match: ${dateValidation.errors.join('; ')}`
+        );
+      }
+    }
+
     // Create the match
     const match = await this.prisma.match.create({
       data: {
-        matchNumber: matchData.matchNumber,        status: matchData.status || MatchState.PENDING,
+        matchNumber: matchData.matchNumber,
+        status: matchData.status || MatchState.PENDING,
         startTime: matchData.startTime ? new Date(matchData.startTime) : null,
         endTime: matchData.endTime ? new Date(matchData.endTime) : null,
         stageId: matchData.stageId,
+        fieldId: matchData.fieldId,
         matchType: matchType || MatchType.FULL, // Set matchType, default to 'FULL'
       },
-    });    // If alliances are provided, create them
+    });
+
+    // If alliances are provided, create them
     if (alliances && Array.isArray(alliances) && alliances.length > 0) {
       for (const allianceData of alliances) {
         await this.createAlliance(match.id, allianceData);
@@ -124,6 +149,51 @@ export class MatchesService {
   async update(id: string, updateMatchDto: UpdateMatchDto & { fieldId?: string; fieldNumber?: number }) {
     const data: any = {};
 
+    // Validate date changes if provided
+    if (updateMatchDto.startTime || updateMatchDto.endTime) {
+      // Get current match to merge with new times
+      const currentMatch = await this.prisma.match.findUnique({
+        where: { id },
+        select: {
+          startTime: true,
+          endTime: true,
+          stageId: true,
+          matchNumber: true
+        }
+      });
+
+      if (!currentMatch) {
+        throw new BadRequestException('Match not found');
+      }
+
+      const newStartTime = updateMatchDto.startTime
+        ? (updateMatchDto.startTime instanceof Date ? updateMatchDto.startTime : new Date(updateMatchDto.startTime))
+        : currentMatch.startTime;
+      const newEndTime = updateMatchDto.endTime
+        ? (updateMatchDto.endTime instanceof Date ? updateMatchDto.endTime : new Date(updateMatchDto.endTime))
+        : currentMatch.endTime;
+
+      // Only validate if both times are available
+      if (newStartTime && newEndTime) {
+        const matchRange = {
+          startDate: newStartTime,
+          endDate: newEndTime
+        };
+
+        const dateValidation = await this.dateValidationService.validateMatchDateRange(
+          matchRange,
+          currentMatch.stageId,
+          id // Exclude current match from validation
+        );
+
+        if (!dateValidation.isValid) {
+          throw new BadRequestException(
+            `Cannot update match schedule: ${dateValidation.errors.join('; ')}`
+          );
+        }
+      }
+    }
+
     // Get current match status for change detection
     let previousStatus: MatchState | undefined;
     if (updateMatchDto.status !== undefined) {
@@ -138,16 +208,16 @@ export class MatchesService {
     if (updateMatchDto.matchNumber !== undefined) {
       data.matchNumber = updateMatchDto.matchNumber;
     }
-    
+
     if (updateMatchDto.startTime) {
-      data.startTime = updateMatchDto.startTime instanceof Date 
-        ? updateMatchDto.startTime 
+      data.startTime = updateMatchDto.startTime instanceof Date
+        ? updateMatchDto.startTime
         : new Date(updateMatchDto.startTime);
     }
-    
+
     if (updateMatchDto.endTime) {
-      data.endTime = updateMatchDto.endTime instanceof Date 
-        ? updateMatchDto.endTime 
+      data.endTime = updateMatchDto.endTime instanceof Date
+        ? updateMatchDto.endTime
         : new Date(updateMatchDto.endTime);
     }
     

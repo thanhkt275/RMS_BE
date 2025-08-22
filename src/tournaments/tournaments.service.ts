@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { Team, UserRole } from '../../generated/prisma';
+import { DateValidationService } from '../common/services/date-validation.service';
 
 @Injectable()
 export class TournamentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private dateValidationService: DateValidationService
+  ) {}
   async create(createTournamentDto: CreateTournamentDto) {
     // Create the tournament first
     const tournament = await this.prisma.tournament.create({
@@ -47,6 +51,9 @@ export class TournamentsService {
             id: true,
             username: true,
           },
+        },
+        _count: {
+          select: { teams: true },
         },
       },
     });
@@ -108,6 +115,53 @@ export class TournamentsService {
     const data: any = {};
     let numberOfFieldsChanged = false;
     let newNumberOfFields: number | undefined;
+    let dateRangeChanged = false;
+
+    // Validate date range changes if provided
+    if (updateTournamentDto.startDate || updateTournamentDto.endDate) {
+      // Get current tournament to merge with new dates
+      const currentTournament = await this.prisma.tournament.findUnique({
+        where: { id },
+        select: { startDate: true, endDate: true }
+      });
+
+      if (!currentTournament) {
+        throw new BadRequestException('Tournament not found');
+      }
+
+      const newStartDate = updateTournamentDto.startDate
+        ? new Date(updateTournamentDto.startDate)
+        : currentTournament.startDate;
+      const newEndDate = updateTournamentDto.endDate
+        ? new Date(updateTournamentDto.endDate)
+        : currentTournament.endDate;
+
+      // Validate the new date range against existing stages
+      const dateValidation = await this.dateValidationService.validateTournamentDateRange(
+        { startDate: newStartDate, endDate: newEndDate },
+        { tournamentId: id }
+      );
+
+      if (!dateValidation.isValid) {
+        throw new BadRequestException(
+          `Cannot update tournament dates: ${dateValidation.errors.join('; ')}`
+        );
+      }
+
+      // Check if the update would affect existing data
+      const updateImpact = await this.dateValidationService.canUpdateTournamentDates(
+        id,
+        { startDate: newStartDate, endDate: newEndDate }
+      );
+
+      if (!updateImpact.canUpdate) {
+        throw new BadRequestException(
+          `Cannot update tournament dates: ${updateImpact.blockers.join('; ')}`
+        );
+      }
+
+      dateRangeChanged = true;
+    }
 
     if (updateTournamentDto.name) {
       data.name = updateTournamentDto.name;
@@ -120,6 +174,11 @@ export class TournamentsService {
     }
     if (updateTournamentDto.endDate) {
       data.endDate = new Date(updateTournamentDto.endDate);
+    }
+    if (updateTournamentDto.registrationDeadline !== undefined) {
+      data.registrationDeadline = updateTournamentDto.registrationDeadline
+        ? new Date(updateTournamentDto.registrationDeadline)
+        : null;
     }
     if (updateTournamentDto.numberOfFields !== undefined) {
       data.numberOfFields = updateTournamentDto.numberOfFields;
@@ -254,5 +313,42 @@ export class TournamentsService {
       },
       orderBy: { number: 'asc' },
     });
+  }
+
+  /**
+   * Get date boundaries for validation purposes
+   */
+  async getDateBoundaries(tournamentId: string) {
+    return this.dateValidationService.getDateBoundaries(tournamentId);
+  }
+
+  /**
+   * Validate if tournament dates can be updated
+   */
+  async validateDateUpdate(
+    tournamentId: string,
+    newStartDate: Date,
+    newEndDate: Date
+  ) {
+    const dateRange = { startDate: newStartDate, endDate: newEndDate };
+
+    // Validate against existing stages
+    const dateValidation = await this.dateValidationService.validateTournamentDateRange(
+      dateRange,
+      { tournamentId }
+    );
+
+    // Check update impact
+    const updateImpact = await this.dateValidationService.canUpdateTournamentDates(
+      tournamentId,
+      dateRange
+    );
+
+    return {
+      isValid: dateValidation.isValid && updateImpact.canUpdate,
+      errors: [...dateValidation.errors, ...updateImpact.blockers],
+      warnings: updateImpact.warnings,
+      impact: updateImpact
+    };
   }
 }

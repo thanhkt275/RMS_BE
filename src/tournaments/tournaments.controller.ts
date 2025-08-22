@@ -116,11 +116,15 @@ export class TournamentsController {
   ) {
     // This will use the MatchesService method that auto-assigns head referee
     const MatchesService = await import('../matches/matches.service');
-    const MatchChangeDetectionService = await import('../matches/match-change-detection.service');
+    const DateValidationService = await import('../common/services/date-validation.service');
+    const dateValidationService = new DateValidationService.DateValidationService(
+      this.tournamentsService['prisma']
+    );
     const matchesService = new MatchesService.MatchesService(
       this.tournamentsService['prisma'],
       null as any, // matchScoresService not needed for this operation
       null as any, // matchChangeDetectionService not needed for this operation
+      dateValidationService,
     );
     return matchesService.assignMatchToField(matchId, fieldId);
   }
@@ -140,5 +144,24 @@ export class TournamentsController {
   @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.tournamentsService.remove(id);
+  }
+
+  @Get(':id/date-boundaries')
+  async getDateBoundaries(@Param('id') id: string) {
+    return this.tournamentsService.getDateBoundaries(id);
+  }
+
+  @Post(':id/validate-date-update')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async validateDateUpdate(
+    @Param('id') id: string,
+    @Body() body: { startDate: string; endDate: string }
+  ) {
+    return this.tournamentsService.validateDateUpdate(
+      id,
+      new Date(body.startDate),
+      new Date(body.endDate)
+    );
   }
 }

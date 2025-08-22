@@ -4,10 +4,12 @@ import { PrismaService } from '../prisma.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import { EmailsService } from '../emails/emails.service';
+import { DateValidationService } from '../common/services/date-validation.service';
 
 describe('TeamsService', () => {
   let service: TeamsService;
   let prisma: DeepMockProxy<PrismaService>;
+  let dateValidationService: DeepMockProxy<DateValidationService>;
 
   const createMockTeam = (overrides: any = {}) => {
     const now = new Date();
@@ -15,14 +17,11 @@ describe('TeamsService', () => {
       id: 'team1',
       name: 'Team 1',
       teamNumber: '000001',
-      organization: null,
-      avatar: null,
-      description: null,
-      teamLead: null,
-      teamLeadId: null,
-      teamMembers: [],
       tournamentId: 't1',
       currentStageId: null,
+      userId: 'user1',
+      referralSource: 'test',
+      teamMembers: [],
       createdAt: now,
       updatedAt: now,
       ...overrides,
@@ -32,11 +31,13 @@ describe('TeamsService', () => {
   beforeEach(async () => {
     prisma = mockDeep<PrismaService>();
     const emailsService = mockDeep<EmailsService>();
+    dateValidationService = mockDeep<DateValidationService>();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TeamsService,
         { provide: PrismaService, useValue: prisma },
-        { provide: EmailsService, useValue: emailsService }
+        { provide: EmailsService, useValue: emailsService },
+        { provide: DateValidationService, useValue: dateValidationService }
       ],
     }).compile();
     service = module.get<TeamsService>(TeamsService);
@@ -55,6 +56,12 @@ describe('TeamsService', () => {
         ...team,
         tournament: { id: 't1', name: 'Tournament 1' }
       } as any);
+
+      // Mock date validation service
+      dateValidationService.validateTeamRegistrationTiming.mockResolvedValue({
+        isValid: true,
+        errors: []
+      });
 
       const dto = {
         name: 'Team 1',
@@ -89,6 +96,13 @@ describe('TeamsService', () => {
         name: 'Tournament 1'
       } as any);
       prisma.team.findFirst.mockResolvedValue(null);
+
+      // Mock successful date validation
+      dateValidationService.validateTeamRegistrationTiming.mockResolvedValue({
+        isValid: true,
+        errors: []
+      });
+
       prisma.team.create.mockRejectedValue(
         new Error('Failed to create team: DB error'),
       );

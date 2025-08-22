@@ -5,17 +5,66 @@ import { MatchesService } from './matches.service';
 import { MatchesController } from './matches.controller';
 import { PrismaService } from '../prisma.service';
 import { MatchScoresService } from '../match-scores/match-scores.service';
+import { MatchChangeDetectionService } from './match-change-detection.service';
+import { DateValidationService } from '../common/services/date-validation.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { MatchState, MatchType, AllianceColor } from '../utils/prisma-types';
+
+// Helper function to create mock match with all required fields
+function createMockMatch(overrides: Partial<any> = {}) {
+  const now = new Date();
+  return {
+    id: 'match1',
+    matchNumber: 1,
+    roundNumber: 1,
+    status: MatchState.PENDING,
+    startTime: null,
+    scheduledTime: null,
+    endTime: null,
+    duration: null,
+    winningAlliance: null,
+    stageId: 'stage1',
+    scoredById: null,
+    roundType: null,
+    scheduleId: null,
+    fieldId: null,
+    matchType: MatchType.FULL,
+    matchDuration: null,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
+// Helper function to create mock alliance with all required fields
+function createMockAlliance(overrides: Partial<any> = {}) {
+  const now = new Date();
+  return {
+    id: 'alliance1',
+    color: AllianceColor.RED,
+    score: 0,
+    matchId: 'match1',
+    autoScore: 0,
+    driveScore: 0,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
 
 describe('MatchesController', () => {
   let app: INestApplication;
   let matchesService: MatchesService;
   let prisma: DeepMockProxy<PrismaService>;
   let matchScoresService: DeepMockProxy<MatchScoresService>;
+  let matchChangeDetectionService: DeepMockProxy<MatchChangeDetectionService>;
+  let dateValidationService: DeepMockProxy<DateValidationService>;
 
   beforeAll(async () => {
     prisma = mockDeep<PrismaService>();
     matchScoresService = mockDeep<MatchScoresService>();
+    matchChangeDetectionService = mockDeep<MatchChangeDetectionService>();
+    dateValidationService = mockDeep<DateValidationService>();
 
     const moduleRef: TestingModule = await Test.createTestingModule({
       controllers: [MatchesController],
@@ -23,6 +72,8 @@ describe('MatchesController', () => {
         MatchesService,
         { provide: PrismaService, useValue: prisma },
         { provide: MatchScoresService, useValue: matchScoresService },
+        { provide: MatchChangeDetectionService, useValue: matchChangeDetectionService },
+        { provide: DateValidationService, useValue: dateValidationService },
       ],
     }).compile();
 
@@ -38,6 +89,12 @@ describe('MatchesController', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock date validation service to return valid by default
+    dateValidationService.validateMatchDateRange.mockResolvedValue({
+      isValid: true,
+      errors: []
+    });
   });
 
   it('should be defined', () => {
@@ -338,7 +395,7 @@ describe('MatchesController', () => {
       prisma.field.findUnique.mockResolvedValue(mockField as any);
       prisma.match.update.mockResolvedValue({ ...mockUpdatedMatch, scoredById: 'existing-scorer' } as any);
 
-      const result = await matchesService.update('match1', updateDto as any);
+      await matchesService.update('match1', updateDto as any);
 
       // Should still call field.findUnique to get field number
       expect(prisma.field.findUnique).toHaveBeenCalledWith({
@@ -363,7 +420,7 @@ describe('MatchesController', () => {
       
       prisma.match.update.mockResolvedValue({ id: 'match1', status: 'IN_PROGRESS' } as any);
 
-      const result = await matchesService.update('match1', updateDto as any);
+      await matchesService.update('match1', updateDto as any);
 
       // Should not call field lookup or head referee lookup since fieldId is not being updated
       expect(prisma.field.findUnique).toHaveBeenCalledTimes(0);
@@ -392,7 +449,7 @@ describe('MatchesController', () => {
       prisma.fieldReferee.findFirst.mockResolvedValue(null);
       prisma.match.update.mockResolvedValue({ ...mockUpdatedMatch, scoredById: null } as any);
 
-      const result = await matchesService.update('match1', updateDto as any);
+      await matchesService.update('match1', updateDto as any);
 
       expect(prisma.match.update).toHaveBeenCalledWith({
         where: { id: 'match1' },
