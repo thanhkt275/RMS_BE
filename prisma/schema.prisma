@@ -37,24 +37,25 @@ model User {
 }
 
 model Tournament {
-  id             String        @id @default(uuid())
-  name           String
-  description    String?
-  startDate      DateTime
-  endDate        DateTime
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  adminId        String
-  admin          User          @relation(fields: [adminId], references: [id])
-  stages         Stage[]
-  teams          Team[] // Added teams relationship
-  teamStats      TeamStats[] // New relation to track team statistics
-  fields         Field[] // New relation: Tournament has many Fields
-  numberOfFields Int           @default(1)
-  scoreConfigs   ScoreConfig[] // New relation: Tournament has many ScoreConfigs
-  maxTeams       Int?
-  maxTeamMembers Int?
-  minTeamMembers Int?
+  id                   String        @id @default(uuid())
+  name                 String
+  description          String?
+  startDate            DateTime
+  endDate              DateTime
+  registrationDeadline DateTime?     // Optional registration deadline
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  adminId              String
+  admin                User          @relation(fields: [adminId], references: [id])
+  stages               Stage[]
+  teams                Team[] // Added teams relationship
+  teamStats            TeamStats[] // New relation to track team statistics
+  fields               Field[] // New relation: Tournament has many Fields
+  numberOfFields       Int           @default(1)
+  scoreConfigs         ScoreConfig[] // New relation: Tournament has many ScoreConfigs
+  maxTeams             Int?
+  maxTeamMembers       Int?
+  minTeamMembers       Int?
 
   @@index([adminId])
 }
@@ -62,6 +63,7 @@ model Tournament {
 model Stage {
   id               String      @id @default(uuid())
   name             String
+  description      String?     // Optional stage description
   type             StageType
   status           StageStatus @default(ACTIVE) // Use proper enum instead of string
   startDate        DateTime
@@ -71,6 +73,9 @@ model Stage {
   matches          Match[]
   teamStats        TeamStats[] // Added relation field for TeamStats
   teamsPerAlliance Int         @default(2) // Number of teams per alliance (2v2, 3v3, etc.)
+  maxTeams         Int?        // Maximum teams allowed in this stage
+  isElimination    Boolean     @default(false) // Whether this is an elimination stage
+  advancementRules String?     // Rules for advancing to next stage
 
   // Add relationship to teams in this stage
   teams Team[] @relation("StageTeams")

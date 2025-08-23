@@ -87,6 +87,31 @@ export class StagesController {
   }
 
   /**
+   * Get date boundaries for stage validation
+   */
+  @Get(':id/date-boundaries')
+  async getDateBoundaries(@Param('id') id: string) {
+    return this.stagesService.getDateBoundaries(id);
+  }
+
+  /**
+   * Validate stage date update
+   */
+  @Post(':id/validate-date-update')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async validateDateUpdate(
+    @Param('id') id: string,
+    @Body() body: { startDate: string; endDate: string }
+  ) {
+    return this.stagesService.validateDateUpdate(
+      id,
+      new Date(body.startDate),
+      new Date(body.endDate)
+    );
+  }
+
+  /**
    * Advance teams from current stage to the next stage
    * Only admins can perform stage advancement
    */

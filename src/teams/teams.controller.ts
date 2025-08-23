@@ -42,6 +42,12 @@ export class TeamsController {
     return this.teamsService.findAll(tournamentId);
   }
 
+  @Get('user/my-teams')
+  @UseGuards(JwtAuthGuard)
+  findUserTeams(@CurrentUser() user) {
+    return this.teamsService.findTeamsByUserId(user.id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.teamsService.findOne(id);

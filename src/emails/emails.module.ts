@@ -23,7 +23,7 @@ import { EmailsService } from './emails.service';
         from: 'Support Team',
       },
       template: {
-        dir: join(__dirname, '../emails/templates'),
+        dir: join(__dirname, 'emails', 'templates'),
         adapter: new HandlebarsAdapter(),
         options: {
           strict: true,

@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma.service';
 import { CreateTeamDto, CreateTeamMemberDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { ImportTeamsDto } from './dto/import-teams.dto';
+import { DateValidationService } from '../common/services/date-validation.service';
 import { Gender, TeamMember } from '../../generated/prisma';
 import { Prisma } from '../../generated/prisma';
 import { EmailsService } from '../emails/emails.service';
@@ -16,6 +17,7 @@ export class TeamsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailsService,
+    private readonly dateValidationService: DateValidationService,
   ) {}
 
   /**
@@ -143,11 +145,38 @@ export class TeamsService {
   async createTeam(createTeamDto: CreateTeamDto) {
     const tournament = await this.prisma.tournament.findUnique({
       where: { id: createTeamDto.tournamentId },
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+        registrationDeadline: true
+      }
     });
 
     if (!tournament) {
       throw new BadRequestException(
         `Tournament with ID ${createTeamDto.tournamentId} does not exist.`,
+      );
+    }
+
+    // Validate team registration timing
+    const registrationDate = new Date();
+    const registrationValidation = await this.dateValidationService.validateTeamRegistrationTiming(
+      registrationDate,
+      createTeamDto.tournamentId
+    );
+
+    if (!registrationValidation.isValid) {
+      throw new BadRequestException(
+        `Cannot register team: ${registrationValidation.errors.join('; ')}`
+      );
+    }
+
+    // Check registration deadline if set
+    if (tournament.registrationDeadline && registrationDate > tournament.registrationDeadline) {
+      throw new BadRequestException(
+        `Registration deadline has passed (${tournament.registrationDeadline.toLocaleDateString()})`
       );
     }
 
@@ -193,18 +222,58 @@ export class TeamsService {
     }
   }
 
-  findAll(tournamentId?: string) {
+  async findAll(tournamentId?: string) {
     const where = tournamentId ? { tournamentId } : {};
 
-    return this.prisma.team.findMany({
+    const teams = await this.prisma.team.findMany({
       where,
       include: {
         tournament: true,
+        teamMembers: true,
+        _count: {
+          select: { teamMembers: true },
+        },
       },
       orderBy: {
         teamNumber: 'asc',
       },
     });
+
+    // Add team member count for frontend compatibility
+    return teams.map(team => ({
+      ...team,
+      teamMemberCount: team.teamMembers?.length || 0,
+    }));
+  }
+
+  /**
+   * Find all teams where the user is the owner/creator
+   * This method supports the current single-owner model
+   * TODO: Extend to support multi-team membership when schema is updated
+   */
+  async findTeamsByUserId(userId: string) {
+    const teams = await this.prisma.team.findMany({
+      where: {
+        userId: userId,
+      },
+      include: {
+        tournament: true,
+        teamMembers: true,
+        _count: {
+          select: { teamMembers: true },
+        },
+      },
+      orderBy: [
+        { tournament: { startDate: 'desc' } },
+        { teamNumber: 'asc' },
+      ],
+    });
+
+    // Add team member count for frontend compatibility
+    return teams.map(team => ({
+      ...team,
+      teamMemberCount: team.teamMembers?.length || 0,
+    }));
   }
 
   async findOne(id: string) {
@@ -212,6 +281,10 @@ export class TeamsService {
       where: { id },
       include: {
         tournament: true,
+        teamMembers: true,
+        _count: {
+          select: { teamMembers: true },
+        },
         teamAlliances: {
           include: {
             alliance: {
@@ -232,7 +305,12 @@ export class TeamsService {
     if (!team) {
       throw new NotFoundException(`Team with ID ${id} not found`);
     }
-    return team;
+
+    // Add team member count for frontend compatibility
+    return {
+      ...team,
+      teamMemberCount: team.teamMembers?.length || 0,
+    };
   }
 
   async update(updateTeamDto: UpdateTeamDto) {

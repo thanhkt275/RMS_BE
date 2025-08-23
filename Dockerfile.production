@@ -1,0 +1,155 @@
+# Production-Ready Multi-stage Dockerfile for NestJS Backend
+# Build arguments
+ARG NODE_VERSION=20
+ARG ALPINE_VERSION=3.18
+
+# ---- Base Stage ----
+FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    dumb-init \
+    libc6-compat \
+    openssl \
+    ca-certificates
+
+WORKDIR /app
+
+# ---- Dependencies Stage ----
+FROM base AS deps
+
+# Copy package files
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
+
+# Install production dependencies only
+RUN \
+  if [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && \
+    pnpm install --frozen-lockfile --prod; \
+  elif [ -f package-lock.json ]; then \
+    npm ci --only=production --legacy-peer-deps --no-audit --no-fund; \
+  else \
+    echo "Lockfile not found." && exit 1; \
+  fi
+
+# Clean npm cache
+RUN npm cache clean --force
+
+# ---- Build Dependencies Stage ----
+FROM base AS build-deps
+
+# Copy package files
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
+
+# Install all dependencies (including dev dependencies)
+RUN \
+  if [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && \
+    pnpm install --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then \
+    npm ci --legacy-peer-deps --no-audit --no-fund; \
+  else \
+    echo "Lockfile not found." && exit 1; \
+  fi
+
+# ---- Builder Stage ----
+FROM base AS builder
+
+# Copy all dependencies from build-deps
+COPY --from=build-deps /app/node_modules ./node_modules
+
+# Copy source files in order of change frequency
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
+COPY .eslintrc.js ./
+COPY prisma/ ./prisma/
+
+# Copy source code
+COPY src/ ./src/
+
+# Build-time environment (don't copy sensitive .env files)
+ARG DATABASE_URL
+ARG NODE_ENV=production
+ARG JWT_SECRET
+ARG EMAIL
+ARG EMAIL_PASSWORD
+
+ENV NODE_ENV=$NODE_ENV
+ENV DATABASE_URL=$DATABASE_URL
+ENV JWT_SECRET=$JWT_SECRET
+ENV EMAIL=$EMAIL 
+ENV EMAIL_PASSWORD=$EMAIL_PASSWORD
+
+# Generate Prisma client
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Build the application
+RUN \
+  if [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && \
+    pnpm run build; \
+  else \
+    npm run build; \
+  fi
+
+# Remove development dependencies after build
+RUN \
+  if [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && \
+    pnpm prune --prod; \
+  else \
+    npm prune --production; \
+  fi
+
+# ---- Production Stage ----
+FROM base AS production
+
+# Install additional security and monitoring tools
+RUN apk add --no-cache \
+    curl \
+    tini \
+    su-exec
+
+# Create non-root user with specific IDs for consistency
+RUN addgroup --system --gid 1001 nestjs && \
+    adduser --system --uid 1001 --ingroup nestjs nestjs
+
+WORKDIR /app
+
+# Set production environment
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+
+# Copy package.json for runtime
+COPY --from=builder --chown=nestjs:nestjs /app/package.json ./package.json
+
+# Copy production dependencies
+COPY --from=deps --chown=nestjs:nestjs /app/node_modules ./node_modules
+
+# Copy built application
+COPY --from=builder --chown=nestjs:nestjs /app/dist ./dist
+
+# Copy Prisma files and generated client
+COPY --from=builder --chown=nestjs:nestjs /app/prisma ./prisma
+COPY --from=builder --chown=nestjs:nestjs /app/node_modules/.prisma ./node_modules/.prisma
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/logs /app/uploads /app/temp && \
+    chown -R nestjs:nestjs /app/logs /app/uploads /app/temp
+
+# Switch to non-root user
+USER nestjs
+
+# Expose port
+EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# Use tini for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Start the application
+CMD ["node", "dist/main.js"]

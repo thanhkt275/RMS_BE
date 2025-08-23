@@ -2,17 +2,43 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TournamentsService } from './tournaments.service';
 import { PrismaService } from '../prisma.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { DateValidationService } from '../common/services/date-validation.service';
+import { BadRequestException } from '@nestjs/common';
 
 describe('TournamentsService', () => {
   let service: TournamentsService;
   let prisma: DeepMockProxy<PrismaService>;
+  let dateValidationService: DeepMockProxy<DateValidationService>;
+
+  const createMockTournament = (overrides: any = {}) => {
+    const now = new Date();
+    return {
+      id: 't1',
+      name: 'Tournament 1',
+      description: 'desc',
+      startDate: now,
+      endDate: now,
+      registrationDeadline: null,
+      createdAt: now,
+      updatedAt: now,
+      adminId: 'admin1',
+      numberOfFields: 2,
+      maxTeams: null,
+      maxTeamMembers: null,
+      minTeamMembers: null,
+      ...overrides,
+    };
+  };
 
   beforeEach(async () => {
     prisma = mockDeep<PrismaService>();
+    dateValidationService = mockDeep<DateValidationService>();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TournamentsService,
         { provide: PrismaService, useValue: prisma },
+        { provide: DateValidationService, useValue: dateValidationService },
       ],
     }).compile();
 
@@ -30,18 +56,14 @@ describe('TournamentsService', () => {
         adminId: 'admin1',
         numberOfFields: 2,
       };
-      const now = new Date();
-      const tournament = {
-        id: 't1',
+      const tournament = createMockTournament({
         name: dto.name,
         description: dto.description,
         startDate: new Date(dto.startDate),
         endDate: new Date(dto.endDate),
-        createdAt: now,
-        updatedAt: now,
         adminId: dto.adminId,
         numberOfFields: dto.numberOfFields,
-      };
+      });
       prisma.tournament.create.mockResolvedValue(tournament);
       prisma.field.create.mockResolvedValue({} as any);
 
@@ -86,18 +108,14 @@ describe('TournamentsService', () => {
         adminId: 'admin1',
         numberOfFields: 0,
       };
-      const now = new Date();
-      const tournament = {
-        id: 't1',
+      const tournament = createMockTournament({
         name: dto.name,
         description: dto.description,
         startDate: new Date(dto.startDate),
         endDate: new Date(dto.endDate),
-        createdAt: now,
-        updatedAt: now,
         adminId: dto.adminId,
         numberOfFields: dto.numberOfFields,
-      };
+      });
       prisma.tournament.create.mockResolvedValue(tournament);
 
       const result = await service.create(dto as any);
@@ -114,18 +132,7 @@ describe('TournamentsService', () => {
 
   describe('findAll', () => {
     it('should return all tournaments', async () => {
-      const now = new Date();
-      const tournament = {
-        id: 't1',
-        name: 'Tournament 1',
-        description: 'desc',
-        startDate: now,
-        endDate: now,
-        createdAt: now,
-        updatedAt: now,
-        adminId: 'admin1',
-        numberOfFields: 2,
-      };
+      const tournament = createMockTournament();
       prisma.tournament.findMany.mockResolvedValue([tournament]);
       const result = await service.findAll();
       expect(Array.isArray(result)).toBe(true);
@@ -144,18 +151,7 @@ describe('TournamentsService', () => {
 
   describe('findOne', () => {
     it('should return a tournament by id', async () => {
-      const now = new Date();
-      const tournament = {
-        id: 't1',
-        name: 'Tournament 1',
-        description: 'desc',
-        startDate: now,
-        endDate: now,
-        createdAt: now,
-        updatedAt: now,
-        adminId: 'admin1',
-        numberOfFields: 2,
-      };
+      const tournament = createMockTournament();
       prisma.tournament.findUnique.mockResolvedValue(tournament);
       const result = await service.findOne('t1');
       expect(result).toHaveProperty('id', 't1');
@@ -173,18 +169,7 @@ describe('TournamentsService', () => {
 
   describe('update', () => {
     it('should update a tournament', async () => {
-      const now = new Date();
-      const tournament = {
-        id: 't1',
-        name: 'Updated',
-        description: 'desc',
-        startDate: now,
-        endDate: now,
-        createdAt: now,
-        updatedAt: now,
-        adminId: 'admin1',
-        numberOfFields: 2,
-      };
+      const tournament = createMockTournament({ name: 'Updated' });
       prisma.tournament.update.mockResolvedValue(tournament);
       const result = await service.update('t1', { name: 'Updated' } as any);
       expect(result).toHaveProperty('id', 't1');
@@ -203,18 +188,10 @@ describe('TournamentsService', () => {
 
   describe('update (numberOfFields logic)', () => {
     it('should create new fields when numberOfFields increases', async () => {
-      const now = new Date();
-      const tournament = {
-        id: 't1',
+      const tournament = createMockTournament({
         name: 'T',
         description: '',
-        startDate: now,
-        endDate: now,
-        createdAt: now,
-        updatedAt: now,
-        adminId: 'admin1',
-        numberOfFields: 2,
-      };
+      });
       prisma.tournament.update.mockResolvedValue({
         ...tournament,
         numberOfFields: 4,
@@ -240,18 +217,11 @@ describe('TournamentsService', () => {
     });
 
     it('should delete fields when numberOfFields decreases and no matches exist', async () => {
-      const now = new Date();
-      const tournament = {
-        id: 't1',
+      const tournament = createMockTournament({
         name: 'T',
         description: '',
-        startDate: now,
-        endDate: now,
-        createdAt: now,
-        updatedAt: now,
-        adminId: 'admin1',
         numberOfFields: 4,
-      };
+      });
       prisma.tournament.update.mockResolvedValue({
         ...tournament,
         numberOfFields: 2,
@@ -272,18 +242,11 @@ describe('TournamentsService', () => {
     });
 
     it('should throw if matches exist on fields to be deleted', async () => {
-      const now = new Date();
-      const tournament = {
-        id: 't1',
+      const tournament = createMockTournament({
         name: 'T',
         description: '',
-        startDate: now,
-        endDate: now,
-        createdAt: now,
-        updatedAt: now,
-        adminId: 'admin1',
         numberOfFields: 4,
-      };
+      });
       prisma.tournament.update.mockResolvedValue({
         ...tournament,
         numberOfFields: 2,
@@ -306,18 +269,7 @@ describe('TournamentsService', () => {
 
   describe('remove', () => {
     it('should delete a tournament', async () => {
-      const now = new Date();
-      const tournament = {
-        id: 't1',
-        name: 'Tournament 1',
-        description: 'desc',
-        startDate: now,
-        endDate: now,
-        createdAt: now,
-        updatedAt: now,
-        adminId: 'admin1',
-        numberOfFields: 2,
-      };
+      const tournament = createMockTournament();
       prisma.tournament.delete.mockResolvedValue(tournament);
       const result = await service.remove('t1');
       expect(result).toHaveProperty('id', 't1');
@@ -445,7 +397,6 @@ describe('TournamentsService', () => {
               id: true,
               teamNumber: true,
               name: true,
-              organization: true,
             },
           },
           _count: {
@@ -639,6 +590,167 @@ describe('TournamentsService', () => {
       expect(prisma.field.findMany).toHaveBeenCalledWith({
         where: { tournamentId: 't1' },
         orderBy: { number: 'asc' },
+      });
+    });
+  });
+
+  describe('Date Validation Integration', () => {
+    describe('update with date validation', () => {
+      it('should validate date changes against existing stages', async () => {
+        const tournamentId = 't1';
+        const updateDto = {
+          startDate: new Date('2024-06-01T09:00:00Z'),
+          endDate: new Date('2024-06-03T18:00:00Z')
+        };
+
+        // Mock current tournament
+        prisma.tournament.findUnique.mockResolvedValue({
+          id: tournamentId,
+          startDate: new Date('2024-06-01T10:00:00Z'),
+          endDate: new Date('2024-06-02T17:00:00Z')
+        } as any);
+
+        // Mock successful validation
+        dateValidationService.validateTournamentDateRange.mockResolvedValue({
+          isValid: true,
+          errors: []
+        });
+
+        dateValidationService.canUpdateTournamentDates.mockResolvedValue({
+          canUpdate: true,
+          blockers: [],
+          warnings: []
+        });
+
+        // Mock successful update
+        prisma.tournament.update.mockResolvedValue({
+          id: tournamentId,
+          ...updateDto
+        } as any);
+
+        await service.update(tournamentId, updateDto);
+
+        expect(dateValidationService.validateTournamentDateRange).toHaveBeenCalledWith(
+          {
+            startDate: new Date(updateDto.startDate),
+            endDate: new Date(updateDto.endDate)
+          },
+          { tournamentId }
+        );
+        expect(dateValidationService.canUpdateTournamentDates).toHaveBeenCalledWith(
+          tournamentId,
+          {
+            startDate: new Date(updateDto.startDate),
+            endDate: new Date(updateDto.endDate)
+          }
+        );
+      });
+
+      it('should throw error when date validation fails', async () => {
+        const tournamentId = 't1';
+        const updateDto = {
+          startDate: new Date('2024-06-01T09:00:00Z'),
+          endDate: new Date('2024-06-03T18:00:00Z')
+        };
+
+        // Mock current tournament
+        prisma.tournament.findUnique.mockResolvedValue({
+          id: tournamentId,
+          startDate: new Date('2024-06-01T10:00:00Z'),
+          endDate: new Date('2024-06-02T17:00:00Z')
+        } as any);
+
+        // Mock failed validation
+        dateValidationService.validateTournamentDateRange.mockResolvedValue({
+          isValid: false,
+          errors: ['Stage "Qualification" falls outside the new tournament date range']
+        });
+
+        await expect(service.update(tournamentId, updateDto))
+          .rejects
+          .toThrow(BadRequestException);
+      });
+
+      it('should throw error when active matches prevent date update', async () => {
+        const tournamentId = 't1';
+        const updateDto = {
+          startDate: new Date('2024-06-01T09:00:00Z'),
+          endDate: new Date('2024-06-03T18:00:00Z')
+        };
+
+        // Mock current tournament
+        prisma.tournament.findUnique.mockResolvedValue({
+          id: tournamentId,
+          startDate: new Date('2024-06-01T10:00:00Z'),
+          endDate: new Date('2024-06-02T17:00:00Z')
+        } as any);
+
+        // Mock successful date validation but blocked by active matches
+        dateValidationService.validateTournamentDateRange.mockResolvedValue({
+          isValid: true,
+          errors: []
+        });
+
+        dateValidationService.canUpdateTournamentDates.mockResolvedValue({
+          canUpdate: false,
+          blockers: ['Cannot update dates: 2 matches are currently active'],
+          warnings: []
+        });
+
+        await expect(service.update(tournamentId, updateDto))
+          .rejects
+          .toThrow(BadRequestException);
+      });
+    });
+
+    describe('getDateBoundaries', () => {
+      it('should return date boundaries', async () => {
+        const tournamentId = 't1';
+        const expectedBoundaries = {
+          tournament: {
+            startDate: new Date('2024-06-01T09:00:00Z'),
+            endDate: new Date('2024-06-03T18:00:00Z')
+          },
+          warnings: []
+        };
+
+        dateValidationService.getDateBoundaries.mockResolvedValue(expectedBoundaries);
+
+        const result = await service.getDateBoundaries(tournamentId);
+
+        expect(result).toEqual(expectedBoundaries);
+        expect(dateValidationService.getDateBoundaries).toHaveBeenCalledWith(tournamentId);
+      });
+    });
+
+    describe('validateDateUpdate', () => {
+      it('should return validation results', async () => {
+        const tournamentId = 't1';
+        const startDate = new Date('2024-06-01T09:00:00Z');
+        const endDate = new Date('2024-06-03T18:00:00Z');
+
+        const mockValidation = {
+          isValid: true,
+          errors: []
+        };
+
+        const mockImpact = {
+          canUpdate: true,
+          blockers: [],
+          warnings: ['Tournament has already started']
+        };
+
+        dateValidationService.validateTournamentDateRange.mockResolvedValue(mockValidation);
+        dateValidationService.canUpdateTournamentDates.mockResolvedValue(mockImpact);
+
+        const result = await service.validateDateUpdate(tournamentId, startDate, endDate);
+
+        expect(result).toEqual({
+          isValid: true,
+          errors: [],
+          warnings: ['Tournament has already started'],
+          impact: mockImpact
+        });
       });
     });
   });

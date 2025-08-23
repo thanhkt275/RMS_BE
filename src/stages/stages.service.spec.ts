@@ -3,17 +3,43 @@ import { StagesService } from './stages.service';
 import { PrismaService } from '../prisma.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
 import { StageType, StageStatus } from '../utils/prisma-types';
+import { DateValidationService } from '../common/services/date-validation.service';
+
+// Helper function to create mock stage with all required fields
+function createMockStage(overrides: Partial<any> = {}) {
+  const now = new Date();
+  return {
+    id: 's1',
+    name: 'Stage 1',
+    description: null,
+    type: StageType.SWISS,
+    status: StageStatus.ACTIVE,
+    startDate: new Date('2025-05-13'),
+    endDate: new Date('2025-05-14'),
+    tournamentId: 't1',
+    teamsPerAlliance: 2,
+    maxTeams: null,
+    isElimination: false,
+    advancementRules: null,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
 
 describe('StagesService', () => {
   let service: StagesService;
   let prisma: DeepMockProxy<PrismaService>;
+  let dateValidationService: DeepMockProxy<DateValidationService>;
 
   beforeEach(async () => {
     prisma = mockDeep<PrismaService>();
+    dateValidationService = mockDeep<DateValidationService>();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StagesService,
         { provide: PrismaService, useValue: prisma },
+        { provide: DateValidationService, useValue: dateValidationService },
       ],
     }).compile();
     service = module.get<StagesService>(StagesService);
@@ -21,53 +47,56 @@ describe('StagesService', () => {
   });
   describe('create', () => {
     it('should create a stage', async () => {
-      const now = new Date();
-      const stage = {
-        id: 's1',
+      const stage = createMockStage();
+      const dto = {
         name: 'Stage 1',
+        description: null,
         type: StageType.SWISS,
-        status: StageStatus.ACTIVE,
-        startDate: new Date('2025-05-13'),
-        endDate: new Date('2025-05-14'),
+        startDate: '2025-05-13',
+        endDate: '2025-05-14',
         tournamentId: 't1',
-        teamsPerAlliance: 2,
-        createdAt: now,
-        updatedAt: now,
+        maxTeams: null,
+        isElimination: false,
+        advancementRules: null
       };
-      const dto = { name: 'Stage 1', type: StageType.SWISS, startDate: '2025-05-13', endDate: '2025-05-14', tournamentId: 't1' };
+
+      // Mock successful date validation
+      dateValidationService.validateStageeDateRange.mockResolvedValue({
+        isValid: true,
+        errors: []
+      });
+
       prisma.stage.create.mockResolvedValue(stage);
       const result = await service.create(dto as any);
       expect(result).toHaveProperty('id', 's1');
       expect(prisma.stage.create).toHaveBeenCalledWith({
         data: {
           name: dto.name,
+          description: dto.description,
           type: dto.type,
           startDate: new Date(dto.startDate),
           endDate: new Date(dto.endDate),
           tournamentId: dto.tournamentId,
+          maxTeams: dto.maxTeams,
+          isElimination: dto.isElimination,
+          advancementRules: dto.advancementRules,
         },
       });
     });
     it('should throw if prisma throws', async () => {
+      // Mock successful date validation
+      dateValidationService.validateStageeDateRange.mockResolvedValue({
+        isValid: true,
+        errors: []
+      });
+
       prisma.stage.create.mockRejectedValue(new Error('DB error'));
       await expect(service.create({} as any)).rejects.toThrow('DB error');
     });
   });
   describe('findAll', () => {
     it('should return all stages', async () => {
-      const now = new Date();
-      const stage = {
-        id: 's1',
-        name: 'Stage 1',
-        type: StageType.SWISS,
-        status: StageStatus.ACTIVE,
-        startDate: now,
-        endDate: now,
-        tournamentId: 't1',
-        teamsPerAlliance: 2,
-        createdAt: now,
-        updatedAt: now,
-      };
+      const stage = createMockStage();
       prisma.stage.findMany.mockResolvedValue([stage]);
       const result = await service.findAll();
       expect(Array.isArray(result)).toBe(true);
@@ -85,19 +114,7 @@ describe('StagesService', () => {
   });
   describe('findOne', () => {
     it('should return a stage by id', async () => {
-      const now = new Date();
-      const stage = {
-        id: 's1',
-        name: 'Stage 1',
-        type: StageType.SWISS,
-        status: StageStatus.ACTIVE,
-        startDate: now,
-        endDate: now,
-        tournamentId: 't1',
-        teamsPerAlliance: 2,
-        createdAt: now,
-        updatedAt: now,
-      };
+      const stage = createMockStage();
       prisma.stage.findUnique.mockResolvedValue(stage);
       const result = await service.findOne('s1');
       expect(result).toHaveProperty('id', 's1');
@@ -114,19 +131,7 @@ describe('StagesService', () => {
   });
   describe('update', () => {
     it('should update a stage', async () => {
-      const now = new Date();
-      const stage = {
-        id: 's1',
-        name: 'Updated',
-        type: StageType.SWISS,
-        status: StageStatus.ACTIVE,
-        startDate: now,
-        endDate: now,
-        tournamentId: 't1',
-        teamsPerAlliance: 2,
-        createdAt: now,
-        updatedAt: now,
-      };
+      const stage = createMockStage({ name: 'Updated' });
       prisma.stage.update.mockResolvedValue(stage);
       const result = await service.update('s1', { name: 'Updated' } as any);
       expect(result).toHaveProperty('id', 's1');
@@ -142,19 +147,7 @@ describe('StagesService', () => {
   });
   describe('remove', () => {
     it('should delete a stage', async () => {
-      const now = new Date();
-      const stage = {
-        id: 's1',
-        name: 'Stage 1',
-        type: StageType.SWISS,
-        status: StageStatus.ACTIVE,
-        startDate: now,
-        endDate: now,
-        tournamentId: 't1',
-        teamsPerAlliance: 2,
-        createdAt: now,
-        updatedAt: now,
-      };
+      const stage = createMockStage();
       prisma.stage.delete.mockResolvedValue(stage);
       const result = await service.remove('s1');
       expect(result).toHaveProperty('id', 's1');

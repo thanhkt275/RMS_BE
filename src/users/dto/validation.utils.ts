@@ -143,6 +143,175 @@ export const createDateRangeSchema = (maxRangeMonths: number = 12) => z.object({
   }
 );
 
+// Hierarchical date validation utilities for tournament system
+export interface DateRange {
+  startDate: Date;
+  endDate: Date;
+}
+
+export interface HierarchicalDateValidationOptions {
+  parentRange?: DateRange;
+  childRanges?: DateRange[];
+  allowPartialOverlap?: boolean;
+  minDuration?: number; // in hours
+  maxDuration?: number; // in hours
+}
+
+/**
+ * Validates that a date range falls within a parent date range
+ */
+export const validateDateRangeWithinParent = (
+  childRange: DateRange,
+  parentRange: DateRange,
+  entityName: string = 'entity',
+  parentName: string = 'parent'
+): { isValid: boolean; error?: string } => {
+  if (childRange.startDate < parentRange.startDate) {
+    return {
+      isValid: false,
+      error: `${entityName} start date cannot be before ${parentName} start date (${parentRange.startDate.toLocaleDateString()})`
+    };
+  }
+
+  if (childRange.endDate > parentRange.endDate) {
+    return {
+      isValid: false,
+      error: `${entityName} end date cannot be after ${parentName} end date (${parentRange.endDate.toLocaleDateString()})`
+    };
+  }
+
+  return { isValid: true };
+};
+
+/**
+ * Validates that child ranges don't conflict with existing ranges
+ */
+export const validateNoDateRangeConflicts = (
+  newRange: DateRange,
+  existingRanges: DateRange[],
+  allowPartialOverlap: boolean = false
+): { isValid: boolean; error?: string; conflictingRanges?: DateRange[] } => {
+  const conflictingRanges: DateRange[] = [];
+
+  for (const existingRange of existingRanges) {
+    const hasOverlap = allowPartialOverlap
+      ? (newRange.startDate < existingRange.endDate && newRange.endDate > existingRange.startDate)
+      : (newRange.startDate <= existingRange.endDate && newRange.endDate >= existingRange.startDate);
+
+    if (hasOverlap) {
+      conflictingRanges.push(existingRange);
+    }
+  }
+
+  if (conflictingRanges.length > 0) {
+    return {
+      isValid: false,
+      error: `Date range conflicts with ${conflictingRanges.length} existing range(s)`,
+      conflictingRanges
+    };
+  }
+
+  return { isValid: true };
+};
+
+/**
+ * Validates duration constraints
+ */
+export const validateDateRangeDuration = (
+  range: DateRange,
+  minHours?: number,
+  maxHours?: number
+): { isValid: boolean; error?: string } => {
+  const durationMs = range.endDate.getTime() - range.startDate.getTime();
+  const durationHours = durationMs / (1000 * 60 * 60);
+
+  if (minHours && durationHours < minHours) {
+    return {
+      isValid: false,
+      error: `Duration must be at least ${minHours} hours (current: ${durationHours.toFixed(1)} hours)`
+    };
+  }
+
+  if (maxHours && durationHours > maxHours) {
+    return {
+      isValid: false,
+      error: `Duration cannot exceed ${maxHours} hours (current: ${durationHours.toFixed(1)} hours)`
+    };
+  }
+
+  return { isValid: true };
+};
+
+/**
+ * Comprehensive hierarchical date validation
+ */
+export const validateHierarchicalDateRange = (
+  range: DateRange,
+  options: HierarchicalDateValidationOptions = {}
+): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  // Basic range validation
+  if (range.startDate >= range.endDate) {
+    errors.push('Start date must be before end date');
+  }
+
+  // Parent range validation
+  if (options.parentRange) {
+    const parentValidation = validateDateRangeWithinParent(range, options.parentRange);
+    if (!parentValidation.isValid && parentValidation.error) {
+      errors.push(parentValidation.error);
+    }
+  }
+
+  // Child ranges validation
+  if (options.childRanges && options.childRanges.length > 0) {
+    for (const childRange of options.childRanges) {
+      const childValidation = validateDateRangeWithinParent(childRange, range, 'Child', 'Current');
+      if (!childValidation.isValid && childValidation.error) {
+        errors.push(childValidation.error);
+      }
+    }
+  }
+
+  // Duration validation
+  if (options.minDuration || options.maxDuration) {
+    const durationValidation = validateDateRangeDuration(range, options.minDuration, options.maxDuration);
+    if (!durationValidation.isValid && durationValidation.error) {
+      errors.push(durationValidation.error);
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+/**
+ * Creates a Zod schema for hierarchical date validation
+ */
+export const createHierarchicalDateSchema = (
+  options: HierarchicalDateValidationOptions = {}
+) => {
+  return z.object({
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date(),
+  }).refine(
+    (data) => {
+      const validation = validateHierarchicalDateRange(data, options);
+      return validation.isValid;
+    },
+    (data) => {
+      const validation = validateHierarchicalDateRange(data, options);
+      return {
+        message: validation.errors.join('; '),
+        path: ['endDate'] as const,
+      };
+    }
+  );
+};
+
 // Pagination validation helper
 export const createPaginationSchema = (maxLimit: number = 100) => z.object({
   page: z.number()
