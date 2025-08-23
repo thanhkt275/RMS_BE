@@ -19,6 +19,7 @@ import {
   PersistScoresDto,
   PersistenceResultDto,
 } from './dto';
+import { CentralizedConnectionManagerService } from './services/centralized-connection-manager.service';
 
 interface TimerData {
   duration: number;
@@ -69,6 +70,7 @@ interface AudienceDisplaySettings {
   showTeams?: boolean;
   message?: string;
   tournamentId: string;
+  fieldId?: string | null;
   updatedAt: number;
 }
 
@@ -96,15 +98,61 @@ export class EventsGateway
 {
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('EventsGateway');
-  
+
   // Store audience display settings per tournament
   private audienceDisplaySettings: Map<string, AudienceDisplaySettings> = new Map();
-  
+
   // Store active timers per tournament
   private activeTimers: Map<string, NodeJS.Timeout> = new Map();
+
+  // Centralized connection management
+  private centralizedConnectionManager: CentralizedConnectionManagerService;
+
   constructor(
     private readonly matchScoresService: MatchScoresService,
-  ) {}
+  ) {
+    // Initialize centralized connection manager
+    this.centralizedConnectionManager = new CentralizedConnectionManagerService({
+      sessionTimeoutMs: 30000,
+      heartbeatIntervalMs: 5000,
+      maxTabsPerSession: 20,
+      debug: process.env.NODE_ENV === 'development',
+      logLevel: 'INFO'
+    });
+
+    this.setupCentralizedConnectionEvents();
+  }
+
+  /**
+   * Subscribe to centralized connection manager events and broadcast relevant messages
+   */
+  private setupCentralizedConnectionEvents(): void {
+    if (!this.centralizedConnectionManager) return;
+
+    // Subscribe to centralized connection events emitted by the manager
+    this.centralizedConnectionManager.onConnectionEvent((event) => {
+      try {
+        this.logger.log(`[CentralizedConnectionEvent] ${event.type} session=${event.sessionId} client=${event.clientId}`);
+
+        // Broadcast room/session related events to interested sockets
+        if (event.type === 'ROOM_SESSION_JOINED' || event.type === 'ROOM_SESSION_LEFT') {
+          const roomId = event.data?.roomId as string | undefined;
+          if (roomId) {
+            const emitEvent = event.type === 'ROOM_SESSION_JOINED' ? 'room_session_joined' : 'room_session_left';
+            this.server.to(roomId).emit(emitEvent, { sessionId: event.sessionId, clientId: event.clientId, ...event.data });
+          }
+        }
+
+        // Handle leader changes
+        if (event.type === 'LEADER_CHANGED') {
+          const { newLeader, oldLeader } = event.data || {};
+          this.logger.log(`Leader changed for session ${event.sessionId}: ${oldLeader} -> ${newLeader}`);
+        }
+      } catch (err) {
+        this.logger.error('Error handling centralized connection event:', err as any);
+      }
+    });
+  }
 
   // Helper method to convert Record<string, number> to GameElementDto[]
   private convertGameElementsToDto(gameElements?: Record<string, number>): GameElementDto[] {
@@ -409,13 +457,24 @@ export class EventsGateway
     this.logger.log(`Display mode change received: ${JSON.stringify(payload)}`);
     // Store the latest settings for this tournament
     this.audienceDisplaySettings.set(payload.tournamentId, payload);
+
     if (payload.tournamentId === "all") {
       // Special case: broadcast to ALL connected clients when tournamentId is "all"
       this.logger.log(`Broadcasting display mode change to ALL clients (tournamentId: "all")`);
       this.logger.log(`Total connected clients: ${this.server.sockets.sockets.size}`);
       this.server.emit('display_mode_change', payload);
+    } else if (payload.fieldId) {
+      // Field-specific broadcast - use emitToField for consistent field room naming
+      this.emitToField(payload.fieldId, 'display_mode_change', payload);
+      this.logger.log(`Broadcasted display_mode_change to field room: field:${payload.fieldId}`);
+
+      // Also broadcast to tournament room for general monitoring
+      if (payload.tournamentId) {
+        this.server.to(payload.tournamentId).emit('display_mode_change', payload);
+        this.logger.log(`Broadcasted display_mode_change to tournament room: ${payload.tournamentId}`);
+      }
     } else {
-      // Broadcast to all clients in the tournament room including the sender
+      // Tournament-wide broadcast (no specific field)
       this.logger.log(`Sending display mode change to tournament room: ${payload.tournamentId}`);
       this.logger.log(`Number of clients in tournament ${payload.tournamentId}: ${this.server.sockets.adapter.rooms.get(payload.tournamentId)?.size || 0}`);
       this.server.to(payload.tournamentId).emit('display_mode_change', payload);

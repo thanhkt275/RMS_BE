@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma.service';
 import { CreateTeamDto, CreateTeamMemberDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { ImportTeamsDto } from './dto/import-teams.dto';
+import { DateValidationService } from '../common/services/date-validation.service';
 import { Gender, TeamMember } from '../../generated/prisma';
 import { Prisma } from '../../generated/prisma';
 import { EmailsService } from '../emails/emails.service';
@@ -16,6 +17,7 @@ export class TeamsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailsService,
+    private readonly dateValidationService: DateValidationService,
   ) {}
 
   /**
@@ -143,11 +145,38 @@ export class TeamsService {
   async createTeam(createTeamDto: CreateTeamDto) {
     const tournament = await this.prisma.tournament.findUnique({
       where: { id: createTeamDto.tournamentId },
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+        registrationDeadline: true
+      }
     });
 
     if (!tournament) {
       throw new BadRequestException(
         `Tournament with ID ${createTeamDto.tournamentId} does not exist.`,
+      );
+    }
+
+    // Validate team registration timing
+    const registrationDate = new Date();
+    const registrationValidation = await this.dateValidationService.validateTeamRegistrationTiming(
+      registrationDate,
+      createTeamDto.tournamentId
+    );
+
+    if (!registrationValidation.isValid) {
+      throw new BadRequestException(
+        `Cannot register team: ${registrationValidation.errors.join('; ')}`
+      );
+    }
+
+    // Check registration deadline if set
+    if (tournament.registrationDeadline && registrationDate > tournament.registrationDeadline) {
+      throw new BadRequestException(
+        `Registration deadline has passed (${tournament.registrationDeadline.toLocaleDateString()})`
       );
     }
 
@@ -201,6 +230,9 @@ export class TeamsService {
       include: {
         tournament: true,
         teamMembers: true,
+        _count: {
+          select: { teamMembers: true },
+        },
       },
       orderBy: {
         teamNumber: 'asc',
@@ -227,6 +259,9 @@ export class TeamsService {
       include: {
         tournament: true,
         teamMembers: true,
+        _count: {
+          select: { teamMembers: true },
+        },
       },
       orderBy: [
         { tournament: { startDate: 'desc' } },
@@ -247,6 +282,9 @@ export class TeamsService {
       include: {
         tournament: true,
         teamMembers: true,
+        _count: {
+          select: { teamMembers: true },
+        },
         teamAlliances: {
           include: {
             alliance: {
