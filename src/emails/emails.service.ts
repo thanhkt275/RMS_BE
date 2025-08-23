@@ -33,4 +33,32 @@ export class EmailsService {
       },
     });
   }
+
+  async sendStageScheduleNotification(
+    to: string,
+    teamName: string,
+    tournamentName: string,
+    stageName: string,
+    stageType: string,
+    stageStartDate: string,
+    stageEndDate: string,
+    isNewStage: boolean = false,
+    stageDescription?: string,
+  ) {
+    await this.mailerService.sendMail({
+      to,
+      subject: `Tournament Stage Schedule Update - ${tournamentName}`,
+      template: 'stage-schedule-notification',
+      context: {
+        teamName,
+        tournamentName,
+        stageName,
+        stageType,
+        stageStartDate,
+        stageEndDate,
+        isNewStage,
+        stageDescription,
+      },
+    });
+  }
 }
