@@ -55,33 +55,29 @@ RUN \
 # ---- Builder Stage ----
 FROM base AS builder
 
+# Copy package.json first (required for npm commands)
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
+
 # Copy all dependencies from build-deps
 COPY --from=build-deps /app/node_modules ./node_modules
 
 # Copy source files in order of change frequency
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
-COPY .eslintrc.js ./
 COPY prisma/ ./prisma/
 
 # Copy source code
 COPY src/ ./src/
 
-# Build-time environment (don't copy sensitive .env files)
+# Build-time environment (only non-sensitive variables)
 ARG DATABASE_URL
 ARG NODE_ENV=production
-ARG JWT_SECRET
-ARG EMAIL
-ARG EMAIL_PASSWORD
 
 ENV NODE_ENV=$NODE_ENV
-ENV DATABASE_URL=$DATABASE_URL
-ENV JWT_SECRET=$JWT_SECRET
-ENV EMAIL=$EMAIL 
-ENV EMAIL_PASSWORD=$EMAIL_PASSWORD
+# Note: DATABASE_URL is only needed for Prisma generation, not stored in final image
 
-# Generate Prisma client
-RUN npx prisma generate --schema=./prisma/schema.prisma
+# Generate Prisma client (use temporary DATABASE_URL for generation)
+RUN DATABASE_URL=$DATABASE_URL npx prisma generate --schema=./prisma/schema.prisma
 
 # Build the application
 RUN \
