@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tournament Stage Schedule Update</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; background-color: #f6f6f6; padding: 20px; color: #333;">
+    <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+      <h2 style="color: #333;">Tournament Stage Schedule Update</h2>
+
+      <p>Hi there,</p>
+
+      <p>
+        We have an important update regarding the tournament schedule for your team 
+        <strong>{{teamName}}</strong> in the tournament <strong>{{tournamentName}}</strong>.
+      </p>
+
+      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
+        <h3 style="color: #495057; margin-top: 0;">Stage Details</h3>
+        <p><strong>Stage Name:</strong> {{stageName}}</p>
+        <p><strong>Stage Type:</strong> {{stageType}}</p>
+        <p><strong>Start Date:</strong> {{stageStartDate}}</p>
+        <p><strong>End Date:</strong> {{stageEndDate}}</p>
+        {{#if stageDescription}}
+        <p><strong>Description:</strong> {{stageDescription}}</p>
+        {{/if}}
+      </div>
+
+      {{#if isNewStage}}
+      <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 6px; margin: 20px 0;">
+        <p style="margin: 0; color: #155724;"><strong>🎉 New Stage Created!</strong> Your team has been assigned to this new stage.</p>
+      </div>
+      {{else}}
+      <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 20px 0;">
+        <p style="margin: 0; color: #856404;"><strong>📅 Schedule Update!</strong> The stage schedule has been updated.</p>
+      </div>
+      {{/if}}
+
+      <p>Please make sure your team is prepared and available during the scheduled dates. Check the tournament platform for detailed match schedules and any additional information.</p>
+
+      <div style="background-color: #e9ecef; padding: 15px; border-radius: 6px; margin: 20px 0;">
+        <h4 style="color: #495057; margin-top: 0;">Important Reminders:</h4>
+        <ul style="margin-bottom: 0;">
+          <li>Arrive at least 30 minutes before your first match</li>
+          <li>Bring all required equipment and documentation</li>
+          <li>Check for any last-minute updates on the tournament platform</li>
+          <li>Contact the tournament organizers if you have any questions</li>
+        </ul>
+      </div>
+
+      <p>We're excited to see your team compete and wish you the best of luck!</p>
+
+      <p style="margin-top: 30px;">Best regards,<br /><strong>The Tournament Organization Team</strong></p>
+    </div>
+  </body>
+</html>
