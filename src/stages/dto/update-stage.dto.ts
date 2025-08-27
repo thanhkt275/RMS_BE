@@ -1,9 +1,14 @@
 
 import { createZodDto } from 'nestjs-zod';
 import { CreateStageSchema } from './create-stage.dto';
+import { z } from 'zod';
+
+const baseSchema = CreateStageSchema instanceof z.ZodEffects 
+  ? CreateStageSchema.innerType() 
+  : CreateStageSchema;
 
 // Define the Zod schema for stage updates - making all fields optional
-export const UpdateStageSchema = CreateStageSchema.innerType().partial().refine(
+export const UpdateStageSchema = baseSchema.innerType().partial().refine(
   data => !data.startDate || !data.endDate || data.startDate <= data.endDate, {
     message: 'End date must be after start date',
     path: ['endDate'],

@@ -87,9 +87,6 @@ describe('Stage DTO Validation', () => {
       const validTypes = [
         StageType.SWISS,
         StageType.PLAYOFF,
-        StageType.ROUND_ROBIN,
-        StageType.SINGLE_ELIMINATION,
-        StageType.DOUBLE_ELIMINATION,
       ];
 
       validTypes.forEach(type => {

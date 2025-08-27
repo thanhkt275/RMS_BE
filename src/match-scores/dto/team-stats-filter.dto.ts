@@ -2,6 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TeamStatsFilterDto {
   @ApiPropertyOptional()
+  stageId?: string;
+  @ApiPropertyOptional()
   teamName?: string;
   @ApiPropertyOptional()
   teamNumber?: string;

@@ -172,7 +172,12 @@ export class RankingUpdateService {
       }));
 
       this.logger.debug(`📊 Retrieved ${rankings.length} team rankings for broadcast`);
-      return rankings;
+      return rankings.map(
+        ranking => ({
+          ...ranking,
+          rank: ranking.rank ?? 0
+        })
+      );
     } catch (error) {
       this.logger.error(`❌ Failed to get rankings for broadcast (tournament: ${tournamentId}, stage: ${stageId}):`, error);
       throw new Error(`Failed to retrieve rankings: ${error.message}`);

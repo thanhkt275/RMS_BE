@@ -48,6 +48,13 @@ export class TournamentsService {
             username: true,
           },
         },
+        _count: {
+          select: {
+            teams: true,
+            stages: true,
+            fields: true,
+          },
+        },
       },
     });
   }
@@ -81,6 +88,13 @@ export class TournamentsService {
           select: {
             id: true,
             username: true,
+          },
+        },
+        _count: {
+          select: {
+            teams: true,
+            stages: true,
+            fields: true,
           },
         },
         stages: {

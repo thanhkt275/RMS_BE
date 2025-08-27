@@ -1,9 +1,15 @@
-import { z } from 'zod';
+
 import { createZodDto } from 'nestjs-zod';
 import { CreateTournamentSchema } from './create-tournament.dto';
+import { z } from 'zod';
+
+// Extract the inner schema and make it partial
+const baseSchema = CreateTournamentSchema instanceof z.ZodEffects 
+  ? CreateTournamentSchema.innerType() 
+  : CreateTournamentSchema;
 
 // Define the Zod schema for tournament updates - making all fields optional
-export const UpdateTournamentSchema = CreateTournamentSchema.innerType().partial().refine(
+export const UpdateTournamentSchema = baseSchema.innerType().partial().refine(
   data => !data.startDate || !data.endDate || data.startDate <= data.endDate, {
     message: 'End date must be after start date',
     path: ['endDate'],

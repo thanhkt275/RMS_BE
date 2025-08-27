@@ -119,6 +119,7 @@ export class TournamentsController {
     const matchesService = new MatchesService.MatchesService(
       this.tournamentsService['prisma'],
       null as any, // matchScoresService not needed for this operation
+      null as any
     );
     return matchesService.assignMatchToField(matchId, fieldId);
   }

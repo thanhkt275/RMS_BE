@@ -168,6 +168,11 @@ export class TeamsService {
         },
         include: {
           tournament: true,
+          _count: {
+            select: {
+              teamMembers: true,
+            },
+          },
         },
       });
 
@@ -200,6 +205,11 @@ export class TeamsService {
       where,
       include: {
         tournament: true,
+        _count: {
+          select: {
+            teamMembers: true,
+          },
+        },
       },
       orderBy: {
         teamNumber: 'asc',
@@ -212,6 +222,11 @@ export class TeamsService {
       where: { id },
       include: {
         tournament: true,
+        _count: {
+          select: {
+            teamMembers: true,
+          },
+        },
         teamAlliances: {
           include: {
             alliance: {
@@ -233,6 +248,44 @@ export class TeamsService {
       throw new NotFoundException(`Team with ID ${id} not found`);
     }
     return team;
+  }
+
+  async findUserTeams(userId: string) {
+    return this.prisma.team.findMany({
+      where: {
+        OR: [
+          { userId: userId }, // Teams owned by the user
+          {
+            teamMembers: {
+              some: {
+                email: {
+                  in: await this.getUserEmails(userId), // Teams where user is a member
+                },
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        tournament: true,
+        _count: {
+          select: {
+            teamMembers: true,
+          },
+        },
+      },
+      orderBy: {
+        teamNumber: 'asc',
+      },
+    });
+  }
+
+  private async getUserEmails(userId: string): Promise<string[]> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    return user?.email ? [user.email] : [];
   }
 
   async update(updateTeamDto: UpdateTeamDto) {
@@ -311,7 +364,15 @@ export class TeamsService {
       return this.prisma.team.update({
         where: { id: updateTeamDto.id },
         data: teamData,
-        include: { tournament: true, teamMembers: true },
+        include: { 
+          tournament: true, 
+          teamMembers: true,
+          _count: {
+            select: {
+              teamMembers: true,
+            },
+          },
+        },
       });
     } catch (error) {
       throw new BadRequestException(`Failed to update team: ${error.message}`);
