@@ -3,7 +3,7 @@ import { createZodDto } from 'nestjs-zod';
 import { Gender } from '../../../generated/prisma';
 
 export const CreateTeamMemberSchema = z.object({
-  name: z.string().min(11),
+  name: z.string().min(1, 'Full name is required'),
   gender: z
     .nativeEnum(Gender, {
       errorMap: () => ({ message: 'Invalid gender' }),
@@ -11,7 +11,12 @@ export const CreateTeamMemberSchema = z.object({
     .nullable()
     .optional(),
   phoneNumber: z.string().optional(),
-  email: z.string().email().or(z.literal('')).optional(),
+  email: z
+    .string()
+    .optional()
+    .refine((val) => !val || /\S+@\S+\.\S+/.test(val), {
+      message: 'Invalid email format',
+    }),
   province: z.string().min(1),
   ward: z.string().min(1),
   organization: z.string().optional(),

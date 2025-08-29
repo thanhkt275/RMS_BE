@@ -1,53 +1,74 @@
 # ---- Builder Stage ----
 FROM node:18-alpine AS builder
+
+# Install security updates and necessary tools
+RUN apk update && apk upgrade && apk add --no-cache dumb-init
+
 WORKDIR /app
 
-# Install ALL dependencies (including dev dependencies) for building
-COPY package.json pnpm-lock.yaml* package-lock.json* ./
-COPY .env.production .env.production
+# Copy dependency files
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
 
-RUN npm ci 
-ENV NODE_ENV=production
+# Install dependencies with npm ci for faster, reliable builds
+RUN if [ -f pnpm-lock.yaml ]; then \
+      corepack enable && pnpm install --frozen-lockfile; \
+    elif [ -f package-lock.json ]; then \
+      npm ci; \
+    else \
+      npm install; \
+    fi
 
-
-# Copy source files and configuration
+# Copy source code and configuration
 COPY prisma ./prisma
 COPY src ./src
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
 
-# Generate Prisma client (for Alpine)
-RUN npx prisma generate --schema=./prisma/schema.prisma
+# Generate Prisma client
+RUN npx prisma generate
 
-# Build the app
+# Build the application
 RUN npm run build
 
 # ---- Production Stage ----
 FROM node:18-alpine AS production
+
+# Install security updates and dumb-init for proper signal handling
+RUN apk update && apk upgrade && apk add --no-cache dumb-init
+
 WORKDIR /app
 
+# Set production environment
 ENV NODE_ENV=production
 
+# Copy dependency files
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
 
 # Install only production dependencies
-COPY package.json pnpm-lock.yaml* package-lock.json* ./
-RUN npm ci 
+RUN npm ci --only=production \
+    npm cache clean --force
 
-# Copy built app and Prisma client from builder
+# Copy built application and necessary files
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/generated ./generated
-COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-
-# Create non-root user
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/generated ./generated
+# Create non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Change ownership of app directory
+RUN chown -R appuser:appgroup /app
+
+# Switch to non-root user
 USER appuser
-# Copy .env file from builder stage
 
-COPY --from=builder /app/.env.production .env
-
+# Expose port
 EXPOSE 5000
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1
 
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/main"]

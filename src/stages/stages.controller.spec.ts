@@ -7,6 +7,46 @@ import { StageAdvancementService } from './stage-advancement.service';
 import { PrismaService } from '../prisma.service';
 import { AdvanceTeamsDto } from './dto/advance-teams.dto';
 import { StageStatus, StageType, UserRole } from '../utils/prisma-types';
+import { DateValidationService } from '../common/services/date-validation.service';
+
+// Helper function to create mock team with all required fields
+function createMockTeam(overrides: Partial<any> = {}) {
+  const now = new Date();
+  return {
+    id: 'team-1',
+    teamNumber: '1001',
+    name: 'Team A',
+    tournamentId: 'tournament-1',
+    currentStageId: 'stage-2',
+    userId: 'user-1',
+    referralSource: 'Website',
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
+// Helper function to create mock stage with all required fields
+function createMockStage(overrides: Partial<any> = {}) {
+  const now = new Date();
+  return {
+    id: 'stage-1',
+    name: 'Swiss Stage A',
+    description: null,
+    type: StageType.SWISS,
+    status: StageStatus.ACTIVE,
+    startDate: now,
+    endDate: now,
+    tournamentId: 'tournament-1',
+    teamsPerAlliance: 2,
+    maxTeams: null,
+    isElimination: false,
+    advancementRules: null,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
 
 describe('StagesController - Stage Advancement', () => {
   let controller: StagesController;
@@ -16,7 +56,8 @@ describe('StagesController - Stage Advancement', () => {
 
   beforeEach(async () => {
     prisma = mockDeep<PrismaService>();
-    
+    const dateValidationService = mockDeep<DateValidationService>();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StagesController],
       providers: [
@@ -25,6 +66,10 @@ describe('StagesController - Stage Advancement', () => {
         {
           provide: PrismaService,
           useValue: prisma,
+        },
+        {
+          provide: DateValidationService,
+          useValue: dateValidationService,
         },
       ],
     }).compile();
@@ -39,69 +84,42 @@ describe('StagesController - Stage Advancement', () => {
     jest.clearAllMocks();
   });
 
-  describe('advanceTeams', () => {    const mockAdvancementResult = {
+  describe('advanceTeams', () => {
+    const mockAdvancementResult = {
       advancedTeams: [
-        { 
-          id: 'team-1', 
-          teamNumber: '1001', 
-          name: 'Team A', 
-          organization: null,
-          avatar: null,
-          description: null,
-          teamLead: null,
-          teamLeadId: null,
-          teamMembers: null,
-          tournamentId: 'tournament-1',
+        createMockTeam({
+          id: 'team-1',
+          teamNumber: '1001',
+          name: 'Team A',
           currentStageId: 'stage-2',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        { 
-          id: 'team-2', 
-          teamNumber: '1002', 
-          name: 'Team B', 
-          organization: null,
-          avatar: null,
-          description: null,
-          teamLead: null,
-          teamLeadId: null,
-          teamMembers: null,
-          tournamentId: 'tournament-1',
+        }),
+        createMockTeam({
+          id: 'team-2',
+          teamNumber: '1002',
+          name: 'Team B',
           currentStageId: 'stage-2',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        }),
       ],
-      completedStage: {
+      completedStage: createMockStage({
         id: 'stage-1',
         name: 'Swiss Stage A',
         status: StageStatus.COMPLETED,
-        type: StageType.SWISS,
-        startDate: new Date(),
-        endDate: new Date(),
-        tournamentId: 'tournament-1',
-        teamsPerAlliance: 2,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      nextStage: {
+      }),
+      nextStage: createMockStage({
         id: 'stage-2',
         name: 'Swiss Stage B',
-        type: StageType.SWISS,
         status: StageStatus.ACTIVE,
-        startDate: new Date(),
-        endDate: new Date(),
-        tournamentId: 'tournament-1',
-        teamsPerAlliance: 2,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
+      }),
       totalTeamsAdvanced: 2,
-    };    const advanceTeamsDto: AdvanceTeamsDto = {
+    };
+
+    const advanceTeamsDto: AdvanceTeamsDto = {
       teamsToAdvance: 2,
       nextStageId: 'stage-2',
       createNextStage: false,
-    };    it('should successfully advance teams to next stage', async () => {
+    };
+
+    it('should successfully advance teams to next stage', async () => {
       const advanceTeamsSpy = jest.spyOn(stageAdvancementService, 'advanceTeamsToNextStage').mockResolvedValue(mockAdvancementResult);
 
       const result = await controller.advanceTeams('stage-1', advanceTeamsDto);
@@ -151,21 +169,17 @@ describe('StagesController - Stage Advancement', () => {
 
       const resultWithNewStage = {
         ...mockAdvancementResult,
-        nextStage: {
+        nextStage: createMockStage({
           id: 'stage-playoff',
           name: 'Playoffs',
           type: StageType.PLAYOFF,
           status: StageStatus.ACTIVE,
           startDate: new Date('2025-01-05'),
           endDate: new Date('2025-01-06'),
-          tournamentId: 'tournament-1',
-          teamsPerAlliance: 2,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        }),
       };
 
-      const advanceTeamsSpy2 = jest.spyOn(stageAdvancementService, 'advanceTeamsToNextStage').mockResolvedValue(resultWithNewStage);
+      jest.spyOn(stageAdvancementService, 'advanceTeamsToNextStage').mockResolvedValue(resultWithNewStage);
 
       const result = await controller.advanceTeams('stage-1', dtoWithNewStage);
 
@@ -176,7 +190,7 @@ describe('StagesController - Stage Advancement', () => {
 
     it('should handle advancement errors properly', async () => {
       const error = new Error('Stage has incomplete matches');
-      const advanceTeamsSpy3 = jest.spyOn(stageAdvancementService, 'advanceTeamsToNextStage').mockRejectedValue(error);
+      jest.spyOn(stageAdvancementService, 'advanceTeamsToNextStage').mockRejectedValue(error);
 
       await expect(controller.advanceTeams('stage-1', advanceTeamsDto)).rejects.toThrow(HttpException);
 
@@ -241,7 +255,7 @@ describe('StagesController - Stage Advancement', () => {
 
     it('should handle rankings errors properly', async () => {
       const error = new Error('Stage not found');
-      const getRankingsSpy2 = jest.spyOn(stageAdvancementService, 'getStageRankings').mockRejectedValue(error);
+      jest.spyOn(stageAdvancementService, 'getStageRankings').mockRejectedValue(error);
 
       await expect(controller.getStageRankings('invalid-stage')).rejects.toThrow(HttpException);
     });
@@ -253,7 +267,7 @@ describe('StagesController - Stage Advancement', () => {
         totalTeams: 8,
       };
 
-      const readinessSpy = jest.spyOn(stageAdvancementService, 'isStageReadyForAdvancement').mockResolvedValue(mockReadiness);
+      jest.spyOn(stageAdvancementService, 'isStageReadyForAdvancement').mockResolvedValue(mockReadiness);
 
       const result = await controller.checkStageReadiness('stage-1');
 
@@ -277,7 +291,7 @@ describe('StagesController - Stage Advancement', () => {
         totalTeams: 8,
       };
 
-      const readinessSpy2 = jest.spyOn(stageAdvancementService, 'isStageReadyForAdvancement').mockResolvedValue(mockReadiness);
+      jest.spyOn(stageAdvancementService, 'isStageReadyForAdvancement').mockResolvedValue(mockReadiness);
 
       const result = await controller.checkStageReadiness('stage-1');
 
@@ -359,8 +373,9 @@ describe('StagesController - Stage Advancement', () => {
   });
 
   describe('Integration scenarios', () => {
-    it('should handle complete advancement workflow', async () => {      // First check readiness
-      const readinessSpy3 = jest.spyOn(stageAdvancementService, 'isStageReadyForAdvancement').mockResolvedValue({
+    it('should handle complete advancement workflow', async () => {
+      // First check readiness
+      jest.spyOn(stageAdvancementService, 'isStageReadyForAdvancement').mockResolvedValue({
         ready: true,
         totalTeams: 8,
       });
@@ -383,54 +398,33 @@ describe('StagesController - Stage Advancement', () => {
         opponentWinPercentage: 0,
       }));
 
-      const getRankingsSpy3 = jest.spyOn(stageAdvancementService, 'getStageRankings').mockResolvedValue(mockRankings);
+      jest.spyOn(stageAdvancementService, 'getStageRankings').mockResolvedValue(mockRankings);
 
       const previewResult = await controller.previewAdvancement('stage-1', '4');
-      expect(previewResult.data.teamsToAdvance).toHaveLength(4);      // Finally advance teams
+      expect(previewResult.data.teamsToAdvance).toHaveLength(4);
+
+      // Finally advance teams
       const mockAdvancementResult = {
-        advancedTeams: mockRankings.slice(0, 4).map(team => ({
+        advancedTeams: mockRankings.slice(0, 4).map(team => createMockTeam({
           id: team.teamId,
           teamNumber: team.teamNumber,
           name: team.teamName,
-          organization: null,
-          avatar: null,
-          description: null,
-          teamLead: null,
-          teamLeadId: null,
-          teamMembers: null,
-          tournamentId: 'tournament-1',
           currentStageId: 'stage-2',
-          createdAt: new Date(),
-          updatedAt: new Date(),
         })),
-        completedStage: {
+        completedStage: createMockStage({
           id: 'stage-1',
           name: 'Swiss Stage A',
           status: StageStatus.COMPLETED,
-          type: StageType.SWISS,
-          startDate: new Date(),
-          endDate: new Date(),
-          tournamentId: 'tournament-1',
-          teamsPerAlliance: 2,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        nextStage: {
+        }),
+        nextStage: createMockStage({
           id: 'stage-2',
           name: 'Swiss Stage B',
-          type: StageType.SWISS,
           status: StageStatus.ACTIVE,
-          startDate: new Date(),
-          endDate: new Date(),
-          tournamentId: 'tournament-1',
-          teamsPerAlliance: 2,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        }),
         totalTeamsAdvanced: 4,
       };
 
-      const advanceTeamsSpy4 = jest.spyOn(stageAdvancementService, 'advanceTeamsToNextStage').mockResolvedValue(mockAdvancementResult);
+      jest.spyOn(stageAdvancementService, 'advanceTeamsToNextStage').mockResolvedValue(mockAdvancementResult);
 
       const advancementResult = await controller.advanceTeams('stage-1', {
         teamsToAdvance: 4,

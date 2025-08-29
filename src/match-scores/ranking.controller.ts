@@ -168,7 +168,11 @@ export class RankingController {
       throw new BadRequestException('Tournament ID is required');
     }
 
-    const leaderboard = await this.teamStatsApiService.getLeaderboard(tournamentId, { stageId });
+    const filter: any = {};
+    if (stageId) {
+      filter.stageId = stageId;
+    }
+    const leaderboard = await this.teamStatsApiService.getLeaderboard(tournamentId, filter);
 
     return {
       ...leaderboard,

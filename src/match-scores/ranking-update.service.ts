@@ -148,7 +148,12 @@ export class RankingUpdateService {
     stageId?: string
   ): Promise<TeamRanking[]> {
     try {
-      const stats = await this.teamStatsApiService.getStatsForTournament(tournamentId, { stageId });
+      // Build filter dynamically to avoid assigning unknown properties on a typed DTO literal
+      const filter: any = {};
+      if (stageId) {
+        filter.stageId = stageId;
+      }
+      const stats = await this.teamStatsApiService.getStatsForTournament(tournamentId, Object.keys(filter).length ? filter : undefined);
 
       if (!stats || stats.length === 0) {
         this.logger.warn(`⚠️ No team stats found for tournament ${tournamentId}${stageId ? `, stage ${stageId}` : ''}`);
@@ -168,7 +173,7 @@ export class RankingUpdateService {
         rankingPoints: stat.rankingPoints,
         tiebreaker1: stat.tiebreaker1,
         tiebreaker2: stat.tiebreaker2,
-        rank: stat.rank
+        rank: stat.rank ?? 0
       }));
 
       this.logger.debug(`📊 Retrieved ${rankings.length} team rankings for broadcast`);
