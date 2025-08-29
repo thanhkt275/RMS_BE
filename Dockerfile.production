@@ -129,6 +129,7 @@ COPY --from=builder --chown=nestjs:nestjs /app/dist ./dist
 # Copy Prisma files and generated client
 COPY --from=builder --chown=nestjs:nestjs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nestjs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nestjs:nestjs /app/generated ./generated
 
 # Create necessary directories with proper permissions
 RUN mkdir -p /app/logs /app/uploads /app/temp && \
